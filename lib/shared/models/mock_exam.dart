@@ -152,6 +152,12 @@ class MockQuestion extends Equatable {
     required this.options,
     required this.position,
     this.instructions,
+    this.contentFormat,
+    this.questionGroupKey,
+    this.questionGroupTitle,
+    this.questionGroupText,
+    this.questionGroupInstructions,
+    this.imageUrl,
   });
 
   factory MockQuestion.fromJson(Map<String, dynamic> json) {
@@ -162,6 +168,12 @@ class MockQuestion extends Equatable {
       options: options is List ? options.map((item) => item.toString()).toList() : const [],
       position: _asInt(json['position']),
       instructions: json['instructions']?.toString(),
+      contentFormat: json['contentFormat']?.toString(),
+      questionGroupKey: json['questionGroupKey']?.toString(),
+      questionGroupTitle: json['questionGroupTitle']?.toString(),
+      questionGroupText: json['questionGroupText']?.toString(),
+      questionGroupInstructions: json['questionGroupInstructions']?.toString(),
+      imageUrl: json['imageUrl']?.toString(),
     );
   }
 
@@ -172,6 +184,12 @@ class MockQuestion extends Equatable {
       'options': options,
       'position': position,
       if (instructions != null) 'instructions': instructions,
+      if (contentFormat != null) 'contentFormat': contentFormat,
+      if (questionGroupKey != null) 'questionGroupKey': questionGroupKey,
+      if (questionGroupTitle != null) 'questionGroupTitle': questionGroupTitle,
+      if (questionGroupText != null) 'questionGroupText': questionGroupText,
+      if (questionGroupInstructions != null) 'questionGroupInstructions': questionGroupInstructions,
+      if (imageUrl != null) 'imageUrl': imageUrl,
     };
   }
 
@@ -180,6 +198,17 @@ class MockQuestion extends Equatable {
   final List<String> options;
   final int position;
   final String? instructions;
+  final String? contentFormat;
+  final String? questionGroupKey;
+  final String? questionGroupTitle;
+  final String? questionGroupText;
+  final String? questionGroupInstructions;
+  final String? imageUrl;
+
+  bool get hasQuestionGroup =>
+      (questionGroupTitle?.isNotEmpty ?? false) ||
+      (questionGroupText?.isNotEmpty ?? false) ||
+      (questionGroupInstructions?.isNotEmpty ?? false);
 
   @override
   List<Object?> get props => [id, position];

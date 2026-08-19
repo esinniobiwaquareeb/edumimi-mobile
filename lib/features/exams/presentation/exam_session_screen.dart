@@ -8,7 +8,7 @@ import 'package:mock_mobile/core/offline/connectivity_service.dart';
 import 'package:mock_mobile/core/offline/offline_sync_service.dart';
 import 'package:mock_mobile/core/offline/pending_submit_queue.dart';
 import 'package:mock_mobile/core/theme/app_colors.dart';
-import 'package:mock_mobile/core/utils/text_utils.dart';
+import 'package:mock_mobile/core/widgets/mock_rich_content.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
@@ -263,10 +263,55 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
                   backgroundColor: AppColors.primarySoft,
                 ),
                 const SizedBox(height: 16),
+                if (question.hasQuestionGroup) ...[
+                  MockCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (question.questionGroupTitle?.isNotEmpty ?? false)
+                          Text(
+                            question.questionGroupTitle!,
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                          ),
+                        if (question.questionGroupText?.isNotEmpty ?? false) ...[
+                          if (question.questionGroupTitle?.isNotEmpty ?? false) const SizedBox(height: 8),
+                          MockRichContent(
+                            content: question.questionGroupText,
+                            format: question.contentFormat,
+                          ),
+                        ],
+                        if (question.questionGroupInstructions?.isNotEmpty ?? false) ...[
+                          const SizedBox(height: 8),
+                          MockRichContent(
+                            content: question.questionGroupInstructions,
+                            format: question.contentFormat,
+                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (question.instructions?.isNotEmpty ?? false) ...[
+                  MockCard(
+                    child: MockRichContent(
+                      content: question.instructions,
+                      format: question.contentFormat,
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 MockCard(
-                  child: Text(
-                    stripHtml(question.questionText),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.4),
+                  child: MockRichContent(
+                    content: question.questionText,
+                    format: question.contentFormat,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -281,7 +326,15 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
                         side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
                       ),
                       onPressed: () => _updateAnswer(question.id, index),
-                      child: Text(stripHtml(question.options[index])),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: MockRichContent(
+                          content: question.options[index],
+                          format: question.contentFormat,
+                          inline: true,
+                          style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+                        ),
+                      ),
                     ),
                   );
                 }),

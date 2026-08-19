@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/theme/app_colors.dart';
-import 'package:mock_mobile/core/utils/text_utils.dart';
+import 'package:mock_mobile/core/utils/text_utils.dart' show formatMockMode;
+import 'package:mock_mobile/core/widgets/mock_rich_content.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
@@ -81,7 +82,7 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
               Text('${exam.totalQuestions} questions · ${exam.durationMinutes} minutes'),
               if (exam.description != null && exam.description!.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(stripHtml(exam.description!)),
+                MockRichContent(content: exam.description),
               ],
             ],
           ),

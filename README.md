@@ -11,6 +11,7 @@ Native Flutter client for the Edumimi mock exam portal (JAMB, WAEC, NECO practic
 - **flutter_secure_storage** — auth token persistence
 - **hive_flutter** — offline question cache, in-progress sessions, submit queue
 - **connectivity_plus** — online/offline detection and sync
+- **flutter_math_fork** + **flutter_html** — LaTeX and HTML question rendering
 
 ## Architecture
 
@@ -37,6 +38,6 @@ flutter run \
 ## Notes
 
 - Login works without Cloudflare Turnstile when `MOCK_TURNSTILE_SECRET_KEY` is unset (local dev).
-- Exam questions strip HTML for display; rich LaTeX rendering can be added later.
+- Exam questions render HTML and inline/display LaTeX (`MockRichContent`), matching the web mock portal.
 - Offline: questions are cached per subject, in-progress attempts persist locally, and submissions queue until reconnect.
 - Community chat and payments are web-first for now; core practice loop is in the app.

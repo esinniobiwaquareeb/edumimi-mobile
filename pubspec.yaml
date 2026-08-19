@@ -19,6 +19,8 @@ dependencies:
   intl: ^0.20.2
   connectivity_plus: ^6.1.4
   hive_flutter: ^1.1.0
+  flutter_math_fork: ^0.7.4
+  flutter_html: ^3.0.0
 
 dev_dependencies:
   flutter_test:
