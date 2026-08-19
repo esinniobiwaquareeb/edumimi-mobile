@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mock_mobile/core/config/app_config.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/storage/auth_storage.dart';
+import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
@@ -10,7 +11,11 @@ final dioProvider = Provider<Dio>((ref) {
       baseUrl: '${AppConfig.apiBaseUrl}${AppConfig.apiPrefix}',
       connectTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 30),
-      headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Mock-Client': 'mobile',
+      },
     ),
   );
 
@@ -26,9 +31,14 @@ final dioProvider = Provider<Dio>((ref) {
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
           final path = error.requestOptions.path;
-          final isAuthRoute = path.contains('/auth/login') || path.contains('/auth/signup');
-          if (!isAuthRoute) {
-            await ref.read(authStorageProvider).clear();
+          final isAuthRoute = path.contains('/auth/login') ||
+              path.contains('/auth/signup') ||
+              path.contains('/auth/forgot-password') ||
+              path.contains('/auth/reset-password') ||
+              path.contains('/auth/verify-email');
+          final isSessionValidation = path.endsWith('/me') || path == '/me';
+          if (!isAuthRoute && !isSessionValidation) {
+            await ref.read(authControllerProvider.notifier).logout(localOnly: true);
           }
         }
         handler.next(error);

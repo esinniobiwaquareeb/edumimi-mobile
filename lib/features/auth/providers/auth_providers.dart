@@ -11,9 +11,10 @@ class AuthState extends Equatable {
     required this.status,
     this.session,
     this.errorMessage,
+    this.isInitializing = false,
   });
 
-  const AuthState.unknown() : this(status: AuthStatus.unknown);
+  const AuthState.initializing() : this(status: AuthStatus.unknown, isInitializing: true);
   const AuthState.authenticated(AuthSession session)
       : this(status: AuthStatus.authenticated, session: session);
   const AuthState.unauthenticated({String? errorMessage})
@@ -22,12 +23,13 @@ class AuthState extends Equatable {
   final AuthStatus status;
   final AuthSession? session;
   final String? errorMessage;
+  final bool isInitializing;
 
   bool get isAuthenticated => status == AuthStatus.authenticated && session != null;
   MockUser? get user => session?.user;
 
   @override
-  List<Object?> get props => [status, session, errorMessage];
+  List<Object?> get props => [status, session, errorMessage, isInitializing];
 }
 
 class AuthController extends Notifier<AuthState> {
@@ -37,7 +39,7 @@ class AuthController extends Notifier<AuthState> {
   AuthState build() {
     _repository = ref.read(authRepositoryProvider);
     _bootstrap();
-    return const AuthState.unknown();
+    return const AuthState.initializing();
   }
 
   Future<void> _bootstrap() async {
@@ -47,16 +49,26 @@ class AuthController extends Notifier<AuthState> {
         state = const AuthState.unauthenticated();
         return;
       }
-      final freshUser = await _repository.fetchMe();
-      state = AuthState.authenticated(AuthSession(token: stored.token, user: freshUser));
+
+      // Restore cached session immediately (matches web client) so cold starts stay logged in.
+      state = AuthState.authenticated(stored);
+
+      try {
+        final freshUser = await _repository.fetchMe();
+        state = AuthState.authenticated(AuthSession(token: stored.token, user: freshUser));
+        await _repository.persistSession(token: stored.token, user: freshUser);
+      } on ApiException catch (error) {
+        if (error.statusCode == 401) {
+          await _repository.clearSession();
+          state = const AuthState.unauthenticated();
+        }
+      }
     } catch (_) {
-      await _repository.clearSession();
       state = const AuthState.unauthenticated();
     }
   }
 
   Future<void> login({required String email, required String password}) async {
-    state = const AuthState.unknown();
     try {
       final session = await _repository.login(email: email, password: password);
       state = AuthState.authenticated(session);
@@ -71,7 +83,6 @@ class AuthController extends Notifier<AuthState> {
     required String email,
     required String password,
   }) async {
-    state = const AuthState.unknown();
     try {
       final session = await _repository.signup(
         fullName: fullName,
@@ -88,6 +99,35 @@ class AuthController extends Notifier<AuthState> {
   Future<void> logout({bool localOnly = false}) async {
     await _repository.clearSession();
     state = const AuthState.unauthenticated();
+  }
+
+  Future<void> refreshUser() async {
+    final current = state.session;
+    if (current == null) {
+      return;
+    }
+    try {
+      final freshUser = await _repository.fetchMe();
+      state = AuthState.authenticated(AuthSession(token: current.token, user: freshUser));
+      await _repository.persistSession(token: current.token, user: freshUser);
+    } on ApiException catch (error) {
+      if (error.statusCode == 401) {
+        await _repository.clearSession();
+        state = const AuthState.unauthenticated();
+      }
+    }
+  }
+
+  Future<void> applyVerifiedSession(AuthSession session) async {
+    state = AuthState.authenticated(session);
+  }
+
+  void updateUser(MockUser user) {
+    final current = state.session;
+    if (current == null) {
+      return;
+    }
+    state = AuthState.authenticated(AuthSession(token: current.token, user: user));
   }
 }
 

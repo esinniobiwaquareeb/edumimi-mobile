@@ -5,12 +5,15 @@ class OfflineStorage {
   static const sessionBoxName = 'exam_sessions_v1';
   static const pendingBoxName = 'pending_submits_v1';
 
+  static const appPrefsBoxName = 'app_prefs_v1';
+
   static Future<void> init() async {
     await Hive.initFlutter();
     await Future.wait([
       Hive.openBox<Map>(practiceBoxName),
       Hive.openBox<Map>(sessionBoxName),
       Hive.openBox<Map>(pendingBoxName),
+      Hive.openBox<dynamic>(appPrefsBoxName),
     ]);
   }
 

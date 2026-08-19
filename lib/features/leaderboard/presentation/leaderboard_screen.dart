@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:mock_mobile/core/theme/app_colors.dart';
+import 'package:mock_mobile/core/theme/app_spacing.dart';
+import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 import 'package:mock_mobile/shared/models/mock_attempt.dart';
@@ -26,25 +27,26 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.page, AppSpacing.page, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Top Students', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-              const SizedBox(height: 6),
-              const Text('See who is leading this period.', style: TextStyle(color: AppColors.textSecondary)),
-              const SizedBox(height: 12),
+              const MockPageHeader(
+                title: 'Top Students',
+                subtitle: 'See who is leading this period.',
+              ),
+              const SizedBox(height: AppSpacing.page),
               MockSegmentedControl<String>(
                 segments: const ['week', 'month', 'all'],
                 selected: _period,
                 onChanged: (value) => setState(() => _period = value),
                 labelBuilder: (value) => switch (value) {
                   'month' => 'Month',
-                  'all' => 'All',
-                  _ => 'Week',
+                  'all' => 'All time',
+                  _ => 'This week',
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.section),
               examTypesAsync.when(
                 loading: () => const SizedBox.shrink(),
                 error: (_, __) => const SizedBox.shrink(),
@@ -61,6 +63,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.section),
         Expanded(
           child: leaderboardAsync.when(
             loading: () => const MockLoadingView(message: 'Loading top students…'),
@@ -80,23 +83,35 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
               return RefreshIndicator(
                 onRefresh: () async => ref.invalidate(leaderboardProvider((period: _period, examTypeSlug: _examTypeSlug))),
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.page,
+                    AppSpacing.page,
+                    AppSpacing.page,
+                    AppSpacing.page + AppSpacing.glassNavClearance,
+                  ),
                   children: [
-                    ...podium.map((entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: MockCard(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('#${entry.rank}', style: const TextStyle(color: AppColors.textDisabled, fontWeight: FontWeight.w700)),
-                                Text(entry.displayName, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-                                const SizedBox(height: 4),
-                                Text('${entry.percentScore.toStringAsFixed(1)}% · ${entry.examTitle}', style: const TextStyle(color: AppColors.textSecondary)),
-                              ],
+                    if (podium.isNotEmpty) ...[
+                      Text('Podium', style: context.label),
+                      const SizedBox(height: AppSpacing.item),
+                      ...podium.map((entry) => Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.section),
+                            child: MockPodiumCard(
+                              rank: entry.rank,
+                              name: entry.displayName,
+                              score: '${entry.percentScore.toStringAsFixed(1)}%',
+                              subtitle: entry.examTitle,
                             ),
-                          ),
-                        )),
-                    ...rest.map((entry) => _LeaderboardMobileRow(entry: entry)),
+                          )),
+                    ],
+                    if (rest.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.item),
+                      Text('Everyone else', style: context.label),
+                      const SizedBox(height: AppSpacing.item),
+                      ...rest.map((entry) => Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.section),
+                            child: _LeaderboardMobileRow(entry: entry),
+                          )),
+                    ],
                   ],
                 ),
               );
@@ -120,38 +135,26 @@ class _LeaderboardMobileRow extends StatelessWidget {
         : '—';
 
     return MockCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(entry.displayName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-          if (entry.subjectName != null) Text(entry.subjectName!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-          Text(entry.examTitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-          const SizedBox(height: 10),
-          _Row(label: 'Rank', value: '#${entry.rank}'),
-          _Row(label: 'Score', value: '${entry.percentScore.toStringAsFixed(1)}%', valueColor: AppColors.success),
-          _Row(label: 'When', value: dateLabel),
-        ],
-      ),
-    );
-  }
-}
-
-class _Row extends StatelessWidget {
-  const _Row({required this.label, required this.value, this.valueColor});
-
-  final String label;
-  final String value;
-  final Color? valueColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textDisabled)),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w700, color: valueColor ?? AppColors.textPrimary)),
+          Container(
+            width: 32,
+            alignment: Alignment.center,
+            child: Text('#${entry.rank}', style: context.label),
+          ),
+          const SizedBox(width: AppSpacing.section),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(entry.displayName, style: context.cardTitle),
+                Text(entry.examTitle, style: context.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text(dateLabel, style: context.caption),
+              ],
+            ),
+          ),
+          Text('${entry.percentScore.toStringAsFixed(1)}%', style: context.cardTitle),
         ],
       ),
     );

@@ -9,7 +9,10 @@ final authStorageProvider = Provider<AuthStorage>((ref) => AuthStorage());
 
 class AuthStorage {
   AuthStorage({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+      : _storage = storage ??
+            const FlutterSecureStorage(
+              aOptions: AndroidOptions(encryptedSharedPreferences: true),
+            );
 
   static const _tokenKey = 'mock_token';
   static const _userKey = 'mock_user';

@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/core/offline/connectivity_service.dart';
 import 'package:mock_mobile/core/offline/offline_sync_service.dart';
-import 'package:mock_mobile/core/theme/app_colors.dart';
+import 'package:mock_mobile/core/theme/app_spacing.dart';
+import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 
 class OfflineStatusBanner extends ConsumerWidget {
@@ -20,11 +21,10 @@ class OfflineStatusBanner extends ConsumerWidget {
 
     if (connectivity != null && !connectivity.isOnline) {
       children.add(
-        const _StatusCard(
+        _StatusCard(
           icon: Icons.wifi_off_outlined,
           title: 'You are offline',
           message: 'Progress is saved on this device and will sync when you reconnect.',
-          tone: AppColors.accent,
         ),
       );
     }
@@ -35,7 +35,6 @@ class OfflineStatusBanner extends ConsumerWidget {
           icon: Icons.cloud_upload_outlined,
           title: '$pendingCount submission${pendingCount == 1 ? '' : 's'} waiting to sync',
           message: 'Keep the app open when you are back online.',
-          tone: AppColors.primary,
         ),
       );
     }
@@ -46,10 +45,10 @@ class OfflineStatusBanner extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Resume in-progress exam', style: TextStyle(fontWeight: FontWeight.w800)),
+              Text('Resume in-progress exam', style: context.sectionTitle),
               const SizedBox(height: 4),
-              Text(savedSession.exam.title, style: const TextStyle(color: AppColors.textSecondary)),
-              const SizedBox(height: 12),
+              Text(savedSession.exam.title, style: context.bodySecondary),
+              const SizedBox(height: AppSpacing.section),
               MockPrimaryButton(
                 label: 'Continue exam',
                 onPressed: () => context.push('/exams/${savedSession.slug}/take'),
@@ -67,7 +66,6 @@ class OfflineStatusBanner extends ConsumerWidget {
           icon: Icons.download_done_outlined,
           title: '${offlineSubjects.length} subject${offlineSubjects.length == 1 ? '' : 's'} cached offline',
           message: '$totalQuestions questions saved for practice without a connection.',
-          tone: AppColors.success,
         ),
       );
     }
@@ -80,10 +78,10 @@ class OfflineStatusBanner extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var index = 0; index < children.length; index++) ...[
-          if (index > 0) const SizedBox(height: 12),
+          if (index > 0) const SizedBox(height: AppSpacing.section),
           children[index],
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.page),
       ],
     );
   }
@@ -94,13 +92,11 @@ class _StatusCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
-    required this.tone,
   });
 
   final IconData icon;
   final String title;
   final String message;
-  final Color tone;
 
   @override
   Widget build(BuildContext context) {
@@ -108,15 +104,15 @@ class _StatusCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: tone),
-          const SizedBox(width: 12),
+          Icon(icon, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)),
+          const SizedBox(width: AppSpacing.section),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+                Text(title, style: context.cardTitle),
                 const SizedBox(height: 4),
-                Text(message, style: const TextStyle(color: AppColors.textSecondary)),
+                Text(message, style: context.bodySecondary),
               ],
             ),
           ),

@@ -10,6 +10,8 @@ class SavedExamSession {
     required this.currentIndex,
     required this.startedAt,
     required this.updatedAt,
+    required this.timeLeftSeconds,
+    required this.markedForReview,
   });
 
   factory SavedExamSession.fromMap(Map map) {
@@ -24,6 +26,14 @@ class SavedExamSession {
       });
     }
 
+    final markedRaw = map['markedForReview'];
+    final markedForReview = <String, bool>{};
+    if (markedRaw is Map) {
+      markedRaw.forEach((key, value) {
+        markedForReview[key.toString()] = value == true;
+      });
+    }
+
     return SavedExamSession(
       slug: map['slug']?.toString() ?? '',
       attemptId: map['attemptId']?.toString() ?? '',
@@ -34,6 +44,12 @@ class SavedExamSession {
           : int.tryParse(map['currentIndex']?.toString() ?? '') ?? 0,
       startedAt: DateTime.tryParse(map['startedAt']?.toString() ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(map['updatedAt']?.toString() ?? '') ?? DateTime.now(),
+      timeLeftSeconds: map['timeLeftSeconds'] is int
+          ? map['timeLeftSeconds'] as int
+          : int.tryParse(map['timeLeftSeconds']?.toString() ?? '') ??
+              (map['timeLeft'] is int ? map['timeLeft'] as int : int.tryParse(map['timeLeft']?.toString() ?? '')) ??
+              0,
+      markedForReview: markedForReview,
     );
   }
 
@@ -44,6 +60,8 @@ class SavedExamSession {
   final int currentIndex;
   final DateTime startedAt;
   final DateTime updatedAt;
+  final int timeLeftSeconds;
+  final Map<String, bool> markedForReview;
 
   Map<String, dynamic> toMap() {
     return {
@@ -54,6 +72,8 @@ class SavedExamSession {
       'currentIndex': currentIndex,
       'startedAt': startedAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'timeLeftSeconds': timeLeftSeconds,
+      'markedForReview': markedForReview,
     };
   }
 }
@@ -68,6 +88,8 @@ class ExamSessionStore {
     required Map<String, int> answers,
     required int currentIndex,
     required DateTime startedAt,
+    required int timeLeftSeconds,
+    required Map<String, bool> markedForReview,
   }) async {
     final session = SavedExamSession(
       slug: slug,
@@ -77,6 +99,8 @@ class ExamSessionStore {
       currentIndex: currentIndex,
       startedAt: startedAt,
       updatedAt: DateTime.now(),
+      timeLeftSeconds: timeLeftSeconds,
+      markedForReview: markedForReview,
     );
     await OfflineStorage.sessionBox.put(_activeKey, session.toMap());
   }

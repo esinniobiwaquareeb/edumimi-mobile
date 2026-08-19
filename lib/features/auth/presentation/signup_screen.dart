@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
-import 'package:mock_mobile/core/theme/app_colors.dart';
+import 'package:mock_mobile/core/theme/app_spacing.dart';
+import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 
@@ -43,9 +44,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             email: _emailController.text,
             password: _passwordController.text,
           );
-      if (mounted) {
-        context.go('/dashboard');
-      }
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } finally {
@@ -58,51 +56,63 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
+      appBar: MockDetailAppBar(
+        title: 'Create account',
+        onBack: () => context.go('/login'),
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text('Start free practice in minutes.', style: TextStyle(color: AppColors.textSecondary)),
-                const SizedBox(height: 20),
-                if (_error != null)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEE2E2),
-                      borderRadius: BorderRadius.circular(12),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.page),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Start free practice in minutes.', style: context.pageSubtitle),
+                    const SizedBox(height: AppSpacing.page),
+                    MockAuthCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (_error != null) ...[
+                            MockInlineNotice.error(message: _error!),
+                            const SizedBox(height: AppSpacing.section),
+                          ],
+                          MockTextField(
+                            label: 'Full name',
+                            controller: _nameController,
+                            validator: (value) => value != null && value.trim().length >= 2 ? null : 'Enter your name',
+                          ),
+                          const SizedBox(height: AppSpacing.section),
+                          MockTextField(
+                            label: 'Email address',
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
+                          ),
+                          const SizedBox(height: AppSpacing.section),
+                      MockTextField(
+                        label: 'Password',
+                        controller: _passwordController,
+                        obscurable: true,
+                        validator: (value) => value != null && value.length >= 8 ? null : 'Use at least 8 characters',
+                      ),
+                          const SizedBox(height: AppSpacing.page),
+                          MockPrimaryButton(label: 'Create account', isLoading: _isLoading, onPressed: _submit),
+                        ],
+                      ),
                     ),
-                    child: Text(_error!, style: const TextStyle(color: AppColors.error)),
-                  ),
-                MockTextField(
-                  label: 'Full name',
-                  controller: _nameController,
-                  validator: (value) => value != null && value.trim().length >= 2 ? null : 'Enter your name',
+                    const SizedBox(height: AppSpacing.section),
+                    TextButton(
+                      onPressed: () => context.go('/login'),
+                      child: const Text('Already have an account? Log in'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                MockTextField(
-                  label: 'Email address',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
-                ),
-                const SizedBox(height: 12),
-                MockTextField(
-                  label: 'Password',
-                  controller: _passwordController,
-                  obscureText: true,
-                  validator: (value) => value != null && value.length >= 8 ? null : 'Use at least 8 characters',
-                ),
-                const SizedBox(height: 20),
-                MockPrimaryButton(label: 'Sign up free', isLoading: _isLoading, onPressed: _submit),
-                const SizedBox(height: 12),
-                TextButton(onPressed: () => context.go('/login'), child: const Text('Already have an account? Log in')),
-              ],
+              ),
             ),
           ),
         ),

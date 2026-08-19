@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
-import 'package:mock_mobile/core/theme/app_colors.dart';
+import 'package:mock_mobile/core/theme/app_spacing.dart';
+import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/utils/text_utils.dart' show formatMockMode;
 import 'package:mock_mobile/core/widgets/mock_rich_content.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
@@ -19,7 +20,7 @@ class ExamDetailScreen extends ConsumerWidget {
     final examAsync = ref.watch(examDetailProvider(slug));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Exam details')),
+      appBar: const MockDetailAppBar(title: 'Exam details'),
       body: examAsync.when(
         loading: () => const MockLoadingView(message: 'Loading exam…'),
         error: (error, _) => MockErrorView(message: error.toString(), onRetry: () => ref.invalidate(examDetailProvider(slug))),
@@ -65,29 +66,38 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
     final subtitle = [exam.examTypeLabel, exam.subjectLabel].where((part) => part.isNotEmpty).join(' · ');
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.page),
       children: [
-        Text(exam.title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+        Text(exam.title, style: context.pageTitle),
         if (subtitle.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          Text(subtitle, style: const TextStyle(color: AppColors.textSecondary)),
+          const SizedBox(height: AppSpacing.item),
+          Text(subtitle, style: context.bodySecondary),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.page),
         MockCard(
+          elevated: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MockChip(label: formatMockMode(exam.mode), tone: MockChipTone.primary),
-              const SizedBox(height: 12),
-              Text('${exam.totalQuestions} questions · ${exam.durationMinutes} minutes'),
+              Wrap(
+                spacing: AppSpacing.item,
+                runSpacing: AppSpacing.item,
+                children: [
+                  MockChip(label: formatMockMode(exam.mode), tone: MockChipTone.primary),
+                  MockChip(label: '${exam.totalQuestions} questions', tone: MockChipTone.neutral),
+                  MockChip(label: '${exam.durationMinutes} min', tone: MockChipTone.neutral),
+                ],
+              ),
               if (exam.description != null && exam.description!.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.page),
+                const MockSectionTitle(title: 'About this exam'),
+                const SizedBox(height: AppSpacing.item),
                 MockRichContent(content: exam.description),
               ],
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSpacing.page),
         MockPrimaryButton(
           label: exam.isLocked ? 'Unlock full access' : 'Start practice',
           isLoading: _isStarting,

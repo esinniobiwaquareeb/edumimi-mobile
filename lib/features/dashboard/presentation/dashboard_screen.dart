@@ -1,20 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mock_mobile/core/theme/app_colors.dart';
+import 'package:mock_mobile/core/network/api_exception.dart';
+import 'package:mock_mobile/core/theme/app_spacing.dart';
+import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/utils/text_utils.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/core/widgets/offline_status_banner.dart';
+import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/shared/models/mock_attempt.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
+  Future<void> _startAdaptiveDrill(BuildContext context, WidgetRef ref, List<MockWeakTopic> weakTopics) async {
+    final exams = await ref.read(examsCatalogProvider(null).future);
+    MockExam? practiceBank;
+    for (final exam in exams) {
+      if (exam.mode == 'PRACTICE' || exam.mode == 'TOPIC_DRILL') {
+        practiceBank = exam;
+        break;
+      }
+    }
+    practiceBank ??= exams.isNotEmpty ? exams.first : null;
+    if (practiceBank == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No practice bank available for an adaptive drill right now')),
+        );
+      }
+      return;
+    }
+    try {
+      final sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+      final response = await ref.read(mockPortalRepositoryProvider).startExam(
+            practiceBank.slug,
+            sessionId: sessionId,
+            adaptive: true,
+            focusTopics: weakTopics.map((topic) => topic.topic).where((topic) => topic.isNotEmpty).take(5).toList(),
+          );
+      if (context.mounted) {
+        context.push(
+          '/exams/${practiceBank.slug}/take?attemptId=${Uri.encodeComponent(response.attemptId)}&sessionId=${Uri.encodeComponent(sessionId)}',
+        );
+      }
+    } on ApiException catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feedAsync = ref.watch(examFeedProvider);
     final insightsAsync = ref.watch(studyInsightsProvider);
+    final user = ref.watch(authControllerProvider).user;
+    final onboardingCompleted = user?.mockProfile?.onboardingCompleted == true;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -22,38 +66,95 @@ class DashboardScreen extends ConsumerWidget {
         ref.invalidate(studyInsightsProvider);
       },
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.page,
+          AppSpacing.page,
+          AppSpacing.page,
+          AppSpacing.page + AppSpacing.glassNavClearance,
+        ),
         children: [
-          Text('Dashboard', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 6),
-          const Text('Pick up where you left off.', style: TextStyle(color: AppColors.textSecondary)),
-          const SizedBox(height: 16),
+          const MockPageHeader(
+            title: 'Dashboard',
+            subtitle: 'Pick up where you left off.',
+          ),
+          const SizedBox(height: AppSpacing.page),
           const OfflineStatusBanner(),
+          const SizedBox(height: AppSpacing.section),
+          if (!onboardingCompleted)
+            MockCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Finish setup first', style: context.sectionTitle),
+                  const SizedBox(height: AppSpacing.item),
+                  Text('Pick your exam and subjects so we can recommend the right practice.', style: context.bodySecondary),
+                  const SizedBox(height: AppSpacing.section),
+                  MockPrimaryButton(label: 'Complete setup', onPressed: () => context.go('/onboarding/interests')),
+                ],
+              ),
+            ),
+          if (!onboardingCompleted) const SizedBox(height: AppSpacing.section),
           insightsAsync.when(
             loading: () => const MockCard(child: MockLoadingView(message: 'Loading insights…')),
             error: (_, __) => const SizedBox.shrink(),
             data: (insights) => MockCard(
+              elevated: true,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${insights.streakDays}-day streak', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-                  const SizedBox(height: 4),
-                  Text('${insights.submittedAttempts} submitted attempts', style: const TextStyle(color: AppColors.textSecondary)),
+                  Text('Your progress', style: context.sectionTitle),
+                  const SizedBox(height: AppSpacing.section),
+                  Row(
+                    children: [
+                      MockStatTile(
+                        label: 'Streak',
+                        value: '${insights.streakDays} days',
+                        icon: Icons.local_fire_department_outlined,
+                        subtitle: insights.streakDays > 0 ? 'Keep it going' : 'Start today',
+                      ),
+                      const SizedBox(width: AppSpacing.section),
+                      MockStatTile(
+                        label: 'Attempts',
+                        value: '${insights.submittedAttempts}',
+                        icon: Icons.check_circle_outline_rounded,
+                        subtitle: 'Submitted',
+                      ),
+                    ],
+                  ),
                   if (insights.weakTopics.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    const Text('Fix these topics', style: TextStyle(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.page),
+                    const MockSectionTitle(title: 'Fix these topics'),
+                    const SizedBox(height: AppSpacing.item),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: insights.weakTopics.take(3).map((topic) => MockChip(label: topic)).toList(),
+                      spacing: AppSpacing.item,
+                      runSpacing: AppSpacing.item,
+                      children: insights.weakTopics.take(3).map((topic) => MockWeakTopicChip(topic: topic)).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.section),
+                    MockSecondaryButton(
+                      label: 'Practice weak topics',
+                      onPressed: () => _startAdaptiveDrill(context, ref, insights.weakTopics),
                     ),
                   ],
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.page),
+          MockCard(
+            child: Row(
+              children: [
+                Expanded(
+                  child: MockSecondaryButton(label: 'Browse packages', onPressed: () => context.push('/packages')),
+                ),
+                const SizedBox(width: AppSpacing.item),
+                Expanded(
+                  child: MockSecondaryButton(label: 'Post-UTME packs', onPressed: () => context.push('/post-utme')),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.page),
           feedAsync.when(
             loading: () => const MockLoadingView(message: 'Loading practice…'),
             error: (error, _) => MockErrorView(message: error.toString(), onRetry: () => ref.invalidate(examFeedProvider)),
@@ -70,10 +171,10 @@ class DashboardScreen extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Recommended for you', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                  const SizedBox(height: 12),
+                  const MockSectionTitle(title: 'Recommended for you'),
+                  const SizedBox(height: AppSpacing.section),
                   ...exams.map((exam) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.section),
                         child: _ExamListTile(exam: exam),
                       )),
                 ],

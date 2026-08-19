@@ -6,14 +6,19 @@ class MockExamType extends Equatable {
     required this.slug,
     required this.title,
     this.description,
+    this.subjects = const [],
   });
 
   factory MockExamType.fromJson(Map<String, dynamic> json) {
+    final subjectsRaw = json['subjects'];
     return MockExamType(
       id: json['id']?.toString() ?? '',
       slug: json['slug']?.toString() ?? '',
       title: json['title']?.toString() ?? 'Exam',
       description: json['description']?.toString(),
+      subjects: subjectsRaw is List
+          ? subjectsRaw.whereType<Map<String, dynamic>>().map(MockSubject.fromJson).toList()
+          : const [],
     );
   }
 
@@ -21,13 +26,14 @@ class MockExamType extends Equatable {
   final String slug;
   final String title;
   final String? description;
+  final List<MockSubject> subjects;
 
   @override
-  List<Object?> get props => [id, slug, title, description];
+  List<Object?> get props => [id, slug, title, description, subjects];
 }
 
 class MockSubject extends Equatable {
-  const MockSubject({required this.id, required this.name, required this.slug});
+  const MockSubject({required this.id, required this.name, required this.slug, this.sortOrder});
 
   factory MockSubject.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -37,15 +43,17 @@ class MockSubject extends Equatable {
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       slug: json['slug']?.toString() ?? '',
+      sortOrder: json['sortOrder'] is num ? (json['sortOrder'] as num).toInt() : null,
     );
   }
 
   final String id;
   final String name;
   final String slug;
+  final int? sortOrder;
 
   @override
-  List<Object?> get props => [id, name, slug];
+  List<Object?> get props => [id, name, slug, sortOrder];
 }
 
 class MockExam extends Equatable {
@@ -60,6 +68,7 @@ class MockExam extends Equatable {
     this.accessState,
     this.recommendationReason,
     this.percentScore,
+    this.examYear,
     this.examType,
     this.subject,
     this.questions = const [],
@@ -78,6 +87,7 @@ class MockExam extends Equatable {
       accessState: json['accessState']?.toString(),
       recommendationReason: json['recommendationReason']?.toString(),
       percentScore: json['percentScore'] is num ? (json['percentScore'] as num).toDouble() : null,
+      examYear: json['examYear'] is num ? (json['examYear'] as num).toInt() : int.tryParse(json['examYear']?.toString() ?? ''),
       examType: json['examType'] is Map<String, dynamic>
           ? MockExamType.fromJson(json['examType'] as Map<String, dynamic>)
           : null,
@@ -103,6 +113,7 @@ class MockExam extends Equatable {
   final String? accessState;
   final String? recommendationReason;
   final double? percentScore;
+  final int? examYear;
   final MockExamType? examType;
   final MockSubject? subject;
   final List<MockQuestion> questions;
@@ -158,6 +169,10 @@ class MockQuestion extends Equatable {
     this.questionGroupText,
     this.questionGroupInstructions,
     this.imageUrl,
+    this.points,
+    this.correctOptionIndex,
+    this.explanation,
+    this.isLocked = false,
   });
 
   factory MockQuestion.fromJson(Map<String, dynamic> json) {
@@ -174,6 +189,12 @@ class MockQuestion extends Equatable {
       questionGroupText: json['questionGroupText']?.toString(),
       questionGroupInstructions: json['questionGroupInstructions']?.toString(),
       imageUrl: json['imageUrl']?.toString(),
+      points: json['points'] is num ? (json['points'] as num).toInt() : _asInt(json['points']),
+      correctOptionIndex: json['correctOptionIndex'] is num
+          ? (json['correctOptionIndex'] as num).toInt()
+          : int.tryParse(json['correctOptionIndex']?.toString() ?? ''),
+      explanation: json['explanation']?.toString(),
+      isLocked: json['isLocked'] == true,
     );
   }
 
@@ -190,6 +211,10 @@ class MockQuestion extends Equatable {
       if (questionGroupText != null) 'questionGroupText': questionGroupText,
       if (questionGroupInstructions != null) 'questionGroupInstructions': questionGroupInstructions,
       if (imageUrl != null) 'imageUrl': imageUrl,
+      if (points != null) 'points': points,
+      if (correctOptionIndex != null) 'correctOptionIndex': correctOptionIndex,
+      if (explanation != null) 'explanation': explanation,
+      if (isLocked) 'isLocked': isLocked,
     };
   }
 
@@ -204,6 +229,10 @@ class MockQuestion extends Equatable {
   final String? questionGroupText;
   final String? questionGroupInstructions;
   final String? imageUrl;
+  final int? points;
+  final int? correctOptionIndex;
+  final String? explanation;
+  final bool isLocked;
 
   bool get hasQuestionGroup =>
       (questionGroupTitle?.isNotEmpty ?? false) ||

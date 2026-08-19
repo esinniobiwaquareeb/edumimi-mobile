@@ -8,6 +8,8 @@ class MockEngagement extends Equatable {
     required this.fcmNotificationsEnabled,
     required this.fcmNotificationsSupported,
     this.referralCode,
+    this.referralLink,
+    this.referredByCustomerId,
     this.streakAtRisk = false,
   });
 
@@ -15,6 +17,8 @@ class MockEngagement extends Equatable {
     return MockEngagement(
       practiceStreakDays: _asInt(json['practiceStreakDays']),
       referralCode: json['referralCode']?.toString(),
+      referralLink: json['referralLink']?.toString(),
+      referredByCustomerId: json['referredByCustomerId']?.toString(),
       streakAtRisk: json['streakAtRisk'] == true,
       pushNotificationsEnabled: json['pushNotificationsEnabled'] == true,
       pushNotificationsSupported: json['pushNotificationsSupported'] == true,
@@ -25,6 +29,8 @@ class MockEngagement extends Equatable {
 
   final int practiceStreakDays;
   final String? referralCode;
+  final String? referralLink;
+  final String? referredByCustomerId;
   final bool streakAtRisk;
   final bool pushNotificationsEnabled;
   final bool pushNotificationsSupported;
@@ -32,7 +38,7 @@ class MockEngagement extends Equatable {
   final bool fcmNotificationsSupported;
 
   @override
-  List<Object?> get props => [practiceStreakDays, fcmNotificationsEnabled];
+  List<Object?> get props => [practiceStreakDays, referralCode, referralLink, referredByCustomerId, fcmNotificationsEnabled];
 }
 
 int _asInt(Object? value) {

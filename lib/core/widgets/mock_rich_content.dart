@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:mock_mobile/core/theme/app_colors.dart';
+import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/utils/rich_content_utils.dart';
 
 class MockRichContent extends StatelessWidget {
@@ -28,11 +28,9 @@ class MockRichContent extends StatelessWidget {
     }
 
     final resolvedStyle = style ??
-        Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: inline ? null : AppColors.textSecondary,
-              height: inline ? 1.35 : 1.6,
-            ) ??
-        const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.6);
+        (inline ? context.body : context.bodySecondary).copyWith(
+              fontSize: inline ? 15 : null,
+            );
 
     final normalizedFormat = normalizeContentFormat(format);
     final containsMath = hasMathContent(safeContent);
@@ -65,7 +63,6 @@ class MockRichContent extends StatelessWidget {
     return DefaultTextStyle(
       style: resolvedStyle.copyWith(
         fontFamily: normalizedFormat == 'LATEX' ? 'serif' : resolvedStyle.fontFamily,
-        letterSpacing: normalizedFormat == 'LATEX' ? 0.15 : resolvedStyle.letterSpacing,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

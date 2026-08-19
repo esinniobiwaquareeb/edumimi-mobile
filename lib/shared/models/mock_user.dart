@@ -7,7 +7,9 @@ class MockUser extends Equatable {
     required this.role,
     this.name,
     this.fullName,
+    this.phone,
     this.avatarUrl,
+    this.isVerified,
     this.mockProfile,
   });
 
@@ -18,7 +20,9 @@ class MockUser extends Equatable {
       role: json['role']?.toString() ?? 'MOCK_CUSTOMER',
       name: json['name']?.toString(),
       fullName: json['fullName']?.toString(),
+      phone: json['phone']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
+      isVerified: json['isVerified'] as bool?,
       mockProfile: json['mockProfile'] is Map<String, dynamic>
           ? MockProfile.fromJson(json['mockProfile'] as Map<String, dynamic>)
           : null,
@@ -30,12 +34,22 @@ class MockUser extends Equatable {
   final String role;
   final String? name;
   final String? fullName;
+  final String? phone;
   final String? avatarUrl;
+  final bool? isVerified;
   final MockProfile? mockProfile;
 
   String get displayName {
     final trimmed = (fullName ?? name ?? '').trim();
     return trimmed.isEmpty ? 'Your account' : trimmed;
+  }
+
+  String get firstName {
+    final parts = displayName.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    if (parts.isEmpty) {
+      return 'there';
+    }
+    return parts.first;
   }
 
   String get initials {
@@ -55,12 +69,14 @@ class MockUser extends Equatable {
         'role': role,
         'name': name,
         'fullName': fullName,
+        'phone': phone,
         'avatarUrl': avatarUrl,
+        'isVerified': isVerified,
         'mockProfile': mockProfile?.toJson(),
       };
 
   @override
-  List<Object?> get props => [id, email, role, name, fullName, avatarUrl, mockProfile];
+  List<Object?> get props => [id, email, role, name, fullName, phone, avatarUrl, isVerified, mockProfile];
 }
 
 class MockProfile extends Equatable {
@@ -97,30 +113,68 @@ class MockProfile extends Equatable {
 class MockInterests extends Equatable {
   const MockInterests({
     this.primaryExamTypeSlug,
+    this.subjectTrack,
+    this.subjectIds = const [],
+    this.prepYear,
+    this.paperYearFrom,
+    this.paperYearTo,
+    this.practiceQuestionCount,
     this.targetScore,
     this.examDate,
   });
 
   factory MockInterests.fromJson(Map<String, dynamic> json) {
+    final subjectIdsRaw = json['subjectIds'];
     return MockInterests(
       primaryExamTypeSlug: json['primaryExamTypeSlug']?.toString(),
+      subjectTrack: json['subjectTrack']?.toString(),
+      subjectIds: subjectIdsRaw is List
+          ? subjectIdsRaw.map((item) => item.toString()).where((item) => item.isNotEmpty).toList()
+          : const [],
+      prepYear: json['prepYear'] is num ? (json['prepYear'] as num).toInt() : null,
+      paperYearFrom: json['paperYearFrom'] is num ? (json['paperYearFrom'] as num).toInt() : null,
+      paperYearTo: json['paperYearTo'] is num ? (json['paperYearTo'] as num).toInt() : null,
+      practiceQuestionCount:
+          json['practiceQuestionCount'] is num ? (json['practiceQuestionCount'] as num).toInt() : null,
       targetScore: json['targetScore'] is num ? (json['targetScore'] as num).toInt() : null,
       examDate: json['examDate']?.toString(),
     );
   }
 
   final String? primaryExamTypeSlug;
+  final String? subjectTrack;
+  final List<String> subjectIds;
+  final int? prepYear;
+  final int? paperYearFrom;
+  final int? paperYearTo;
+  final int? practiceQuestionCount;
   final int? targetScore;
   final String? examDate;
 
   Map<String, dynamic> toJson() => {
         'primaryExamTypeSlug': primaryExamTypeSlug,
+        'subjectTrack': subjectTrack,
+        'subjectIds': subjectIds,
+        'prepYear': prepYear,
+        'paperYearFrom': paperYearFrom,
+        'paperYearTo': paperYearTo,
+        'practiceQuestionCount': practiceQuestionCount,
         'targetScore': targetScore,
         'examDate': examDate,
       };
 
   @override
-  List<Object?> get props => [primaryExamTypeSlug, targetScore, examDate];
+  List<Object?> get props => [
+        primaryExamTypeSlug,
+        subjectTrack,
+        subjectIds,
+        prepYear,
+        paperYearFrom,
+        paperYearTo,
+        practiceQuestionCount,
+        targetScore,
+        examDate,
+      ];
 }
 
 class AuthSession extends Equatable {

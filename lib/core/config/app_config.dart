@@ -7,8 +7,12 @@ class AppConfig {
   );
 
   static const apiPrefix = '/mock-portal';
-  static const appName = 'mock.edumimi';
+  static const appName = 'Edumimi Mock';
   static const deepLinkScheme = 'mockedumimi';
+  static const webShareOrigin = String.fromEnvironment(
+    'MOCK_WEB_URL',
+    defaultValue: 'https://mock.edumimi.com',
+  );
 
   static const firebaseProjectId = String.fromEnvironment(
     'FIREBASE_PROJECT_ID',

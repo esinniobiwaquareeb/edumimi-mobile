@@ -1,6 +1,58 @@
 import 'package:equatable/equatable.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 
+class MockTopicStat extends Equatable {
+  const MockTopicStat({
+    required this.topic,
+    required this.total,
+    required this.correct,
+    required this.percent,
+  });
+
+  factory MockTopicStat.fromJson(Map<String, dynamic> json) {
+    return MockTopicStat(
+      topic: json['topic']?.toString() ?? '',
+      total: _asInt(json['total']),
+      correct: _asInt(json['correct']),
+      percent: _asInt(json['percent']),
+    );
+  }
+
+  final String topic;
+  final int total;
+  final int correct;
+  final int percent;
+
+  @override
+  List<Object?> get props => [topic, total, correct, percent];
+}
+
+class MockRemediationSuggestion extends Equatable {
+  const MockRemediationSuggestion({
+    required this.topic,
+    required this.percent,
+    required this.questionCount,
+    required this.correctCount,
+  });
+
+  factory MockRemediationSuggestion.fromJson(Map<String, dynamic> json) {
+    return MockRemediationSuggestion(
+      topic: json['topic']?.toString() ?? '',
+      percent: _asInt(json['percent']),
+      questionCount: _asInt(json['questionCount']),
+      correctCount: _asInt(json['correctCount']),
+    );
+  }
+
+  final String topic;
+  final int percent;
+  final int questionCount;
+  final int correctCount;
+
+  @override
+  List<Object?> get props => [topic, percent, questionCount, correctCount];
+}
+
 class MockAttempt extends Equatable {
   const MockAttempt({
     required this.id,
@@ -9,10 +61,28 @@ class MockAttempt extends Equatable {
     required this.totalPossibleScore,
     required this.percentScore,
     this.submittedAt,
+    this.durationSeconds,
+    this.answers = const {},
+    this.topicStats = const [],
+    this.remediationSuggestions = const [],
     this.exam,
   });
 
   factory MockAttempt.fromJson(Map<String, dynamic> json) {
+    final answersRaw = json['answers'];
+    final answers = <String, int>{};
+    if (answersRaw is Map) {
+      answersRaw.forEach((key, value) {
+        final parsed = value is int ? value : int.tryParse(value.toString());
+        if (parsed != null) {
+          answers[key.toString()] = parsed;
+        }
+      });
+    }
+
+    final topicStats = json['topicStats'];
+    final remediationSuggestions = json['remediationSuggestions'];
+
     return MockAttempt(
       id: json['id']?.toString() ?? '',
       status: json['status']?.toString() ?? 'IN_PROGRESS',
@@ -20,6 +90,19 @@ class MockAttempt extends Equatable {
       totalPossibleScore: _asNum(json['totalPossibleScore']),
       percentScore: _asNum(json['percentScore']),
       submittedAt: json['submittedAt']?.toString(),
+      durationSeconds: json['durationSeconds'] is num
+          ? (json['durationSeconds'] as num).toInt()
+          : int.tryParse(json['durationSeconds']?.toString() ?? ''),
+      answers: answers,
+      topicStats: topicStats is List
+          ? topicStats.whereType<Map<String, dynamic>>().map(MockTopicStat.fromJson).toList()
+          : const [],
+      remediationSuggestions: remediationSuggestions is List
+          ? remediationSuggestions
+              .whereType<Map<String, dynamic>>()
+              .map(MockRemediationSuggestion.fromJson)
+              .toList()
+          : const [],
       exam: json['exam'] is Map<String, dynamic>
           ? MockExam.fromJson(json['exam'] as Map<String, dynamic>)
           : null,
@@ -32,6 +115,10 @@ class MockAttempt extends Equatable {
   final num totalPossibleScore;
   final num percentScore;
   final String? submittedAt;
+  final int? durationSeconds;
+  final Map<String, int> answers;
+  final List<MockTopicStat> topicStats;
+  final List<MockRemediationSuggestion> remediationSuggestions;
   final MockExam? exam;
 
   bool get isSubmitted => status == 'SUBMITTED';
@@ -39,6 +126,42 @@ class MockAttempt extends Equatable {
 
   @override
   List<Object?> get props => [id, status, score, percentScore, exam?.id];
+}
+
+class MockWeakTopic extends Equatable {
+  const MockWeakTopic({
+    required this.topic,
+    required this.percent,
+    required this.questionCount,
+    required this.correctCount,
+  });
+
+  factory MockWeakTopic.fromJson(dynamic json) {
+    if (json is Map<String, dynamic>) {
+      return MockWeakTopic(
+        topic: json['topic']?.toString() ?? '',
+        percent: _asInt(json['percent']),
+        questionCount: _asInt(json['questionCount']),
+        correctCount: _asInt(json['correctCount']),
+      );
+    }
+    if (json is String && json.isNotEmpty) {
+      return MockWeakTopic(topic: json, percent: 0, questionCount: 0, correctCount: 0);
+    }
+    return const MockWeakTopic(topic: '', percent: 0, questionCount: 0, correctCount: 0);
+  }
+
+  final String topic;
+  final int percent;
+  final int questionCount;
+  final int correctCount;
+
+  String get displayLabel => topic.isEmpty ? 'Unknown topic' : topic;
+
+  String get chipLabel => '$displayLabel · $percent%';
+
+  @override
+  List<Object?> get props => [topic, percent, questionCount, correctCount];
 }
 
 class MockStudyInsights extends Equatable {
@@ -52,14 +175,14 @@ class MockStudyInsights extends Equatable {
     final weakTopics = json['weakTopics'];
     return MockStudyInsights(
       weakTopics: weakTopics is List
-          ? weakTopics.map((item) => item.toString()).toList()
+          ? weakTopics.map(MockWeakTopic.fromJson).where((topic) => topic.topic.isNotEmpty).toList()
           : const [],
       streakDays: _asInt(json['streakDays']),
       submittedAttempts: _asInt(json['submittedAttempts']),
     );
   }
 
-  final List<String> weakTopics;
+  final List<MockWeakTopic> weakTopics;
   final int streakDays;
   final int submittedAttempts;
 

@@ -13,12 +13,21 @@ class AuthRepository {
 
   Future<AuthSession?> readStoredSession() async {
     final token = await _storage.readToken();
-    final user = await _storage.readUser();
-    if (token == null || user == null) {
+    if (token == null || token.isEmpty) {
       return null;
+    }
+    final user = await _storage.readUser();
+    if (user == null) {
+      return AuthSession(
+        token: token,
+        user: const MockUser(id: '', email: '', role: 'MOCK_CUSTOMER'),
+      );
     }
     return AuthSession(token: token, user: user);
   }
+
+  Future<void> persistSession({required String token, required MockUser user}) =>
+      _storage.saveSession(token: token, user: user);
 
   Future<AuthSession> login({required String email, required String password}) async {
     final data = await _dio.postData<Map<String, dynamic>>(
@@ -61,6 +70,37 @@ class AuthRepository {
   }
 
   Future<void> clearSession() => _storage.clear();
+
+  Future<void> forgotPassword({required String email}) {
+    return _dio.postData(
+      ApiPaths.forgotPassword,
+      data: {'email': email.trim()},
+      parser: (_) {},
+    );
+  }
+
+  Future<void> resetPassword({required String token, required String newPassword}) {
+    return _dio.postData(
+      ApiPaths.resetPassword,
+      data: {'token': token, 'newPassword': newPassword},
+      parser: (_) {},
+    );
+  }
+
+  Future<AuthSession> verifyEmail({required String token}) async {
+    final data = await _dio.postData<Map<String, dynamic>>(
+      ApiPaths.verifyEmail,
+      data: {'token': token},
+      parser: (json) => json as Map<String, dynamic>,
+    );
+    final accessToken = data['access_token']?.toString() ?? '';
+    final user = MockUser.fromJson(data['user'] as Map<String, dynamic>? ?? {});
+    final session = AuthSession(token: accessToken, user: user);
+    if (accessToken.isNotEmpty) {
+      await _storage.saveSession(token: accessToken, user: user);
+    }
+    return session;
+  }
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

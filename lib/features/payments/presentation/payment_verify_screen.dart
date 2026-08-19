@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mock_mobile/core/theme/app_colors.dart';
+import 'package:mock_mobile/core/network/api_exception.dart';
+import 'package:mock_mobile/core/theme/app_spacing.dart';
+import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
@@ -17,47 +19,73 @@ class PaymentVerifyScreen extends ConsumerWidget {
     final verifyAsync = ref.watch(_paymentVerifyProvider(reference));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment status')),
+      appBar: const MockDetailAppBar(title: 'Payment status'),
       body: verifyAsync.when(
         loading: () => const MockLoadingView(message: 'Confirming payment…'),
         error: (error, _) => MockErrorView(
-          message: error.toString(),
+          message: error is ApiException
+              ? error.message
+              : 'Could not confirm payment. The server may be unreachable — try again shortly.',
           onRetry: () => ref.invalidate(_paymentVerifyProvider(reference)),
         ),
         data: (purchase) {
           final success = purchase.isSuccessful;
+          final pending = purchase.isPending;
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.page),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 MockCard(
+                  elevated: success,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
-                        success ? Icons.check_circle_outline : Icons.hourglass_empty,
-                        color: success ? AppColors.success : AppColors.accent,
-                        size: 42,
+                        success
+                            ? Icons.check_circle_outline
+                            : pending
+                                ? Icons.schedule_outlined
+                                : Icons.error_outline,
+                        size: 40,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.section),
                       Text(
-                        success ? 'Payment successful' : 'Payment pending',
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
+                        success
+                            ? 'Payment successful'
+                            : pending
+                                ? 'Payment pending'
+                                : 'Payment not completed',
+                        style: context.sectionTitle,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.item),
                       Text(
                         purchase.package?.title ?? 'Mock package',
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: context.bodySecondary,
                       ),
+                      if (pending) ...[
+                        const SizedBox(height: AppSpacing.item),
+                        Text(
+                          'Paystack is still processing this payment. Pull to refresh on the packages screen or tap below to check again.',
+                          style: context.caption,
+                        ),
+                      ],
                       if (purchase.accessEndsAt != null) ...[
-                        const SizedBox(height: 8),
-                        Text('Access until ${purchase.accessEndsAt}', style: const TextStyle(color: AppColors.textSecondary)),
+                        const SizedBox(height: AppSpacing.item),
+                        Text('Access until ${purchase.accessEndsAt}', style: context.caption),
                       ],
                     ],
                   ),
                 ),
                 const Spacer(),
+                if (pending) ...[
+                  MockSecondaryButton(
+                    label: 'Check again',
+                    onPressed: () => ref.invalidate(_paymentVerifyProvider(reference)),
+                  ),
+                  const SizedBox(height: AppSpacing.section),
+                ],
                 MockPrimaryButton(
                   label: success ? 'Start practicing' : 'Back to packages',
                   onPressed: () {

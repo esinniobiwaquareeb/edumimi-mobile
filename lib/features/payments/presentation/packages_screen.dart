@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
-import 'package:mock_mobile/core/theme/app_colors.dart';
+import 'package:mock_mobile/core/theme/app_spacing.dart';
+import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_rich_content.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
@@ -58,6 +59,12 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
       }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Checkout failed. Check your connection and try again.')),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _checkoutSlug = '');
@@ -72,20 +79,20 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
     final currency = NumberFormat.simpleCurrency(name: 'NGN', decimalDigits: 0);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Unlock full access')),
+      appBar: const MockDetailAppBar(title: 'Unlock full access'),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(packagesProvider);
           ref.invalidate(myPurchasesProvider);
         },
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.page),
           children: [
-            const Text(
-              'Get timed full mocks and premium practice packs.',
-              style: TextStyle(color: AppColors.textSecondary),
+            const MockPageHeader(
+              title: 'Premium packs',
+              subtitle: 'Get timed full mocks and extended practice access.',
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.page),
             MockCard(
               child: TextField(
                 controller: _agentCodeController,
@@ -96,15 +103,20 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.page),
             packagesAsync.when(
               loading: () => const MockLoadingView(message: 'Loading packages…'),
-              error: (error, _) => MockErrorView(message: error.toString(), onRetry: () => ref.invalidate(packagesProvider)),
+              error: (error, _) => MockErrorView(
+                message: error is ApiException
+                    ? error.message
+                    : 'Could not load packages. The payment service may be unreachable.',
+                onRetry: () => ref.invalidate(packagesProvider),
+              ),
               data: (packages) {
                 if (packages.isEmpty) {
                   return const MockEmptyState(
-                    title: 'No packages yet',
-                    message: 'Check back soon for premium practice packs.',
+                    title: 'No packages available',
+                    message: 'Premium packs are not listed right now. Pull down to refresh or try again later.',
                   );
                 }
                 final purchases = purchasesAsync.valueOrNull ?? const <MockPurchase>[];
@@ -112,38 +124,34 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
                   children: packages
                       .map(
                         (package) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.only(bottom: AppSpacing.section),
                           child: MockCard(
+                            elevated: package.isFeatured,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    Expanded(
-                                      child: Text(package.title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-                                    ),
+                                    Expanded(child: Text(package.title, style: context.sectionTitle)),
                                     if (package.isFeatured) const MockChip(label: 'Featured', tone: MockChipTone.primary),
                                   ],
                                 ),
                                 if (package.examType != null) ...[
                                   const SizedBox(height: 4),
-                                  Text(package.examType!.title, style: const TextStyle(color: AppColors.textSecondary)),
+                                  Text(package.examType!.title, style: context.bodySecondary),
                                 ],
-                                const SizedBox(height: 8),
-                                Text(
-                                  currency.format(package.price),
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: AppColors.primary),
-                                ),
+                                const SizedBox(height: AppSpacing.item),
+                                Text(currency.format(package.price), style: context.sectionTitle),
                                 if (package.description?.isNotEmpty ?? false) ...[
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: AppSpacing.item),
                                   MockRichContent(content: package.description),
                                 ],
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppSpacing.item),
                                 Text(
                                   '${package.accessDurationDays} days access · ${package.maxAttempts ?? 'Unlimited'} attempts',
-                                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                                  style: context.caption,
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: AppSpacing.section),
                                 MockPrimaryButton(
                                   label: hasActivePackageSlug(purchases, package.slug)
                                       ? 'Active'
