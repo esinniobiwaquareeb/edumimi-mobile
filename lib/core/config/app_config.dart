@@ -8,4 +8,12 @@ class AppConfig {
 
   static const apiPrefix = '/mock-portal';
   static const appName = 'mock.edumimi';
+  static const deepLinkScheme = 'mockedumimi';
+
+  static const firebaseProjectId = String.fromEnvironment(
+    'FIREBASE_PROJECT_ID',
+    defaultValue: '',
+  );
+
+  static bool get isFirebaseConfigured => firebaseProjectId.isNotEmpty;
 }

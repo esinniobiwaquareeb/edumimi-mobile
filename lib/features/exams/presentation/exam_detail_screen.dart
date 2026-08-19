@@ -89,9 +89,9 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
         ),
         const SizedBox(height: 20),
         MockPrimaryButton(
-          label: exam.isLocked ? 'Get full access to start' : 'Start practice',
+          label: exam.isLocked ? 'Unlock full access' : 'Start practice',
           isLoading: _isStarting,
-          onPressed: exam.isLocked ? null : _start,
+          onPressed: exam.isLocked ? () => context.push('/packages') : _start,
         ),
       ],
     );

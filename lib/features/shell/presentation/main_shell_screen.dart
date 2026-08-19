@@ -42,6 +42,22 @@ class MainShellScreen extends ConsumerWidget {
                   ),
                 ),
               ListTile(
+                leading: const Icon(Icons.lock_open_outlined),
+                title: const Text('Unlock full access'),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push('/packages');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.forum_outlined),
+                title: const Text('Study Squad chat'),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push('/community');
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.person_outline),
                 title: const Text('My profile'),
                 onTap: () {

@@ -78,6 +78,19 @@ extension DioResponseX on Dio {
       throw _mapDioError(error);
     }
   }
+
+  Future<T> deleteData<T>(
+    String path, {
+    Object? data,
+    required T Function(dynamic json) parser,
+  }) async {
+    try {
+      final response = await delete<dynamic>(path, data: data);
+      return parser(response.data);
+    } on DioException catch (error) {
+      throw _mapDioError(error);
+    }
+  }
 }
 
 ApiException _mapDioError(DioException error) {
