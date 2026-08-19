@@ -24,7 +24,6 @@ class MainShellScreen extends ConsumerWidget {
     final engagementAsync = ref.watch(engagementProvider);
 
     final engagement = engagementAsync.valueOrNull;
-    final streakDays = engagement?.practiceStreakDays;
     final streakAtRisk = engagement?.streakAtRisk ?? false;
     final showNotificationBadge = streakAtRisk && !(engagement?.fcmNotificationsEnabled ?? false);
 
@@ -35,9 +34,6 @@ class MainShellScreen extends ConsumerWidget {
         userInitials: user?.initials,
         avatarUrl: user?.avatarUrl,
         onProfileTap: () => context.push('/profile'),
-        streakDays: streakDays,
-        streakAtRisk: streakAtRisk,
-        isVerified: user?.mockProfile?.isVerified == true,
         onCommunityTap: () => context.push('/community'),
         onNotificationsTap: () => context.push('/notifications'),
         showNotificationBadge: showNotificationBadge,

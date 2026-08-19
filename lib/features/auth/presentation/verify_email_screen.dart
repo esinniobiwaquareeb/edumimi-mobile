@@ -65,6 +65,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const MockBrandLogo(compact: true),
+              const SizedBox(height: AppSpacing.page),
               if (_status == _VerifyStatus.loading) ...[
                 const MockLoadingView(message: 'Verifying…'),
                 const SizedBox(height: AppSpacing.section),

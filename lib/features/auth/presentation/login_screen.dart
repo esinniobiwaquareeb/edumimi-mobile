@@ -68,7 +68,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: AppSpacing.page),
-                    const MockBrandLockup(),
+                    const MockBrandLogo(),
                     const SizedBox(height: AppSpacing.page),
                     Text('Sign in', style: context.pageTitle),
                     const SizedBox(height: AppSpacing.item),

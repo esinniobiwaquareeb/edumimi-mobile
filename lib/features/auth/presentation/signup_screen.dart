@@ -71,6 +71,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const MockBrandLogo(compact: true),
+                    const SizedBox(height: AppSpacing.page),
                     Text('Start free practice in minutes.', style: context.pageSubtitle),
                     const SizedBox(height: AppSpacing.page),
                     MockAuthCard(

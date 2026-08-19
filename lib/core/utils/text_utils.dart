@@ -19,3 +19,16 @@ String formatMockMode(String mode) {
       return 'Practice';
   }
 }
+
+String formatMockDifficulty(String? difficulty) {
+  switch (difficulty?.toUpperCase()) {
+    case 'BEGINNER':
+      return 'Beginner';
+    case 'INTERMEDIATE':
+      return 'Intermediate';
+    case 'ADVANCED':
+      return 'Advanced';
+    default:
+      return difficulty?.trim() ?? '';
+  }
+}

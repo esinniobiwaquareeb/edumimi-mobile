@@ -77,6 +77,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const MockBrandLogo(compact: true),
+                const SizedBox(height: AppSpacing.page),
                 Text('Choose a new password', style: context.pageTitle),
                 const SizedBox(height: AppSpacing.page),
                 if (_isSuccess)

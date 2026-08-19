@@ -65,6 +65,9 @@ class MockExam extends Equatable {
     required this.durationMinutes,
     required this.totalQuestions,
     this.description,
+    this.instructions,
+    this.difficulty,
+    this.totalMarks = 0,
     this.accessState,
     this.recommendationReason,
     this.percentScore,
@@ -84,6 +87,9 @@ class MockExam extends Equatable {
       durationMinutes: _asInt(json['durationMinutes']),
       totalQuestions: _asInt(json['totalQuestions']),
       description: json['description']?.toString(),
+      instructions: json['instructions']?.toString(),
+      difficulty: json['difficulty']?.toString(),
+      totalMarks: _asInt(json['totalMarks']),
       accessState: json['accessState']?.toString(),
       recommendationReason: json['recommendationReason']?.toString(),
       percentScore: json['percentScore'] is num ? (json['percentScore'] as num).toDouble() : null,
@@ -110,6 +116,9 @@ class MockExam extends Equatable {
   final int durationMinutes;
   final int totalQuestions;
   final String? description;
+  final String? instructions;
+  final String? difficulty;
+  final int totalMarks;
   final String? accessState;
   final String? recommendationReason;
   final double? percentScore;
@@ -119,6 +128,23 @@ class MockExam extends Equatable {
   final List<MockQuestion> questions;
 
   bool get isLocked => accessState == 'LOCKED';
+
+  bool get isFreePractice => mode == 'PRACTICE' || mode == 'TOPIC_DRILL';
+
+  int get displayQuestionCount => questions.isNotEmpty ? questions.length : totalQuestions;
+
+  int get displayTotalMarks {
+    if (totalMarks > 0) {
+      return totalMarks;
+    }
+    if (questions.isNotEmpty) {
+      final pointsTotal = questions.fold<int>(0, (sum, question) => sum + (question.points ?? 1));
+      if (pointsTotal > 0) {
+        return pointsTotal;
+      }
+    }
+    return totalQuestions;
+  }
 
   String get examTypeLabel => examType?.title ?? 'General';
   String get subjectLabel => subject?.name ?? '';
@@ -132,6 +158,9 @@ class MockExam extends Equatable {
       'durationMinutes': durationMinutes,
       'totalQuestions': totalQuestions,
       if (description != null) 'description': description,
+      if (instructions != null) 'instructions': instructions,
+      if (difficulty != null) 'difficulty': difficulty,
+      if (totalMarks > 0) 'totalMarks': totalMarks,
       if (accessState != null) 'accessState': accessState,
       if (recommendationReason != null) 'recommendationReason': recommendationReason,
       if (percentScore != null) 'percentScore': percentScore,

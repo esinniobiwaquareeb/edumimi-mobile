@@ -83,18 +83,24 @@ class PostUtmePackDetailScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.page),
             const MockSectionTitle(title: 'Practice exams'),
             const SizedBox(height: AppSpacing.section),
-            ...detail.practiceExams.map(
-              (exam) => Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.section),
-                child: MockExamCard(
-                  title: exam.title,
-                  subtitle: exam.subjectLabel,
-                  meta: exam.mode,
-                  locked: exam.isLocked,
-                  onTap: () => context.push('/exams/${exam.slug}'),
+            if (detail.practiceExams.isEmpty)
+              Text(
+                'Practice sets for this pack are coming soon.',
+                style: context.bodySecondary,
+              )
+            else
+              ...detail.practiceExams.map(
+                (exam) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.section),
+                  child: MockExamCard(
+                    title: exam.title,
+                    subtitle: exam.subjectLabel,
+                    meta: exam.mode,
+                    locked: exam.isLocked,
+                    onTap: () => context.push('/exams/${exam.slug}'),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

@@ -9,6 +9,7 @@ import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/core/widgets/offline_status_banner.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/shared/models/mock_attempt.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 
@@ -57,13 +58,20 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final feedAsync = ref.watch(examFeedProvider);
     final insightsAsync = ref.watch(studyInsightsProvider);
+    final engagementAsync = ref.watch(engagementProvider);
+    final attemptsAsync = ref.watch(attemptsProvider);
     final user = ref.watch(authControllerProvider).user;
+    final streakDays = engagementAsync.valueOrNull?.practiceStreakDays ?? 0;
+    final submittedAttempts =
+        attemptsAsync.valueOrNull?.where((attempt) => attempt.status == 'SUBMITTED').length ?? 0;
     final onboardingCompleted = user?.mockProfile?.onboardingCompleted == true;
 
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(examFeedProvider);
         ref.invalidate(studyInsightsProvider);
+        ref.invalidate(engagementProvider);
+        ref.invalidate(attemptsProvider);
       },
       child: ListView(
         padding: EdgeInsets.fromLTRB(
@@ -108,14 +116,14 @@ class DashboardScreen extends ConsumerWidget {
                     children: [
                       MockStatTile(
                         label: 'Streak',
-                        value: '${insights.streakDays} days',
+                        value: '$streakDays days',
                         icon: Icons.local_fire_department_outlined,
-                        subtitle: insights.streakDays > 0 ? 'Keep it going' : 'Start today',
+                        subtitle: streakDays > 0 ? 'Keep it going' : 'Start today',
                       ),
                       const SizedBox(width: AppSpacing.section),
                       MockStatTile(
                         label: 'Attempts',
-                        value: '${insights.submittedAttempts}',
+                        value: '$submittedAttempts',
                         icon: Icons.check_circle_outline_rounded,
                         subtitle: 'Submitted',
                       ),

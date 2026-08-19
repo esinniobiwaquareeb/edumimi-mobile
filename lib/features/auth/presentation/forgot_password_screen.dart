@@ -68,6 +68,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const MockBrandLogo(compact: true),
+                const SizedBox(height: AppSpacing.page),
                 Text('Reset your password', style: context.pageTitle),
                 const SizedBox(height: AppSpacing.item),
                 Text('Enter your email to get a reset link.', style: context.pageSubtitle),

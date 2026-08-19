@@ -597,6 +597,43 @@ class MockBrandLockup extends StatelessWidget {
   }
 }
 
+/// Centered brand mark — logo icon only, no text lockup.
+class MockBrandLogo extends StatelessWidget {
+  const MockBrandLogo({super.key, this.compact = false});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final logoSize = compact ? 48.0 : 72.0;
+    final padding = compact ? 14.0 : 20.0;
+
+    return Center(
+      child: Container(
+        padding: EdgeInsets.all(padding),
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          border: Border.all(color: context.appBorder),
+          boxShadow: [
+            BoxShadow(
+              color: context.colors.onSurface.withValues(alpha: context.isDarkMode ? 0.18 : 0.04),
+              blurRadius: compact ? 16 : 20,
+              offset: Offset(0, compact ? 6 : 8),
+            ),
+          ],
+        ),
+        child: Image.asset(
+          'assets/branding/logo-icon.png',
+          width: logoSize,
+          height: logoSize,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+}
+
 class MockScreenBody extends StatelessWidget {
   const MockScreenBody({super.key, required this.child, this.padding = const EdgeInsets.all(AppSpacing.page)});
 
@@ -616,9 +653,6 @@ class MockAppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.userInitials,
     this.avatarUrl,
     this.onProfileTap,
-    this.streakDays,
-    this.streakAtRisk = false,
-    this.isVerified = false,
     this.onCommunityTap,
     this.onNotificationsTap,
     this.showNotificationBadge = false,
@@ -628,9 +662,6 @@ class MockAppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String? userInitials;
   final String? avatarUrl;
   final VoidCallback? onProfileTap;
-  final int? streakDays;
-  final bool streakAtRisk;
-  final bool isVerified;
   final VoidCallback? onCommunityTap;
   final VoidCallback? onNotificationsTap;
   final bool showNotificationBadge;
@@ -694,31 +725,14 @@ class MockAppHeader extends StatelessWidget implements PreferredSizeWidget {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    Row(
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            trimmedName,
-                                            style: context.body.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: context.colors.onSurface,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        if (isVerified) ...[
-                                          const SizedBox(width: 6),
-                                          const MockChip(label: 'Verified', tone: MockChipTone.success),
-                                        ],
-                                        if (streakDays != null && streakDays! > 0) ...[
-                                          const SizedBox(width: 6),
-                                          _MockHeaderStreakBadge(
-                                            streakDays: streakDays!,
-                                            streakAtRisk: streakAtRisk,
-                                          ),
-                                        ],
-                                      ],
+                                    Text(
+                                      trimmedName,
+                                      style: context.body.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: context.colors.onSurface,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
@@ -812,51 +826,6 @@ class _MockHeaderIconButton extends StatelessWidget {
   }
 
   static const streakAtRiskColor = Color(0xFFD97706);
-}
-
-class _MockHeaderStreakBadge extends StatelessWidget {
-  const _MockHeaderStreakBadge({
-    required this.streakDays,
-    this.streakAtRisk = false,
-  });
-
-  final int streakDays;
-  final bool streakAtRisk;
-
-  @override
-  Widget build(BuildContext context) {
-    final warningBg = context.isDarkMode ? AppColors.darkWarningSoft : const Color(0xFFFFFBEB);
-    final warningBorder = context.isDarkMode ? const Color(0xFF6B4423) : const Color(0xFFFDE68A);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: streakAtRisk ? warningBg : context.appPrimarySoft,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: streakAtRisk ? warningBorder : context.appBorder,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            AppIcons.streak,
-            size: 12,
-            color: streakAtRisk ? const Color(0xFFD97706) : AppColors.primary,
-          ),
-          const SizedBox(width: 3),
-          Text(
-            '$streakDays',
-            style: context.caption.copyWith(
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-              color: streakAtRisk ? const Color(0xFFB45309) : AppColors.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class MockNavDestination {

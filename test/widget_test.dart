@@ -7,6 +7,7 @@ import 'package:mock_mobile/core/offline/offline_storage.dart';
 import 'package:mock_mobile/core/storage/app_prefs_storage.dart';
 import 'package:mock_mobile/core/utils/rich_content_utils.dart';
 import 'package:mock_mobile/core/utils/share_utils.dart';
+import 'package:mock_mobile/core/utils/text_utils.dart';
 import 'package:mock_mobile/shared/models/mock_attempt.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 import 'package:mock_mobile/shared/models/mock_user.dart';
@@ -193,6 +194,34 @@ void main() {
     expect(attempt.answers['q1'], 0);
     expect(attempt.exam?.questions.first.correctOptionIndex, 0);
     expect(attempt.exam?.questions.first.explanation, 'Basic addition.');
+  });
+
+  test('parses exam detail metadata fields', () {
+    final exam = MockExam.fromJson({
+      'id': 'exam-1',
+      'title': 'JAMB Physics 2024',
+      'slug': 'jamb-physics-2024',
+      'mode': 'PAST_PAPER',
+      'durationMinutes': 60,
+      'totalQuestions': 40,
+      'totalMarks': 40,
+      'difficulty': 'INTERMEDIATE',
+      'instructions': 'Answer all questions.',
+      'examYear': 2024,
+      'accessState': 'LOCKED',
+      'percentScore': 72,
+      'examType': {'id': '1', 'slug': 'jamb', 'title': 'JAMB'},
+      'subject': {'id': '2', 'name': 'Physics', 'slug': 'physics'},
+    });
+
+    expect(exam.difficulty, 'INTERMEDIATE');
+    expect(exam.instructions, 'Answer all questions.');
+    expect(exam.totalMarks, 40);
+    expect(exam.displayTotalMarks, 40);
+    expect(exam.examYear, 2024);
+    expect(exam.isLocked, isTrue);
+    expect(exam.isFreePractice, isFalse);
+    expect(formatMockDifficulty(exam.difficulty), 'Intermediate');
   });
 
   test('persists exam session timer and review flags offline', () async {
