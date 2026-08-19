@@ -30,9 +30,7 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
   Future<void> _purchase(MockPackage package, List<MockPurchase> purchases) async {
     if (hasActivePackageSlug(purchases, package.slug)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('This package is already active on your account.')),
-        );
+        MockToast.info(context, 'This package is already active on your account.');
       }
       return;
     }
@@ -57,13 +55,11 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
       );
     } on ApiException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        MockToast.error(context, error.message);
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Checkout failed. Check your connection and try again.')),
-        );
+        MockToast.error(context, 'Checkout failed. Check your connection and try again.');
       }
     } finally {
       if (mounted) {

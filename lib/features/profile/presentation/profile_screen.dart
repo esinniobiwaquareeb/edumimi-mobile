@@ -55,9 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
         final router = GoRouter.of(context);
         final success = await service.initialize(router);
         if (!success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Push notifications are not available on this device yet.')),
-          );
+          MockToast.info(context, 'Push notifications are not available on this device yet.');
         }
       } else {
         await service.disable();
@@ -179,7 +177,7 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
             phone: _phoneController.text,
           );
       widget.onUserUpdated();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated')));
+      if (mounted) MockToast.success(context, 'Profile updated');
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } finally {
@@ -208,7 +206,7 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
       _currentPasswordController.clear();
       _newPasswordController.clear();
       _confirmPasswordController.clear();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated')));
+      if (mounted) MockToast.success(context, 'Password updated');
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } finally {
@@ -224,9 +222,9 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
     try {
       await ref.read(profileRepositoryProvider).uploadAvatar(file.path);
       widget.onUserUpdated();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile photo updated')));
+      if (mounted) MockToast.success(context, 'Profile photo updated');
     } on ApiException catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      if (mounted) MockToast.error(context, error.message);
     } finally {
       if (mounted) setState(() => _isUploadingAvatar = false);
     }
@@ -256,10 +254,10 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
     try {
       await ref.read(profileRepositoryProvider).resendVerification(widget.user.email);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification email sent')));
+        MockToast.success(context, 'Verification email sent');
       }
     } on ApiException catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      if (mounted) MockToast.error(context, error.message);
     }
   }
 
@@ -268,7 +266,7 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
       final link = await ref.read(profileRepositoryProvider).fetchParentShareLink();
       await shareParentProgressLink(link.shareUrl, sharePositionOrigin: sharePositionOrigin);
     } on ApiException catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      if (mounted) MockToast.error(context, error.message);
     }
   }
 
@@ -290,10 +288,10 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
       await ref.read(profileRepositoryProvider).redeemBulkLicense(code);
       _bulkLicenseController.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('License redeemed')));
+        MockToast.success(context, 'License redeemed');
       }
     } on ApiException catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      if (mounted) MockToast.error(context, error.message);
     } finally {
       if (mounted) setState(() => _isRedeemingLicense = false);
     }
@@ -350,7 +348,12 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
             Expanded(child: MockSecondaryButton(label: 'Change photo', onPressed: _isUploadingAvatar ? null : _pickAvatar)),
             const SizedBox(width: AppSpacing.item),
             if (widget.user.avatarUrl?.isNotEmpty == true)
-              Expanded(child: MockSecondaryButton(label: 'Remove', onPressed: _isUploadingAvatar ? null : _removeAvatar)),
+              Expanded(
+                child: MockDestructiveButton(
+                  label: 'Remove',
+                  onPressed: _isUploadingAvatar ? null : _removeAvatar,
+                ),
+              ),
           ],
         ),
         const SizedBox(height: AppSpacing.page),
@@ -484,7 +487,7 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
         const SizedBox(height: AppSpacing.page),
         MockPrimaryButton(label: 'Browse packages', onPressed: () => context.push('/packages')),
         const SizedBox(height: AppSpacing.section),
-        MockSecondaryButton(
+        MockDestructiveButton(
           label: MockVoice.logOut,
           onPressed: () async {
             final confirmed = await MockConfirmDialog.show(
@@ -492,7 +495,8 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
               title: MockVoice.logOutTitle,
               message: MockVoice.logOutDesc,
               confirmLabel: MockVoice.logOut,
-              variant: MockConfirmDialogVariant.warning,
+              variant: MockConfirmDialogVariant.danger,
+              isDestructiveConfirm: true,
               icon: AppIcons.logout,
             );
             if (!confirmed || !context.mounted) return;
@@ -567,7 +571,7 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
         'targetScore': int.tryParse(_targetScoreController.text.trim()),
       });
       widget.onSaved();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Prep profile saved')));
+      if (mounted) MockToast.success(context, 'Prep profile saved');
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } finally {
@@ -760,14 +764,13 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
                 label: _isApplying ? 'Applying…' : 'Apply referral code',
                 isLoading: _isApplying,
                 onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
                   setState(() => _isApplying = true);
                   try {
                     await ref.read(profileRepositoryProvider).applyReferralCode(_applyCodeController.text);
                     ref.invalidate(engagementProvider);
-                    messenger.showSnackBar(const SnackBar(content: Text('Referral code applied')));
+                    if (context.mounted) MockToast.success(context, 'Referral code applied');
                   } on ApiException catch (error) {
-                    messenger.showSnackBar(SnackBar(content: Text(error.message)));
+                    if (context.mounted) MockToast.error(context, error.message);
                   } finally {
                     if (mounted) setState(() => _isApplying = false);
                   }
@@ -801,13 +804,13 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
                           label: _isUpdatingCode ? 'Saving…' : 'Update code',
                           isLoading: _isUpdatingCode,
                           onPressed: () async {
-                            final messenger = ScaffoldMessenger.of(context);
                             setState(() => _isUpdatingCode = true);
                             try {
                               await ref.read(profileRepositoryProvider).updateReferralCode(_ownCodeController.text);
                               ref.invalidate(engagementProvider);
+                              if (context.mounted) MockToast.success(context, 'Referral code updated');
                             } on ApiException catch (error) {
-                              messenger.showSnackBar(SnackBar(content: Text(error.message)));
+                              if (context.mounted) MockToast.error(context, error.message);
                             } finally {
                               if (mounted) setState(() => _isUpdatingCode = false);
                             }

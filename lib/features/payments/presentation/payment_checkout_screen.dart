@@ -90,7 +90,8 @@ class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
       message: MockVoice.cancelPaymentDesc,
       confirmLabel: MockVoice.cancelPaymentConfirm,
       cancelLabel: MockVoice.cancelPaymentStay,
-      variant: MockConfirmDialogVariant.warning,
+      variant: MockConfirmDialogVariant.danger,
+      isDestructiveConfirm: true,
     );
     if (confirmed && mounted) {
       context.go('/packages');

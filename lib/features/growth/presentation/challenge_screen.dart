@@ -42,7 +42,7 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
       }
     } on ApiException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        MockToast.error(context, error.message);
       }
     } finally {
       if (mounted) setState(() => _isStarting = false);

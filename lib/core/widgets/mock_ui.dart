@@ -54,6 +54,62 @@ class MockSecondaryButton extends StatelessWidget {
   }
 }
 
+/// Outlined destructive action — logout, remove, delete. Uses theme error colors.
+class MockDestructiveButton extends StatelessWidget {
+  const MockDestructiveButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.isLoading = false,
+    this.filled = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final error = context.colors.error;
+    final onError = context.colors.onError;
+
+    if (filled) {
+      return FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: error,
+          foregroundColor: onError,
+        ),
+        onPressed: isLoading ? null : onPressed,
+        child: isLoading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: onError),
+              )
+            : Text(label),
+      );
+    }
+
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: error,
+        side: BorderSide(color: error),
+        backgroundColor: context.appErrorSoft,
+      ),
+      onPressed: isLoading ? null : onPressed,
+      child: Text(label),
+    );
+  }
+}
+
+ButtonStyle mockDestructiveFilledButtonStyle(BuildContext context) {
+  return FilledButton.styleFrom(
+    backgroundColor: context.colors.error,
+    foregroundColor: context.colors.onError,
+  );
+}
+
 class MockTextField extends StatefulWidget {
   const MockTextField({
     super.key,
@@ -1195,6 +1251,62 @@ class MockAuthCard extends StatelessWidget {
 enum MockConfirmDialogVariant { danger, warning, info }
 
 /// Themed confirmation dialog aligned with mock-frontend ConfirmDialog.
+enum MockToastTone { info, success, error }
+
+/// Themed floating snackbar — use instead of raw [SnackBar] across the app.
+class MockToast {
+  MockToast._();
+
+  static void show(
+    BuildContext context,
+    String message, {
+    MockToastTone tone = MockToastTone.info,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    final theme = Theme.of(context);
+    final snackBarTheme = theme.snackBarTheme;
+
+    Color? backgroundColor;
+    Color? foregroundColor;
+
+    switch (tone) {
+      case MockToastTone.error:
+        backgroundColor = theme.colorScheme.error;
+        foregroundColor = theme.colorScheme.onError;
+      case MockToastTone.success:
+        backgroundColor = context.appSuccessSoft;
+        foregroundColor = AppColors.success;
+      case MockToastTone.info:
+        backgroundColor = snackBarTheme.backgroundColor;
+        foregroundColor = snackBarTheme.contentTextStyle?.color ?? theme.colorScheme.onInverseSurface;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: (snackBarTheme.contentTextStyle ?? theme.textTheme.bodyMedium)?.copyWith(color: foregroundColor),
+          ),
+          backgroundColor: backgroundColor,
+          behavior: snackBarTheme.behavior ?? SnackBarBehavior.floating,
+          shape: snackBarTheme.shape,
+          duration: duration,
+        ),
+      );
+  }
+
+  static void success(BuildContext context, String message, {Duration duration = const Duration(seconds: 3)}) =>
+      show(context, message, tone: MockToastTone.success, duration: duration);
+
+  static void error(BuildContext context, String message, {Duration duration = const Duration(seconds: 3)}) =>
+      show(context, message, tone: MockToastTone.error, duration: duration);
+
+  static void info(BuildContext context, String message, {Duration duration = const Duration(seconds: 3)}) =>
+      show(context, message, tone: MockToastTone.info, duration: duration);
+}
+
 class MockConfirmDialog {
   MockConfirmDialog._();
 
@@ -1252,7 +1364,7 @@ class _MockConfirmDialogContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDanger = variant == MockConfirmDialogVariant.danger || isDestructiveConfirm;
     final iconBackground = isDanger ? context.appErrorSoft : context.appPrimarySoft;
-    final iconColor = isDanger ? AppColors.error : AppColors.primary;
+    final iconColor = isDanger ? context.colors.error : context.colors.primary;
     final dialogIcon = icon ??
         switch (variant) {
           MockConfirmDialogVariant.danger => LucideIcons.alertTriangle,
@@ -1300,6 +1412,7 @@ class _MockConfirmDialogContent extends StatelessWidget {
           width: double.infinity,
           child: hideCancel
               ? FilledButton(
+                  style: isDanger ? mockDestructiveFilledButtonStyle(context) : null,
                   onPressed: () => Navigator.of(context).pop(true),
                   child: Text(confirmLabel),
                 )
@@ -1313,19 +1426,11 @@ class _MockConfirmDialogContent extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.section),
                     Expanded(
-                      child: isDestructiveConfirm
-                          ? FilledButton(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.error,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: Text(confirmLabel),
-                            )
-                          : FilledButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: Text(confirmLabel),
-                            ),
+                      child: FilledButton(
+                        style: isDanger ? mockDestructiveFilledButtonStyle(context) : null,
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: Text(confirmLabel),
+                      ),
                     ),
                   ],
                 ),

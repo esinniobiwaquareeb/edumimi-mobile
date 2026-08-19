@@ -181,9 +181,7 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 4)),
-    );
+    MockToast.info(context, message, duration: const Duration(seconds: 4));
   }
 
   List<MockQuestion> get _questions {
@@ -328,8 +326,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
         return;
       }
       context.go('/results/${result.id}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(autoSubmit ? 'Time up — submitted · ${result.percentScore}%' : 'Submitted · ${result.percentScore}%')),
+      MockToast.success(
+        context,
+        autoSubmit ? 'Time up — submitted · ${result.percentScore}%' : 'Submitted · ${result.percentScore}%',
       );
     } on ApiException catch (error) {
       if (_shouldQueueOffline(error, connectivity.isOnline)) {
@@ -337,7 +336,7 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
         return;
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        MockToast.error(context, error.message);
       }
     } finally {
       if (mounted) {
@@ -374,9 +373,7 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
       return;
     }
     context.go('/dashboard');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Saved offline — will sync when you reconnect')),
-    );
+    MockToast.info(context, 'Saved offline — will sync when you reconnect');
   }
 
   Future<void> _openQuestionPalette() async {

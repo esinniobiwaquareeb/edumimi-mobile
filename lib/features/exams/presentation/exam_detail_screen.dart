@@ -61,7 +61,7 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
       context.push('/exams/${widget.exam.slug}/take');
     } on ApiException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        MockToast.error(context, error.message);
       }
     } finally {
       if (mounted) {

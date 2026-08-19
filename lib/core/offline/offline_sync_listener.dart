@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mock_mobile/core/offline/connectivity_service.dart';
 import 'package:mock_mobile/core/offline/offline_sync_service.dart';
+import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 
 class OfflineSyncListener extends ConsumerStatefulWidget {
@@ -35,8 +36,9 @@ class _OfflineSyncListenerState extends ConsumerState<OfflineSyncListener> {
     }
     if (result.syncedCount > 0) {
       ref.invalidate(attemptsProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Synced ${result.syncedCount} offline submission${result.syncedCount == 1 ? '' : 's'}')),
+      MockToast.success(
+        context,
+        'Synced ${result.syncedCount} offline submission${result.syncedCount == 1 ? '' : 's'}',
       );
     }
   }

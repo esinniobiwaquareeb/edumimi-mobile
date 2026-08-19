@@ -161,7 +161,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
       }
     } on ApiException catch (error) {
       if (mounted && _messages.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        MockToast.error(context, error.message);
       }
     } finally {
       if (mounted) {
@@ -211,12 +211,12 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     } on ApiException catch (error) {
       _removeOptimisticMessage(clientNonce);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        MockToast.error(context, error.message);
       }
     } catch (error) {
       _removeOptimisticMessage(clientNonce);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+        MockToast.error(context, 'Could not send message. Check your connection.');
       }
     } finally {
       if (mounted) {

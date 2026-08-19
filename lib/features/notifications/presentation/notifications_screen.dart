@@ -29,9 +29,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         final router = GoRouter.of(context);
         final success = await service.initialize(router);
         if (!success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Push notifications are not available on this device yet.')),
-          );
+          MockToast.info(context, 'Push notifications are not available on this device yet.');
         }
       } else {
         await service.disable();
@@ -49,9 +47,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     try {
       final success = await ref.read(pushNotificationServiceProvider).previewLocalStreakReminder();
       if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Allow notifications in system settings to preview reminders.')),
-        );
+        MockToast.info(context, 'Allow notifications in system settings to preview reminders.');
       }
     } finally {
       if (mounted) {

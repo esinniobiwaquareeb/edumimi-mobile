@@ -28,9 +28,7 @@ class DashboardScreen extends ConsumerWidget {
     practiceBank ??= exams.isNotEmpty ? exams.first : null;
     if (practiceBank == null) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No practice bank available for an adaptive drill right now')),
-        );
+        MockToast.info(context, 'No practice bank available for an adaptive drill right now');
       }
       return;
     }
@@ -49,7 +47,7 @@ class DashboardScreen extends ConsumerWidget {
       }
     } on ApiException catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        MockToast.error(context, error.message);
       }
     }
   }

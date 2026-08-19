@@ -51,6 +51,7 @@ class AppTheme {
       onSurfaceVariant: AppColors.textSecondary,
       outline: AppColors.border,
       error: AppColors.error,
+      onError: Colors.white,
     );
 
     return _buildTheme(
@@ -118,6 +119,7 @@ class AppTheme {
       onSurfaceVariant: AppColors.darkTextSecondary,
       outline: AppColors.darkBorder,
       error: AppColors.error,
+      onError: Colors.white,
       surfaceContainerHighest: AppColors.darkSurfaceElevated,
     );
 

@@ -6,6 +6,7 @@
 |-------|-------|
 | App name | mock.edumimi |
 | Package ID | `com.edumimi.mock_mobile` |
+| Min SDK | 23 (Android 6.0+) |
 | Category | Education |
 | Content rating | Everyone (exam prep, no UGC moderation required beyond chat reports) |
 

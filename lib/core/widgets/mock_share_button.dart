@@ -123,7 +123,7 @@ class _MockChallengeShareButtonState extends ConsumerState<MockChallengeShareBut
       );
     } on ApiException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        MockToast.error(context, error.message);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

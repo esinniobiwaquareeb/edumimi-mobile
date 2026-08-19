@@ -31,17 +31,22 @@ lib/
 cd mock_mobile
 flutter pub get
 
-# iOS 18.4+ / iOS 26–27 beta physical devices block Flutter debug JIT — use profile or release on device; debug on simulator only.
-flutter run --profile -d 00008130-000870112441401C \
-  --dart-define=MOCK_API_URL=https://api.edumimi.com
-
-# Release (fastest on device; no hot reload):
-flutter run --release -d 00008130-000870112441401C \
-  --dart-define=MOCK_API_URL=https://api.edumimi.com
+# Production API + web URLs (see .env.example for all dart-defines)
+flutter run --release \
+  --dart-define=MOCK_API_URL=https://api.edumimi.com \
+  --dart-define=MOCK_WEB_URL=https://mock.edumimi.com
 
 # Build + install profile, then launch from home screen (if flutter run hangs on ptrace):
 flutter build ios --profile --dart-define=MOCK_API_URL=https://api.edumimi.com
-flutter install --profile -d 00008130-000870112441401C
+
+# Release builds (store deploy)
+flutter build appbundle --release \
+  --dart-define=MOCK_API_URL=https://api.edumimi.com \
+  --dart-define=MOCK_WEB_URL=https://mock.edumimi.com
+
+flutter build ios --release \
+  --dart-define=MOCK_API_URL=https://api.edumimi.com \
+  --dart-define=MOCK_WEB_URL=https://mock.edumimi.com
 
 # Point at your NestJS API (default: localhost:3000)
 flutter run \
@@ -73,6 +78,7 @@ flutter run \
 - Paystack dev bypass works when `PAYSTACK_SECRET_KEY` is unset and `NODE_ENV !== production`.
 - Replace `android/app/google-services.json` before enabling push in production.
 - Copy `android/key.properties.example` → `android/key.properties` for signed release builds.
+- Dart defines are documented in [.env.example](.env.example) (pass each as `--dart-define=KEY=value`).
 
 ## Firebase setup (push notifications)
 
@@ -108,7 +114,9 @@ Values come from Firebase project settings and each platform app config.
 ### 4. Android notes
 
 - `google-services.json` must match your Firebase Android app (replace the placeholder).
+- Minimum SDK is **23** (Android 6.0+) — required by Firebase Messaging.
 - For release builds, use the release keystore SHA-256 in Firebase Console and in `mock-frontend/public/.well-known/assetlinks.json`.
+- Copy `android/key.properties.example` → `android/key.properties` for signed Play Store uploads.
 
 ## Deep links
 
