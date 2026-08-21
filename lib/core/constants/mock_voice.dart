@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 /// Student-friendly product copy aligned with mock-frontend mock-voice.ts.
 abstract final class MockVoice {
   static const brandTagline = 'Exam practice for JAMB, WAEC & NECO';
@@ -34,6 +36,34 @@ abstract final class MockVoice {
 
   static const cancel = 'Cancel';
 
+  static const continueAttemptLabel = 'Continue where you left off';
+  static const continueAttemptCta = 'Continue exam';
+  static const unlockUpsellTitle = 'Ready for full access?';
+  static const unlockUpsellBody =
+      'Free practice stops at your preview limit. Full access unlocks the complete bank and timed mocks.';
+  static const unlockUpsellCta = 'Get full access';
+
+  static const transactionPinSetupTitle = 'Set up a transaction PIN';
+  static const transactionPinSetupBody =
+      'Create a 4–6 digit PIN in your profile before you can pay for packages.';
+  static const transactionPinPromptTitle = 'Enter transaction PIN';
+  static const transactionPinPromptBody = 'Confirm your 4–6 digit PIN to continue to secure checkout.';
+  static const transactionPinGoToProfile = 'Go to profile';
+  static const transactionPinContinuePayment = 'Continue to payment';
+  static const transactionPinSectionTitle = 'Transaction PIN';
+  static const transactionPinSectionBody = 'Use a 4–6 digit PIN to authorize package payments securely.';
+  static const transactionPinCreateCta = 'Create transaction PIN';
+  static const transactionPinUpdateCta = 'Update transaction PIN';
+
+  static const leaderboardTableWhen = 'Period';
+  static const leaderboardPrizesTitle = 'Top student rewards';
+  static const leaderboardPrizesBody =
+      'Top scorers each week earn bonus practice credits and streak boosts. Keep practicing and submit full exams to qualify.';
+  static const leaderboardCtaTitle = 'Want to join the top students?';
+  static const leaderboardCtaBody =
+      'Free practice only scores your preview questions. Get full access to submit complete exams and rank with the best.';
+  static const leaderboardCtaButton = 'Get full access';
+
   static const onboardingPages = [
     MockOnboardingPage(
       iconName: 'menu_book_outlined',
@@ -56,6 +86,25 @@ abstract final class MockVoice {
       body: 'Submit full exams, join the top students list, and share wins with your study squad.',
     ),
   ];
+
+  static String leaderboardPeriodLabel(String period) {
+    return switch (period) {
+      'month' => 'This month',
+      'all' => 'All time',
+      _ => 'This week',
+    };
+  }
+
+  static String formatLeaderboardDate(String submittedAt) {
+    if (submittedAt.isEmpty) {
+      return '—';
+    }
+    final parsed = DateTime.tryParse(submittedAt);
+    if (parsed == null) {
+      return '—';
+    }
+    return DateFormat.yMMMd('en_NG').format(parsed.toLocal());
+  }
 }
 
 class MockOnboardingPage {

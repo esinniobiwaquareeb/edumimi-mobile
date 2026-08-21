@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mock_mobile/core/constants/mock_voice.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
@@ -22,6 +23,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
   Widget build(BuildContext context) {
     final examTypesAsync = ref.watch(examTypesProvider);
     final leaderboardAsync = ref.watch(leaderboardProvider((period: _period, examTypeSlug: _examTypeSlug)));
+    final periodLabel = MockVoice.leaderboardPeriodLabel(_period);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -31,20 +33,16 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const MockPageHeader(
+              MockPageHeader(
                 title: 'Top Students',
-                subtitle: 'See who is leading this period.',
+                subtitle: 'See who is leading $periodLabel.',
               ),
               const SizedBox(height: AppSpacing.page),
               MockSegmentedControl<String>(
                 segments: const ['week', 'month', 'all'],
                 selected: _period,
                 onChanged: (value) => setState(() => _period = value),
-                labelBuilder: (value) => switch (value) {
-                  'month' => 'Month',
-                  'all' => 'All time',
-                  _ => 'This week',
-                },
+                labelBuilder: (value) => MockVoice.leaderboardPeriodLabel(value),
               ),
               const SizedBox(height: AppSpacing.section),
               examTypesAsync.when(
@@ -73,9 +71,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
             ),
             data: (response) {
               if (response.entries.isEmpty) {
-                return const MockEmptyState(
+                return MockEmptyState(
                   title: 'No scores yet',
-                  message: 'Be the first to submit a score this period.',
+                  message: 'Be the first to submit a score for ${periodLabel.toLowerCase()}.',
                 );
               }
               final podium = response.entries.take(3).toList();
@@ -90,6 +88,17 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                     AppSpacing.page + AppSpacing.glassNavClearance,
                   ),
                   children: [
+                    MockCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(MockVoice.leaderboardPrizesTitle, style: context.cardTitle),
+                          const SizedBox(height: AppSpacing.item),
+                          Text(MockVoice.leaderboardPrizesBody, style: context.bodySecondary),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.section),
                     if (podium.isNotEmpty) ...[
                       Text('Podium', style: context.label),
                       const SizedBox(height: AppSpacing.item),
@@ -112,6 +121,22 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                             child: _LeaderboardMobileRow(entry: entry),
                           )),
                     ],
+                    const SizedBox(height: AppSpacing.section),
+                    MockCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(MockVoice.leaderboardCtaTitle, style: context.cardTitle),
+                          const SizedBox(height: AppSpacing.item),
+                          Text(MockVoice.leaderboardCtaBody, style: context.bodySecondary),
+                          const SizedBox(height: AppSpacing.section),
+                          MockPrimaryButton(
+                            label: MockVoice.leaderboardCtaButton,
+                            onPressed: () => context.push('/packages'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -130,31 +155,40 @@ class _LeaderboardMobileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateLabel = entry.submittedAt.isNotEmpty
-        ? DateFormat.yMMMd().format(DateTime.parse(entry.submittedAt))
-        : '—';
+    final dateLabel = MockVoice.formatLeaderboardDate(entry.submittedAt);
 
     return MockCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 32,
-            alignment: Alignment.center,
-            child: Text('#${entry.rank}', style: context.label),
+          Row(
+            children: [
+              Container(
+                width: 32,
+                alignment: Alignment.center,
+                child: Text('#${entry.rank}', style: context.label),
+              ),
+              const SizedBox(width: AppSpacing.section),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(entry.displayName, style: context.cardTitle),
+                    Text(entry.examTitle, style: context.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              Text('${entry.percentScore.toStringAsFixed(1)}%', style: context.cardTitle),
+            ],
           ),
-          const SizedBox(width: AppSpacing.section),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(entry.displayName, style: context.cardTitle),
-                Text(entry.examTitle, style: context.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 2),
-                Text(dateLabel, style: context.caption),
-              ],
-            ),
+          const SizedBox(height: AppSpacing.item),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(MockVoice.leaderboardTableWhen, style: context.caption.copyWith(fontWeight: FontWeight.w700)),
+              Text(dateLabel, style: context.caption),
+            ],
           ),
-          Text('${entry.percentScore.toStringAsFixed(1)}%', style: context.cardTitle),
         ],
       ),
     );

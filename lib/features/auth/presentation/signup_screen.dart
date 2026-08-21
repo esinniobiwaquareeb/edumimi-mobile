@@ -8,7 +8,9 @@ import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
-  const SignupScreen({super.key});
+  const SignupScreen({super.key, this.initialReferralCode});
+
+  final String? initialReferralCode;
 
   @override
   ConsumerState<SignupScreen> createState() => _SignupScreenState();
@@ -19,14 +21,25 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _referralController = TextEditingController();
   var _isLoading = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final referral = widget.initialReferralCode?.trim();
+    if (referral != null && referral.isNotEmpty) {
+      _referralController.text = referral.toUpperCase();
+    }
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _referralController.dispose();
     super.dispose();
   }
 
@@ -43,6 +56,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             fullName: _nameController.text,
             email: _emailController.text,
             password: _passwordController.text,
+            referralCode: _referralController.text.trim().isEmpty ? null : _referralController.text,
           );
     } on ApiException catch (error) {
       setState(() => _error = error.message);
@@ -94,6 +108,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
+                          ),
+                          const SizedBox(height: AppSpacing.section),
+                          MockTextField(
+                            label: 'Referral code (optional)',
+                            controller: _referralController,
                           ),
                           const SizedBox(height: AppSpacing.section),
                       MockTextField(

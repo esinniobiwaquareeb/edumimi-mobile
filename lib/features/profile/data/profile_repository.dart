@@ -29,6 +29,37 @@ class ProfileRepository {
     );
   }
 
+  Future<void> setupTransactionPin({
+    required String password,
+    required String pin,
+    required String confirmPin,
+  }) {
+    return _dio.postData(
+      ApiPaths.transactionPin,
+      data: {'password': password, 'pin': pin.trim(), 'confirmPin': confirmPin.trim()},
+      parser: (_) {},
+    );
+  }
+
+  Future<void> changeTransactionPin({
+    required String currentPin,
+    required String newPin,
+    required String confirmPin,
+  }) {
+    return _dio.patchData(
+      ApiPaths.transactionPin,
+      data: {'currentPin': currentPin.trim(), 'newPin': newPin.trim(), 'confirmPin': confirmPin.trim()},
+      parser: (_) {},
+    );
+  }
+
+  Future<MockUser> fetchMe() {
+    return _dio.getData(
+      ApiPaths.me,
+      parser: (json) => MockUser.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
   Future<MockInterests> savePreferences(Map<String, dynamic> payload) {
     return _dio.patchData(
       ApiPaths.preferences,

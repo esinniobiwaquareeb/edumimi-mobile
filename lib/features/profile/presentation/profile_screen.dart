@@ -137,9 +137,17 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
   late final TextEditingController _currentPasswordController;
   late final TextEditingController _newPasswordController;
   late final TextEditingController _confirmPasswordController;
+  late final TextEditingController _pinPasswordController;
+  late final TextEditingController _pinController;
+  late final TextEditingController _confirmPinController;
+  late final TextEditingController _currentPinController;
+  late final TextEditingController _newPinController;
+  late final TextEditingController _confirmNewPinController;
   late final TextEditingController _bulkLicenseController;
   var _isSavingProfile = false;
   var _isChangingPassword = false;
+  var _isUpdatingTransactionPin = false;
+  var _hasTransactionPin = false;
   var _isUploadingAvatar = false;
   var _isRedeemingLicense = false;
   String? _error;
@@ -152,7 +160,24 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
     _currentPasswordController = TextEditingController();
     _newPasswordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
+    _pinPasswordController = TextEditingController();
+    _pinController = TextEditingController();
+    _confirmPinController = TextEditingController();
+    _currentPinController = TextEditingController();
+    _newPinController = TextEditingController();
+    _confirmNewPinController = TextEditingController();
     _bulkLicenseController = TextEditingController();
+    _hasTransactionPin = widget.user.hasTransactionPin;
+    _loadTransactionPinStatus();
+  }
+
+  Future<void> _loadTransactionPinStatus() async {
+    try {
+      final profile = await ref.read(profileRepositoryProvider).fetchMe();
+      if (mounted) {
+        setState(() => _hasTransactionPin = profile.hasTransactionPin);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -162,6 +187,12 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
+    _pinPasswordController.dispose();
+    _pinController.dispose();
+    _confirmPinController.dispose();
+    _currentPinController.dispose();
+    _newPinController.dispose();
+    _confirmNewPinController.dispose();
     _bulkLicenseController.dispose();
     super.dispose();
   }
@@ -211,6 +242,51 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
       setState(() => _error = error.message);
     } finally {
       if (mounted) setState(() => _isChangingPassword = false);
+    }
+  }
+
+  Future<void> _saveTransactionPin() async {
+    setState(() {
+      _isUpdatingTransactionPin = true;
+      _error = null;
+    });
+    try {
+      if (_hasTransactionPin) {
+        if (_newPinController.text.length < 4 || _newPinController.text != _confirmNewPinController.text) {
+          setState(() => _error = 'Enter matching 4–6 digit PINs.');
+          return;
+        }
+        await ref.read(profileRepositoryProvider).changeTransactionPin(
+              currentPin: _currentPinController.text,
+              newPin: _newPinController.text,
+              confirmPin: _confirmNewPinController.text,
+            );
+      } else {
+        if (_pinPasswordController.text.isEmpty ||
+            _pinController.text.length < 4 ||
+            _pinController.text != _confirmPinController.text) {
+          setState(() => _error = 'Enter your password and matching 4–6 digit PINs.');
+          return;
+        }
+        await ref.read(profileRepositoryProvider).setupTransactionPin(
+              password: _pinPasswordController.text,
+              pin: _pinController.text,
+              confirmPin: _confirmPinController.text,
+            );
+        setState(() => _hasTransactionPin = true);
+      }
+      _pinPasswordController.clear();
+      _pinController.clear();
+      _confirmPinController.clear();
+      _currentPinController.clear();
+      _newPinController.clear();
+      _confirmNewPinController.clear();
+      widget.onUserUpdated();
+      if (mounted) MockToast.success(context, 'Transaction PIN saved');
+    } on ApiException catch (error) {
+      setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _isUpdatingTransactionPin = false);
     }
   }
 
@@ -406,6 +482,42 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
                 label: _isChangingPassword ? 'Updating…' : 'Update password',
                 isLoading: _isChangingPassword,
                 onPressed: _changePassword,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.page),
+        MockCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Transaction PIN', style: context.sectionTitle),
+              const SizedBox(height: AppSpacing.item),
+              Text(
+                'Authorize package payments with a 4–6 digit PIN.',
+                style: context.caption,
+              ),
+              const SizedBox(height: AppSpacing.section),
+              if (_hasTransactionPin) ...[
+                MockTextField(label: 'Current PIN', controller: _currentPinController, obscurable: true, keyboardType: TextInputType.number),
+                const SizedBox(height: AppSpacing.section),
+                MockTextField(label: 'New PIN', controller: _newPinController, obscurable: true, keyboardType: TextInputType.number),
+                const SizedBox(height: AppSpacing.section),
+                MockTextField(label: 'Confirm new PIN', controller: _confirmNewPinController, obscurable: true, keyboardType: TextInputType.number),
+              ] else ...[
+                MockTextField(label: 'Account password', controller: _pinPasswordController, obscurable: true),
+                const SizedBox(height: AppSpacing.section),
+                MockTextField(label: 'Transaction PIN', controller: _pinController, obscurable: true, keyboardType: TextInputType.number),
+                const SizedBox(height: AppSpacing.section),
+                MockTextField(label: 'Confirm PIN', controller: _confirmPinController, obscurable: true, keyboardType: TextInputType.number),
+              ],
+              const SizedBox(height: AppSpacing.section),
+              MockPrimaryButton(
+                label: _isUpdatingTransactionPin
+                    ? 'Saving…'
+                    : (_hasTransactionPin ? 'Update transaction PIN' : 'Create transaction PIN'),
+                isLoading: _isUpdatingTransactionPin,
+                onPressed: _saveTransactionPin,
               ),
             ],
           ),

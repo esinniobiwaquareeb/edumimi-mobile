@@ -9,6 +9,7 @@ class ApiPaths {
   static const resendVerification = '/auth/resend-verification';
   static const me = '/me';
   static const changePassword = '/me/change-password';
+  static const transactionPin = '/me/transaction-pin';
   static const preferences = '/me/preferences';
   static const avatar = '/me/avatar';
   static const parentShare = '/me/parent-share';

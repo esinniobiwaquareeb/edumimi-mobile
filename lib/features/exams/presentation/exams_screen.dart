@@ -18,7 +18,16 @@ class ExamsScreen extends ConsumerStatefulWidget {
 
 class _ExamsScreenState extends ConsumerState<ExamsScreen> {
   String? _selectedExamTypeSlug;
+  String? _selectedMode;
   final _searchController = TextEditingController();
+
+  static const _modeFilters = <({String? value, String label})>[
+    (value: null, label: 'All modes'),
+    (value: 'PRACTICE', label: 'Practice'),
+    (value: 'FULL_MOCK', label: 'Full mock'),
+    (value: 'TOPIC_DRILL', label: 'Topic drill'),
+    (value: 'PAST_PAPER', label: 'Past paper'),
+  ];
 
   @override
   void dispose() {
@@ -72,6 +81,22 @@ class _ExamsScreenState extends ConsumerState<ExamsScreen> {
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: AppSpacing.section),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final filter in _modeFilters) ...[
+                      _ExamTypeChip(
+                        label: filter.label,
+                        selected: _selectedMode == filter.value,
+                        onSelected: () => setState(() => _selectedMode = filter.value),
+                      ),
+                      const SizedBox(width: AppSpacing.item),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.section),
               examTypesAsync.when(
                 loading: () => const SizedBox.shrink(),
                 error: (_, __) => const SizedBox.shrink(),
@@ -109,6 +134,9 @@ class _ExamsScreenState extends ConsumerState<ExamsScreen> {
             error: (error, _) => MockErrorView(message: error.toString(), onRetry: () => ref.invalidate(examsCatalogProvider(_selectedExamTypeSlug))),
             data: (exams) {
               final filtered = exams.where((exam) {
+                if (_selectedMode != null && exam.mode != _selectedMode) {
+                  return false;
+                }
                 if (query.isEmpty) return true;
                 return exam.title.toLowerCase().contains(query) ||
                     exam.subjectLabel.toLowerCase().contains(query) ||

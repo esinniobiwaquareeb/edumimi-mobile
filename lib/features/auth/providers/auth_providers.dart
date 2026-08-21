@@ -82,12 +82,14 @@ class AuthController extends Notifier<AuthState> {
     required String fullName,
     required String email,
     required String password,
+    String? referralCode,
   }) async {
     try {
       final session = await _repository.signup(
         fullName: fullName,
         email: email,
         password: password,
+        referralCode: referralCode,
       );
       state = AuthState.authenticated(session);
     } on ApiException catch (error) {

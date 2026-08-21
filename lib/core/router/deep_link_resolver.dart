@@ -30,6 +30,7 @@ class DeepLinkResolver {
       return switch (path) {
         '/auth/verify-email' => '/verify-email',
         '/auth/reset-password' => '/reset-password',
+        '/auth/register' => '/signup',
         _ => path,
       };
     }
@@ -49,6 +50,17 @@ class DeepLinkResolver {
         return path;
       }
       return Uri(path: path, queryParameters: queryParameters).toString();
+    }
+
+    if (path == '/' && queryParameters.containsKey('ref')) {
+      return Uri(
+        path: '/signup',
+        queryParameters: {'ref': queryParameters['ref']!},
+      ).toString();
+    }
+
+    if (path == '/signup' && queryParameters.containsKey('ref')) {
+      return Uri(path: '/signup', queryParameters: queryParameters).toString();
     }
 
     final challengeMatch = RegExp(r'^/challenge/([^/]+)$').firstMatch(path);

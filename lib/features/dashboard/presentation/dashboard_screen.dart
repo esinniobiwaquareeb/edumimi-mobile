@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mock_mobile/core/constants/mock_voice.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
@@ -58,10 +59,22 @@ class DashboardScreen extends ConsumerWidget {
     final insightsAsync = ref.watch(studyInsightsProvider);
     final engagementAsync = ref.watch(engagementProvider);
     final attemptsAsync = ref.watch(attemptsProvider);
+    final purchasesAsync = ref.watch(myPurchasesProvider);
     final user = ref.watch(authControllerProvider).user;
+    final attempts = attemptsAsync.valueOrNull ?? const <MockAttempt>[];
+    final submittedAttempts = attempts.where((attempt) => attempt.status == 'SUBMITTED').length;
+    MockAttempt? inProgressAttempt;
+    for (final attempt in attempts) {
+      if (attempt.isInProgress && attempt.exam != null) {
+        inProgressAttempt = attempt;
+        break;
+      }
+    }
+    final purchases = purchasesAsync.valueOrNull ?? const [];
+    final hasActivePurchases = purchases.any((purchase) => purchase.isActive);
+    final feedExams = feedAsync.valueOrNull?.recommended ?? const <MockExam>[];
+    final showUnlockUpsell = !hasActivePurchases && (submittedAttempts >= 1 || feedExams.isNotEmpty);
     final streakDays = engagementAsync.valueOrNull?.practiceStreakDays ?? 0;
-    final submittedAttempts =
-        attemptsAsync.valueOrNull?.where((attempt) => attempt.status == 'SUBMITTED').length ?? 0;
     final onboardingCompleted = user?.mockProfile?.onboardingCompleted == true;
 
     return RefreshIndicator(
@@ -70,6 +83,7 @@ class DashboardScreen extends ConsumerWidget {
         ref.invalidate(studyInsightsProvider);
         ref.invalidate(engagementProvider);
         ref.invalidate(attemptsProvider);
+        ref.invalidate(myPurchasesProvider);
       },
       child: ListView(
         padding: EdgeInsets.fromLTRB(
@@ -100,6 +114,32 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
           if (!onboardingCompleted) const SizedBox(height: AppSpacing.section),
+          if (inProgressAttempt?.exam != null) ...[
+            MockCard(
+              elevated: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(MockVoice.continueAttemptLabel, style: context.caption.copyWith(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: AppSpacing.item),
+                  Text(inProgressAttempt!.exam!.title, style: context.sectionTitle),
+                  const SizedBox(height: 4),
+                  Text(
+                    [inProgressAttempt.exam!.subjectLabel, inProgressAttempt.exam!.examTypeLabel]
+                        .where((part) => part.isNotEmpty)
+                        .join(' · '),
+                    style: context.bodySecondary,
+                  ),
+                  const SizedBox(height: AppSpacing.section),
+                  MockPrimaryButton(
+                    label: MockVoice.continueAttemptCta,
+                    onPressed: () => context.push('/exams/${inProgressAttempt!.exam!.slug}/take'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.section),
+          ],
           insightsAsync.when(
             loading: () => const MockCard(child: MockLoadingView(message: 'Loading insights…')),
             error: (_, __) => const SizedBox.shrink(),
@@ -161,6 +201,24 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.page),
+          if (showUnlockUpsell) ...[
+            MockCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(MockVoice.unlockUpsellTitle, style: context.caption.copyWith(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: AppSpacing.item),
+                  Text(MockVoice.unlockUpsellBody, style: context.bodySecondary),
+                  const SizedBox(height: AppSpacing.section),
+                  MockPrimaryButton(
+                    label: MockVoice.unlockUpsellCta,
+                    onPressed: () => context.push('/packages'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.page),
+          ],
           feedAsync.when(
             loading: () => const MockLoadingView(message: 'Loading practice…'),
             error: (error, _) => MockErrorView(message: error.toString(), onRetry: () => ref.invalidate(examFeedProvider)),

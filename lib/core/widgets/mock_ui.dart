@@ -31,7 +31,10 @@ class MockPrimaryButton extends StatelessWidget {
           ? const SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
             )
           : Text(label),
     );
@@ -85,7 +88,10 @@ class MockDestructiveButton extends StatelessWidget {
             ? SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: onError),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: onError,
+                ),
               )
             : Text(label),
       );
@@ -186,11 +192,15 @@ class MockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!elevated) {
-      return Card(child: Padding(padding: padding, child: child));
+      return Card(
+        child: Padding(padding: padding, child: child),
+      );
     }
 
     final colors = context.colors;
-    final surfaceColor = context.isDarkMode && elevated ? AppColors.darkSurfaceElevated : colors.surface;
+    final surfaceColor = context.isDarkMode && elevated
+        ? AppColors.darkSurfaceElevated
+        : colors.surface;
     return Container(
       decoration: BoxDecoration(
         color: surfaceColor,
@@ -198,7 +208,9 @@ class MockCard extends StatelessWidget {
         border: Border.all(color: context.appBorder),
         boxShadow: [
           BoxShadow(
-            color: colors.onSurface.withValues(alpha: context.isDarkMode ? 0.1 : 0.04),
+            color: colors.onSurface.withValues(
+              alpha: context.isDarkMode ? 0.1 : 0.04,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -212,7 +224,11 @@ class MockCard extends StatelessWidget {
 enum MockChipTone { primary, neutral, success }
 
 class MockChip extends StatelessWidget {
-  const MockChip({super.key, required this.label, this.tone = MockChipTone.neutral});
+  const MockChip({
+    super.key,
+    required this.label,
+    this.tone = MockChipTone.neutral,
+  });
 
   final String label;
   final MockChipTone tone;
@@ -220,9 +236,21 @@ class MockChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (background, foreground, border) = switch (tone) {
-      MockChipTone.primary => (context.appPrimarySoft, AppColors.primary, context.appBorder),
-      MockChipTone.success => (context.appSuccessSoft, AppColors.success, context.appBorder),
-      MockChipTone.neutral => (context.appNeutralSoft, context.appTextSecondary, context.appBorder),
+      MockChipTone.primary => (
+        context.appPrimarySoft,
+        AppColors.primary,
+        context.appBorder,
+      ),
+      MockChipTone.success => (
+        context.appSuccessSoft,
+        AppColors.success,
+        context.appBorder,
+      ),
+      MockChipTone.neutral => (
+        context.appNeutralSoft,
+        context.appTextSecondary,
+        context.appBorder,
+      ),
     };
 
     return Container(
@@ -278,11 +306,14 @@ class MockSectionTitle extends StatelessWidget {
 enum MockNoticeTone { error, info, success }
 
 class MockInlineNotice extends StatelessWidget {
-  const MockInlineNotice.error({super.key, required this.message}) : tone = MockNoticeTone.error;
+  const MockInlineNotice.error({super.key, required this.message})
+    : tone = MockNoticeTone.error;
 
-  const MockInlineNotice.info({super.key, required this.message}) : tone = MockNoticeTone.info;
+  const MockInlineNotice.info({super.key, required this.message})
+    : tone = MockNoticeTone.info;
 
-  const MockInlineNotice.success({super.key, required this.message}) : tone = MockNoticeTone.success;
+  const MockInlineNotice.success({super.key, required this.message})
+    : tone = MockNoticeTone.success;
 
   final String message;
   final MockNoticeTone tone;
@@ -307,6 +338,7 @@ class MockInlineNotice extends StatelessWidget {
     );
   }
 }
+
 class MockMetaRow extends StatelessWidget {
   const MockMetaRow({
     super.key,
@@ -327,10 +359,7 @@ class MockMetaRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label.toUpperCase(), style: context.label),
-          Text(
-            value,
-            style: emphasis ? context.cardTitle : context.body,
-          ),
+          Text(value, style: emphasis ? context.cardTitle : context.body),
         ],
       ),
     );
@@ -359,9 +388,17 @@ class MockEmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(title, textAlign: TextAlign.center, style: context.sectionTitle),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: context.sectionTitle,
+            ),
             const SizedBox(height: AppSpacing.item),
-            Text(message, textAlign: TextAlign.center, style: context.bodySecondary),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: context.bodySecondary,
+            ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: AppSpacing.page),
               MockPrimaryButton(label: actionLabel!, onPressed: onAction),
@@ -394,7 +431,11 @@ class MockLoadingView extends StatelessWidget {
 }
 
 class MockErrorView extends StatelessWidget {
-  const MockErrorView({super.key, required this.message, required this.onRetry});
+  const MockErrorView({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
 
   final String message;
   final VoidCallback onRetry;
@@ -407,7 +448,11 @@ class MockErrorView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(message, textAlign: TextAlign.center, style: context.bodySecondary),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: context.bodySecondary,
+            ),
             const SizedBox(height: AppSpacing.page),
             MockSecondaryButton(label: 'Try again', onPressed: onRetry),
           ],
@@ -460,11 +505,19 @@ class MockExamCard extends StatelessWidget {
             ),
             if (subtitle.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(subtitle, style: context.bodySecondary.copyWith(fontSize: 13)),
+              Text(
+                subtitle,
+                style: context.bodySecondary.copyWith(fontSize: 13),
+              ),
             ],
             if (reason != null && reason!.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.item),
-              Text(reason!, style: context.caption.copyWith(color: context.appTextSecondary)),
+              Text(
+                reason!,
+                style: context.caption.copyWith(
+                  color: context.appTextSecondary,
+                ),
+              ),
             ],
             const SizedBox(height: AppSpacing.section),
             Container(
@@ -473,7 +526,10 @@ class MockExamCard extends StatelessWidget {
                 color: context.appNeutralSoft,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
-              child: Text(meta, style: context.caption.copyWith(fontWeight: FontWeight.w500)),
+              child: Text(
+                meta,
+                style: context.caption.copyWith(fontWeight: FontWeight.w500),
+              ),
             ),
           ],
         ),
@@ -510,7 +566,9 @@ class MockSegmentedControl<T extends Object> extends StatelessWidget {
           onSelected: (_) => onChanged(segment),
           backgroundColor: context.colors.surface,
           selectedColor: context.appPrimarySoft,
-          side: BorderSide(color: isSelected ? AppColors.primary : context.appBorder),
+          side: BorderSide(
+            color: isSelected ? AppColors.primary : context.appBorder,
+          ),
           labelStyle: context.caption.copyWith(
             color: isSelected ? AppColors.primary : context.appTextSecondary,
             fontWeight: FontWeight.w600,
@@ -544,7 +602,8 @@ class MockUserAvatar extends StatelessWidget {
           child: Image.network(
             trimmedUrl,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _MockInitialsAvatar(initials: initials, size: size),
+            errorBuilder: (_, __, ___) =>
+                _MockInitialsAvatar(initials: initials, size: size),
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) {
                 return child;
@@ -595,7 +654,11 @@ String mockTimeBasedGreeting([DateTime? at]) {
 }
 
 class MockBrandLockup extends StatelessWidget {
-  const MockBrandLockup({super.key, this.compact = false, this.withLogo = false});
+  const MockBrandLockup({
+    super.key,
+    this.compact = false,
+    this.withLogo = false,
+  });
 
   final bool compact;
   final bool withLogo;
@@ -614,13 +677,16 @@ class MockBrandLockup extends StatelessWidget {
             ),
             children: const [
               TextSpan(text: 'mock'),
-              TextSpan(text: '.edumimi', style: TextStyle(color: AppColors.primary)),
+              TextSpan(
+                text: '.edumimi',
+                style: TextStyle(color: AppColors.primary),
+              ),
             ],
           ),
         ),
         if (!compact)
           Text(
-            'Part of Edumimi',
+            'Powered by Edumimi',
             style: context.caption.copyWith(letterSpacing: 1.1, fontSize: 11),
           ),
       ],
@@ -673,7 +739,9 @@ class MockBrandLogo extends StatelessWidget {
           border: Border.all(color: context.appBorder),
           boxShadow: [
             BoxShadow(
-              color: context.colors.onSurface.withValues(alpha: context.isDarkMode ? 0.18 : 0.04),
+              color: context.colors.onSurface.withValues(
+                alpha: context.isDarkMode ? 0.18 : 0.04,
+              ),
               blurRadius: compact ? 16 : 20,
               offset: Offset(0, compact ? 6 : 8),
             ),
@@ -691,7 +759,11 @@ class MockBrandLogo extends StatelessWidget {
 }
 
 class MockScreenBody extends StatelessWidget {
-  const MockScreenBody({super.key, required this.child, this.padding = const EdgeInsets.all(AppSpacing.page)});
+  const MockScreenBody({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(AppSpacing.page),
+  });
 
   final Widget child;
   final EdgeInsets padding;
@@ -733,14 +805,13 @@ class MockAppHeader extends StatelessWidget implements PreferredSizeWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.colors.surface,
-        border: Border(bottom: BorderSide(color: context.appBorder, width: 0.5)),
+        border: Border(
+          bottom: BorderSide(color: context.appBorder, width: 0.5),
+        ),
         gradient: LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          colors: [
-            context.colors.surface,
-            context.appHeaderGradientEnd,
-          ],
+          colors: [context.colors.surface, context.appHeaderGradientEnd],
         ),
       ),
       child: SafeArea(
@@ -868,7 +939,10 @@ class _MockHeaderIconButton extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: streakAtRiskColor,
                           shape: BoxShape.circle,
-                          border: Border.all(color: context.colors.surface, width: 1.5),
+                          border: Border.all(
+                            color: context.colors.surface,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                     ),
@@ -940,14 +1014,13 @@ class MockGlassNavBar extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  context.appNavGlassTop,
-                  context.appNavGlassBottom,
-                ],
+                colors: [context.appNavGlassTop, context.appNavGlassBottom],
               ),
               border: Border(
                 top: BorderSide(
-                  color: context.appBorder.withValues(alpha: context.isDarkMode ? 0.35 : 0.45),
+                  color: context.appBorder.withValues(
+                    alpha: context.isDarkMode ? 0.35 : 0.45,
+                  ),
                 ),
               ),
             ),
@@ -959,11 +1032,17 @@ class MockGlassNavBar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.isDarkMode ? AppColors.darkSurface : context.colors.surface,
-        border: Border(top: BorderSide(color: context.appBorder.withValues(alpha: 0.8))),
+        color: context.isDarkMode
+            ? AppColors.darkSurface
+            : context.colors.surface,
+        border: Border(
+          top: BorderSide(color: context.appBorder.withValues(alpha: 0.8)),
+        ),
         boxShadow: [
           BoxShadow(
-            color: context.colors.onSurface.withValues(alpha: context.isDarkMode ? 0.12 : 0.03),
+            color: context.colors.onSurface.withValues(
+              alpha: context.isDarkMode ? 0.12 : 0.03,
+            ),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -998,7 +1077,9 @@ class _MockNavItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: isSelected
-                ? context.appPrimarySoft.withValues(alpha: context.isDarkMode ? 0.65 : 0.9)
+                ? context.appPrimarySoft.withValues(
+                    alpha: context.isDarkMode ? 0.65 : 0.9,
+                  )
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(999),
           ),
@@ -1008,7 +1089,9 @@ class _MockNavItem extends StatelessWidget {
               Icon(
                 isSelected ? destination.selectedIcon : destination.icon,
                 size: 22,
-                color: isSelected ? AppColors.primary : context.appTextSecondary,
+                color: isSelected
+                    ? AppColors.primary
+                    : context.appTextSecondary,
               ),
               const SizedBox(height: 2),
               Text(
@@ -1016,7 +1099,9 @@ class _MockNavItem extends StatelessWidget {
                 style: context.caption.copyWith(
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? AppColors.primary : context.appTextSecondary,
+                  color: isSelected
+                      ? AppColors.primary
+                      : context.appTextSecondary,
                 ),
               ),
             ],
@@ -1060,11 +1145,16 @@ class MockStatTile extends StatelessWidget {
                   Icon(icon, size: 16, color: context.appTextSecondary),
                   const SizedBox(width: 6),
                 ],
-                Expanded(child: Text(label.toUpperCase(), style: context.label)),
+                Expanded(
+                  child: Text(label.toUpperCase(), style: context.label),
+                ),
               ],
             ),
             const SizedBox(height: 6),
-            Text(value, style: context.sectionTitle.copyWith(letterSpacing: -0.2)),
+            Text(
+              value,
+              style: context.sectionTitle.copyWith(letterSpacing: -0.2),
+            ),
             if (subtitle != null) ...[
               const SizedBox(height: 2),
               Text(subtitle!, style: context.caption),
@@ -1093,14 +1183,26 @@ class MockWeakTopicChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(topic.displayLabel, style: context.caption.copyWith(fontWeight: FontWeight.w600, color: context.colors.onSurface)),
+          Text(
+            topic.displayLabel,
+            style: context.caption.copyWith(
+              fontWeight: FontWeight.w600,
+              color: context.colors.onSurface,
+            ),
+          ),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 8),
             width: 1,
             height: 12,
             color: context.appBorder,
           ),
-          Text('${topic.percent}%', style: context.caption.copyWith(fontWeight: FontWeight.w700, color: AppColors.primary)),
+          Text(
+            '${topic.percent}%',
+            style: context.caption.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
+          ),
         ],
       ),
     );
@@ -1108,7 +1210,13 @@ class MockWeakTopicChip extends StatelessWidget {
 }
 
 class MockPodiumCard extends StatelessWidget {
-  const MockPodiumCard({super.key, required this.rank, required this.name, required this.score, this.subtitle});
+  const MockPodiumCard({
+    super.key,
+    required this.rank,
+    required this.name,
+    required this.score,
+    this.subtitle,
+  });
 
   final int rank;
   final String name;
@@ -1126,9 +1234,15 @@ class MockPodiumCard extends StatelessWidget {
             height: 40,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: rank == 1 ? context.appPrimarySoft : context.appNeutralSoft,
+              color: rank == 1
+                  ? context.appPrimarySoft
+                  : context.appNeutralSoft,
               shape: BoxShape.circle,
-              border: Border.all(color: rank == 1 ? AppColors.primary.withValues(alpha: 0.3) : context.appBorder),
+              border: Border.all(
+                color: rank == 1
+                    ? AppColors.primary.withValues(alpha: 0.3)
+                    : context.appBorder,
+              ),
             ),
             child: Text(
               '#$rank',
@@ -1146,12 +1260,20 @@ class MockPodiumCard extends StatelessWidget {
                 Text(name, style: context.cardTitle),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
-                  Text(subtitle!, style: context.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(
+                    subtitle!,
+                    style: context.caption,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ],
             ),
           ),
-          Text(score, style: context.sectionTitle.copyWith(color: AppColors.primary)),
+          Text(
+            score,
+            style: context.sectionTitle.copyWith(color: AppColors.primary),
+          ),
         ],
       ),
     );
@@ -1185,7 +1307,11 @@ class MockScoreRing extends StatelessWidget {
           ),
           Text(
             '${percent.round()}%',
-            style: context.caption.copyWith(fontWeight: FontWeight.w700, color: context.colors.onSurface, fontSize: 11),
+            style: context.caption.copyWith(
+              fontWeight: FontWeight.w700,
+              color: context.colors.onSurface,
+              fontSize: 11,
+            ),
           ),
         ],
       ),
@@ -1210,7 +1336,12 @@ class MockBackButton extends StatelessWidget {
 }
 
 class MockDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const MockDetailAppBar({super.key, required this.title, this.leading, this.onBack});
+  const MockDetailAppBar({
+    super.key,
+    required this.title,
+    this.leading,
+    this.onBack,
+  });
 
   final String title;
   final Widget? leading;
@@ -1278,7 +1409,9 @@ class MockToast {
         foregroundColor = AppColors.success;
       case MockToastTone.info:
         backgroundColor = snackBarTheme.backgroundColor;
-        foregroundColor = snackBarTheme.contentTextStyle?.color ?? theme.colorScheme.onInverseSurface;
+        foregroundColor =
+            snackBarTheme.contentTextStyle?.color ??
+            theme.colorScheme.onInverseSurface;
     }
 
     ScaffoldMessenger.of(context)
@@ -1287,7 +1420,9 @@ class MockToast {
         SnackBar(
           content: Text(
             message,
-            style: (snackBarTheme.contentTextStyle ?? theme.textTheme.bodyMedium)?.copyWith(color: foregroundColor),
+            style:
+                (snackBarTheme.contentTextStyle ?? theme.textTheme.bodyMedium)
+                    ?.copyWith(color: foregroundColor),
           ),
           backgroundColor: backgroundColor,
           behavior: snackBarTheme.behavior ?? SnackBarBehavior.floating,
@@ -1297,14 +1432,23 @@ class MockToast {
       );
   }
 
-  static void success(BuildContext context, String message, {Duration duration = const Duration(seconds: 3)}) =>
-      show(context, message, tone: MockToastTone.success, duration: duration);
+  static void success(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 3),
+  }) => show(context, message, tone: MockToastTone.success, duration: duration);
 
-  static void error(BuildContext context, String message, {Duration duration = const Duration(seconds: 3)}) =>
-      show(context, message, tone: MockToastTone.error, duration: duration);
+  static void error(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 3),
+  }) => show(context, message, tone: MockToastTone.error, duration: duration);
 
-  static void info(BuildContext context, String message, {Duration duration = const Duration(seconds: 3)}) =>
-      show(context, message, tone: MockToastTone.info, duration: duration);
+  static void info(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 3),
+  }) => show(context, message, tone: MockToastTone.info, duration: duration);
 }
 
 class MockConfirmDialog {
@@ -1362,10 +1506,14 @@ class _MockConfirmDialogContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDanger = variant == MockConfirmDialogVariant.danger || isDestructiveConfirm;
-    final iconBackground = isDanger ? context.appErrorSoft : context.appPrimarySoft;
+    final isDanger =
+        variant == MockConfirmDialogVariant.danger || isDestructiveConfirm;
+    final iconBackground = isDanger
+        ? context.appErrorSoft
+        : context.appPrimarySoft;
     final iconColor = isDanger ? context.colors.error : context.colors.primary;
-    final dialogIcon = icon ??
+    final dialogIcon =
+        icon ??
         switch (variant) {
           MockConfirmDialogVariant.danger => LucideIcons.alertTriangle,
           MockConfirmDialogVariant.warning => LucideIcons.info,
@@ -1379,8 +1527,18 @@ class _MockConfirmDialogContent extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         side: BorderSide(color: context.appBorder),
       ),
-      contentPadding: const EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, 0),
-      actionsPadding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.section, AppSpacing.page, AppSpacing.page),
+      contentPadding: const EdgeInsets.fromLTRB(
+        AppSpacing.page,
+        20,
+        AppSpacing.page,
+        0,
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(
+        AppSpacing.page,
+        AppSpacing.section,
+        AppSpacing.page,
+        AppSpacing.page,
+      ),
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1412,7 +1570,9 @@ class _MockConfirmDialogContent extends StatelessWidget {
           width: double.infinity,
           child: hideCancel
               ? FilledButton(
-                  style: isDanger ? mockDestructiveFilledButtonStyle(context) : null,
+                  style: isDanger
+                      ? mockDestructiveFilledButtonStyle(context)
+                      : null,
                   onPressed: () => Navigator.of(context).pop(true),
                   child: Text(confirmLabel),
                 )
@@ -1427,7 +1587,9 @@ class _MockConfirmDialogContent extends StatelessWidget {
                     const SizedBox(width: AppSpacing.section),
                     Expanded(
                       child: FilledButton(
-                        style: isDanger ? mockDestructiveFilledButtonStyle(context) : null,
+                        style: isDanger
+                            ? mockDestructiveFilledButtonStyle(context)
+                            : null,
                         onPressed: () => Navigator.of(context).pop(true),
                         child: Text(confirmLabel),
                       ),

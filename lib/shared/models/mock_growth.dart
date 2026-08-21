@@ -184,6 +184,9 @@ class PostUtmePackSummary extends Equatable {
     this.summary,
     this.listPrice,
     this.practiceExamCount = 0,
+    this.brochureUrl,
+    this.cutOffMarks,
+    this.entryRequirements,
   });
 
   factory PostUtmePackSummary.fromJson(Map<String, dynamic> json) {
@@ -194,6 +197,9 @@ class PostUtmePackSummary extends Equatable {
       summary: json['summary']?.toString(),
       listPrice: json['listPrice'] is num ? (json['listPrice'] as num).toDouble() : null,
       practiceExamCount: json['practiceExamCount'] is num ? (json['practiceExamCount'] as num).toInt() : 0,
+      brochureUrl: json['brochureUrl']?.toString(),
+      cutOffMarks: json['cutOffMarks']?.toString(),
+      entryRequirements: json['entryRequirements']?.toString(),
     );
   }
 
@@ -203,6 +209,9 @@ class PostUtmePackSummary extends Equatable {
   final String? summary;
   final double? listPrice;
   final int practiceExamCount;
+  final String? brochureUrl;
+  final String? cutOffMarks;
+  final String? entryRequirements;
 
   @override
   List<Object?> get props => [slug, title, universityName];

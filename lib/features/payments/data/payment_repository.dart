@@ -37,11 +37,16 @@ class PaymentRepository {
     );
   }
 
-  Future<CheckoutResponse> initializeCheckout(String slug, {String? agentCode}) {
+  Future<CheckoutResponse> initializeCheckout(
+    String slug, {
+    String? agentCode,
+    required String transactionPin,
+  }) {
     return _dio.postData(
       ApiPaths.packageCheckout(slug),
       data: {
         if (agentCode != null && agentCode.isNotEmpty) 'agentCode': agentCode,
+        'transactionPin': transactionPin,
       },
       parser: (json) => CheckoutResponse.fromJson(json as Map<String, dynamic>),
     );

@@ -47,6 +47,7 @@ class AuthRepository {
     required String fullName,
     required String email,
     required String password,
+    String? referralCode,
   }) async {
     final data = await _dio.postData<Map<String, dynamic>>(
       ApiPaths.signup,
@@ -54,6 +55,8 @@ class AuthRepository {
         'fullName': fullName.trim(),
         'email': email.trim(),
         'password': password,
+        if (referralCode != null && referralCode.trim().isNotEmpty)
+          'referralCode': referralCode.trim().toUpperCase(),
       },
       parser: (json) => json as Map<String, dynamic>,
     );

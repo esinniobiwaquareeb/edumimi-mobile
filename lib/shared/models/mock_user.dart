@@ -10,6 +10,7 @@ class MockUser extends Equatable {
     this.phone,
     this.avatarUrl,
     this.isVerified,
+    this.hasTransactionPin = false,
     this.mockProfile,
   });
 
@@ -23,6 +24,7 @@ class MockUser extends Equatable {
       phone: json['phone']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
       isVerified: json['isVerified'] as bool?,
+      hasTransactionPin: json['hasTransactionPin'] as bool? ?? false,
       mockProfile: json['mockProfile'] is Map<String, dynamic>
           ? MockProfile.fromJson(json['mockProfile'] as Map<String, dynamic>)
           : null,
@@ -37,6 +39,7 @@ class MockUser extends Equatable {
   final String? phone;
   final String? avatarUrl;
   final bool? isVerified;
+  final bool hasTransactionPin;
   final MockProfile? mockProfile;
 
   String get displayName {
@@ -72,11 +75,13 @@ class MockUser extends Equatable {
         'phone': phone,
         'avatarUrl': avatarUrl,
         'isVerified': isVerified,
+        'hasTransactionPin': hasTransactionPin,
         'mockProfile': mockProfile?.toJson(),
       };
 
   @override
-  List<Object?> get props => [id, email, role, name, fullName, phone, avatarUrl, isVerified, mockProfile];
+  List<Object?> get props =>
+      [id, email, role, name, fullName, phone, avatarUrl, isVerified, hasTransactionPin, mockProfile];
 }
 
 class MockProfile extends Equatable {
