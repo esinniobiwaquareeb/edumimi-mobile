@@ -6,6 +6,7 @@ import 'package:mock_mobile/core/router/app_router.dart';
 import 'package:mock_mobile/core/router/deep_link_listener.dart';
 import 'package:mock_mobile/core/theme/app_theme.dart';
 import 'package:mock_mobile/core/theme/theme_provider.dart';
+import 'package:mock_mobile/features/notifications/presentation/app_icon_badge_listener.dart';
 import 'package:mock_mobile/features/push/data/push_notification_service.dart';
 
 class MockMobileApp extends ConsumerStatefulWidget {
@@ -33,15 +34,17 @@ class _MockMobileAppState extends ConsumerState<MockMobileApp> {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeControllerProvider);
 
-    return DeepLinkListener(
-      child: OfflineSyncListener(
-        child: MaterialApp.router(
-        title: AppConfig.appName,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: themeMode,
-        routerConfig: router,
-        debugShowCheckedModeBanner: false,
+    return AppIconBadgeListener(
+      child: DeepLinkListener(
+        child: OfflineSyncListener(
+          child: MaterialApp.router(
+          title: AppConfig.appName,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          routerConfig: router,
+          debugShowCheckedModeBanner: false,
+          ),
         ),
       ),
     );

@@ -18,8 +18,12 @@ class UnreadCountsRepository {
     );
   }
 
-  Future<void> markActivityRead() {
-    return _dio.postData(ApiPaths.activityRead, data: const {}, parser: (_) {});
+  Future<void> markAllAsRead() {
+    return _dio.postData(
+      ApiPaths.notificationsMarkAllRead,
+      data: const {},
+      parser: (_) {},
+    );
   }
 }
 

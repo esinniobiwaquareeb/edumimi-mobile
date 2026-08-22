@@ -9,12 +9,12 @@ import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
-import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/notifications/data/notifications_repository.dart';
 import 'package:mock_mobile/features/notifications/data/unread_counts_repository.dart';
 import 'package:mock_mobile/features/notifications/notifications_push_actions.dart';
-import 'package:mock_mobile/features/notifications/utils/app_activity_notifications.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/features/push/data/push_notification_service.dart';
+import 'package:mock_mobile/shared/models/mock_notification.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -32,14 +32,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _markActivityRead());
-  }
-
-  Future<void> _markActivityRead() async {
-    try {
-      await ref.read(unreadCountsRepositoryProvider).markActivityRead();
-      invalidateUnreadSummary(ref);
-    } catch (_) {}
   }
 
   @override
@@ -105,79 +97,128 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
   }
 }
 
-class _ActivityNotificationsTab extends ConsumerWidget {
+class _ActivityNotificationsTab extends ConsumerStatefulWidget {
   const _ActivityNotificationsTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final purchasesAsync = ref.watch(myPurchasesProvider);
-    final attemptsAsync = ref.watch(attemptsProvider);
+  ConsumerState<_ActivityNotificationsTab> createState() => _ActivityNotificationsTabState();
+}
 
-    return purchasesAsync.when(
-      loading: () => const MockLoadingView(message: 'Loading activity…'),
+class _ActivityNotificationsTabState extends ConsumerState<_ActivityNotificationsTab> {
+  var _isMarkingAll = false;
+
+  Future<void> _markAllAsRead() async {
+    setState(() => _isMarkingAll = true);
+    try {
+      await ref.read(notificationsRepositoryProvider).markAllAsRead();
+      invalidateNotifications(ref);
+      invalidateUnreadSummary(ref);
+    } finally {
+      if (mounted) {
+        setState(() => _isMarkingAll = false);
+      }
+    }
+  }
+
+  Future<void> _openNotification(MockNotification item) async {
+    if (!item.isRead) {
+      await ref.read(notificationsRepositoryProvider).markAsRead(item.id);
+      invalidateNotifications(ref);
+      invalidateUnreadSummary(ref);
+    }
+
+    final route = item.route;
+    if (route != null && route.isNotEmpty && mounted) {
+      context.push(route);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final notificationsAsync = ref.watch(notificationsProvider);
+
+    return notificationsAsync.when(
+      loading: () => const MockLoadingView(message: 'Loading notifications…'),
       error: (error, _) => MockErrorView(
         message: error.toString(),
-        onRetry: () => ref.invalidate(myPurchasesProvider),
+        onRetry: () => ref.invalidate(notificationsProvider),
       ),
-      data: (purchases) => attemptsAsync.when(
-        loading: () => const MockLoadingView(message: 'Loading activity…'),
-        error: (error, _) => MockErrorView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(attemptsProvider),
-        ),
-        data: (attempts) {
-          final items = buildAppActivityNotifications(
-            purchases: purchases,
-            attempts: attempts,
+      data: (items) {
+        final unreadCount = items.where((item) => !item.isRead).length;
+
+        if (items.isEmpty) {
+          return const MockEmptyState(
+            title: 'No notifications yet',
+            message: 'Payments, package unlocks, and submitted scores will show up here.',
           );
+        }
 
-          if (items.isEmpty) {
-            return const MockEmptyState(
-              title: 'No activity yet',
-              message: 'Payments, package unlocks, and submitted scores will show up here.',
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(myPurchasesProvider);
-              ref.invalidate(attemptsProvider);
-            },
-            child: ListView.separated(
-              padding: const EdgeInsets.all(AppSpacing.page),
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.section),
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return _ActivityNotificationCard(item: item);
-              },
+        return Column(
+          children: [
+            if (unreadCount > 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.page, AppSpacing.page, 0),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isMarkingAll ? null : _markAllAsRead,
+                    child: Text(_isMarkingAll ? 'Marking all read…' : 'Mark all as read'),
+                  ),
+                ),
+              ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(notificationsProvider);
+                  invalidateUnreadSummary(ref);
+                },
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(AppSpacing.page),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.section),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return _NotificationCard(
+                      item: item,
+                      onTap: () => _openNotification(item),
+                    );
+                  },
+                ),
+              ),
             ),
-          );
-        },
-      ),
+          ],
+        );
+      },
     );
   }
 }
 
-class _ActivityNotificationCard extends StatelessWidget {
-  const _ActivityNotificationCard({required this.item});
+class _NotificationCard extends StatelessWidget {
+  const _NotificationCard({
+    required this.item,
+    required this.onTap,
+  });
 
-  final AppActivityNotification item;
+  final MockNotification item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final icon = switch (item.kind) {
-      AppActivityNotificationKind.purchase => LucideIcons.receipt,
-      AppActivityNotificationKind.attempt => LucideIcons.barChart3,
+    final icon = switch (item.category) {
+      MockNotificationCategory.purchase => LucideIcons.receipt,
+      MockNotificationCategory.attempt => LucideIcons.barChart3,
+      MockNotificationCategory.referral => LucideIcons.gift,
+      MockNotificationCategory.system => LucideIcons.bell,
     };
-    final timestamp = item.timestamp.millisecondsSinceEpoch > 0
-        ? DateFormat('d MMM · HH:mm').format(item.timestamp.toLocal())
+    final parsed = DateTime.tryParse(item.createdAt);
+    final timestamp = parsed != null
+        ? DateFormat('d MMM · HH:mm').format(parsed.toLocal())
         : 'Recently';
 
     return MockCard(
       child: InkWell(
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        onTap: item.route == null ? null : () => context.push(item.route!),
+        onTap: onTap,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -185,7 +226,7 @@ class _ActivityNotificationCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: context.appPrimarySoft,
+                color: item.isRead ? context.appNeutralSoft : context.appPrimarySoft,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                 border: Border.all(color: context.appBorder),
               ),
@@ -196,7 +237,27 @@ class _ActivityNotificationCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.title, style: context.cardTitle),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: context.cardTitle.copyWith(
+                            fontWeight: item.isRead ? FontWeight.w600 : FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (!item.isRead)
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   Text(item.message, style: context.bodySecondary),
                   const SizedBox(height: AppSpacing.item),

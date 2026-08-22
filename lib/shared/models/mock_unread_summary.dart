@@ -29,6 +29,12 @@ class MockUnreadSummary extends Equatable {
   final bool pushPrompt;
   final int notificationUnread;
 
+  /// Total unread shown on the home screen app icon (community + notifications).
+  int get appIconBadgeCount {
+    final total = communityUnread + notificationUnread;
+    return total <= 0 ? 0 : total;
+  }
+
   @override
   List<Object?> get props => [communityUnread, activityUnread, pushPrompt, notificationUnread];
 }

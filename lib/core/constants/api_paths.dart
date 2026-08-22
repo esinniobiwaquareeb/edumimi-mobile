@@ -25,6 +25,8 @@ class ApiPaths {
   static const engagement = '/me/engagement';
   static const unreadSummary = '/me/unread-summary';
   static const activityRead = '/me/activity/read';
+  static const notifications = '/me/notifications';
+  static const notificationsMarkAllRead = '/me/notifications/mark-all-read';
   static const packages = '/packages';
   static const myPurchases = '/my/purchases';
   static const verifyPayment = '/payments/verify';
@@ -46,6 +48,7 @@ class ApiPaths {
   static String communityJoin(String roomId) => '/community/rooms/$roomId/join';
   static String communityRead(String roomId) => '/community/rooms/$roomId/read';
   static String communityReport(String messageId) => '/community/messages/$messageId/report';
+  static String notificationRead(String notificationId) => '/me/notifications/$notificationId/read';
   static String publicChallenge(String token) => '/public/challenges/$token';
   static String publicParentView(String token) => '/public/parent/$token';
   static String postUtmePackDetail(String slug) => '/post-utme/packs/$slug';
