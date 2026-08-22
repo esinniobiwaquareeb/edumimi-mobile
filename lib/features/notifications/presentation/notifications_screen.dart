@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mock_mobile/core/config/app_config.dart';
 import 'package:mock_mobile/core/theme/app_colors.dart';
-import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
+import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
+import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/notifications/notifications_push_actions.dart';
+import 'package:mock_mobile/features/notifications/utils/app_activity_notifications.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/features/push/data/push_notification_service.dart';
 
@@ -17,24 +22,27 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
   var _isUpdatingPush = false;
   var _isPreviewingLocal = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   Future<void> _togglePushNotifications(bool enabled) async {
     setState(() => _isUpdatingPush = true);
     try {
-      final service = ref.read(pushNotificationServiceProvider);
-      if (enabled) {
-        final router = GoRouter.of(context);
-        final success = await service.initialize(router);
-        if (!success && mounted) {
-          MockToast.info(context, 'Push notifications are not available on this device yet.');
-        }
-      } else {
-        await service.disable();
-      }
-      ref.invalidate(engagementProvider);
+      await toggleMockPushNotifications(ref: ref, context: context, enabled: enabled);
     } finally {
       if (mounted) {
         setState(() => _isUpdatingPush = false);
@@ -58,53 +66,169 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final engagementAsync = ref.watch(engagementProvider);
-    final firebaseConfigured = AppConfig.isFirebaseConfigured;
-
     return Scaffold(
-      appBar: const MockDetailAppBar(title: 'Notifications'),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.page),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const MockBackButton(),
+        title: Text('Notifications', style: context.cardTitle),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Activity'),
+            Tab(text: 'Push'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          if (!firebaseConfigured) ...[
-            MockCard(
-              elevated: true,
+          const _ActivityNotificationsTab(),
+          _PushNotificationsTab(
+            isUpdatingPush: _isUpdatingPush,
+            isPreviewingLocal: _isPreviewingLocal,
+            onTogglePush: _togglePushNotifications,
+            onPreviewLocal: _previewLocalReminder,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityNotificationsTab extends ConsumerWidget {
+  const _ActivityNotificationsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final purchasesAsync = ref.watch(myPurchasesProvider);
+    final attemptsAsync = ref.watch(attemptsProvider);
+
+    return purchasesAsync.when(
+      loading: () => const MockLoadingView(message: 'Loading activity…'),
+      error: (error, _) => MockErrorView(
+        message: error.toString(),
+        onRetry: () => ref.invalidate(myPurchasesProvider),
+      ),
+      data: (purchases) => attemptsAsync.when(
+        loading: () => const MockLoadingView(message: 'Loading activity…'),
+        error: (error, _) => MockErrorView(
+          message: error.toString(),
+          onRetry: () => ref.invalidate(attemptsProvider),
+        ),
+        data: (attempts) {
+          final items = buildAppActivityNotifications(
+            purchases: purchases,
+            attempts: attempts,
+          );
+
+          if (items.isEmpty) {
+            return const MockEmptyState(
+              title: 'No activity yet',
+              message: 'Payments, package unlocks, and submitted scores will show up here.',
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(myPurchasesProvider);
+              ref.invalidate(attemptsProvider);
+            },
+            child: ListView.separated(
+              padding: const EdgeInsets.all(AppSpacing.page),
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.section),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _ActivityNotificationCard(item: item);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ActivityNotificationCard extends StatelessWidget {
+  const _ActivityNotificationCard({required this.item});
+
+  final AppActivityNotification item;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = switch (item.kind) {
+      AppActivityNotificationKind.purchase => LucideIcons.receipt,
+      AppActivityNotificationKind.attempt => LucideIcons.barChart3,
+    };
+    final timestamp = item.timestamp.millisecondsSinceEpoch > 0
+        ? DateFormat('d MMM · HH:mm').format(item.timestamp.toLocal())
+        : 'Recently';
+
+    return MockCard(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        onTap: item.route == null ? null : () => context.push(item.route!),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: context.appPrimarySoft,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                border: Border.all(color: context.appBorder),
+              ),
+              child: Icon(icon, size: 20, color: AppColors.primary),
+            ),
+            const SizedBox(width: AppSpacing.section),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline_rounded, color: Colors.orange.shade800, size: 22),
-                      const SizedBox(width: AppSpacing.item),
-                      Expanded(child: Text('Push not configured', style: context.sectionTitle)),
-                    ],
-                  ),
+                  Text(item.title, style: context.cardTitle),
+                  const SizedBox(height: 4),
+                  Text(item.message, style: context.bodySecondary),
                   const SizedBox(height: AppSpacing.item),
-                  Text(
-                    'Firebase is not enabled in this build. Remote streak reminders require dart-defines and platform config files.',
-                    style: context.bodySecondary,
-                  ),
-                  const SizedBox(height: AppSpacing.section),
-                  Text('To enable FCM push:', style: context.cardTitle.copyWith(fontSize: 14)),
-                  const SizedBox(height: AppSpacing.item),
-                  Text(
-                    '1. Create a Firebase project and add Android + iOS apps\n'
-                    '2. Replace android/app/google-services.json\n'
-                    '3. Add ios/Runner/GoogleService-Info.plist from Firebase Console\n'
-                    '4. Rebuild with FIREBASE_PROJECT_ID, FIREBASE_API_KEY, FIREBASE_APP_ID, and FIREBASE_MESSAGING_SENDER_ID dart-defines\n\n'
-                    'See README.md → Firebase setup for full steps.',
-                    style: context.caption,
-                  ),
-                  const SizedBox(height: AppSpacing.section),
-                  MockSecondaryButton(
-                    label: _isPreviewingLocal ? 'Sending preview…' : 'Preview local reminder',
-                    onPressed: _isPreviewingLocal ? null : _previewLocalReminder,
-                  ),
+                  Text(timestamp, style: context.caption),
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.page),
+            if (item.route != null)
+              MockLongArrowIcon(
+                direction: MockLongArrowDirection.right,
+                size: 18,
+                color: context.appTextDisabled,
+              ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PushNotificationsTab extends ConsumerWidget {
+  const _PushNotificationsTab({
+    required this.isUpdatingPush,
+    required this.isPreviewingLocal,
+    required this.onTogglePush,
+    required this.onPreviewLocal,
+  });
+
+  final bool isUpdatingPush;
+  final bool isPreviewingLocal;
+  final ValueChanged<bool> onTogglePush;
+  final VoidCallback onPreviewLocal;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final engagementAsync = ref.watch(engagementProvider);
+    final firebaseConfigured = AppConfig.isFirebaseConfigured;
+
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.page),
+      children: [
+        if (!firebaseConfigured) ...[
           MockCard(
             elevated: true,
             child: Column(
@@ -112,102 +236,101 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: context.appPrimarySoft,
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                        border: Border.all(color: context.appBorder),
-                      ),
-                      child: const Icon(Icons.notifications_none_rounded, color: AppColors.primary, size: 22),
-                    ),
-                    const SizedBox(width: AppSpacing.section),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Practice reminders', style: context.sectionTitle),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Stay on track with daily streak nudges — not a full message inbox yet.',
-                            style: context.bodySecondary,
-                          ),
-                        ],
-                      ),
-                    ),
+                    Icon(Icons.info_outline_rounded, color: Colors.orange.shade800, size: 22),
+                    const SizedBox(width: AppSpacing.item),
+                    Expanded(child: Text('Push not configured', style: context.sectionTitle)),
                   ],
+                ),
+                const SizedBox(height: AppSpacing.item),
+                Text(
+                  'Add Firebase config files and rebuild to enable remote streak reminders.',
+                  style: context.bodySecondary,
+                ),
+                const SizedBox(height: AppSpacing.section),
+                MockSecondaryButton(
+                  label: isPreviewingLocal ? 'Sending preview…' : 'Preview local reminder',
+                  onPressed: isPreviewingLocal ? null : onPreviewLocal,
                 ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.page),
-          engagementAsync.when(
-            loading: () => const MockCard(child: MockLoadingView(message: 'Loading reminders…')),
-            error: (_, __) => const SizedBox.shrink(),
-            data: (engagement) {
-              final streakLabel = engagement.practiceStreakDays > 0
-                  ? '${engagement.practiceStreakDays}-day streak active'
-                  : 'No active streak yet';
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  MockCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const MockSectionTitle(title: 'Your streak'),
-                        const SizedBox(height: AppSpacing.item),
-                        Text(
-                          engagement.streakAtRisk
-                              ? 'Your streak is on the line — practice today to keep it alive.'
-                              : engagement.practiceStreakDays > 0
-                                  ? 'Complete one practice today to extend your streak.'
-                                  : 'Complete one practice today to start a streak.',
-                          style: context.bodySecondary,
-                        ),
-                        const SizedBox(height: AppSpacing.section),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.local_fire_department_rounded,
-                              size: 18,
-                              color: engagement.streakAtRisk ? const Color(0xFFD97706) : AppColors.primary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(streakLabel, style: context.cardTitle),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.page),
-                  MockCard(
-                    child: SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('Daily streak reminders', style: context.cardTitle),
-                      subtitle: Text(
-                        firebaseConfigured
-                            ? 'Get a push notification if you have an active streak but have not practiced today.'
-                            : 'Configure Firebase (see notice above) to enable remote push.',
-                        style: context.caption,
-                      ),
-                      value: firebaseConfigured && engagement.fcmNotificationsEnabled,
-                      onChanged: (!_isUpdatingPush && firebaseConfigured) ? _togglePushNotifications : null,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: AppSpacing.page),
-          MockSecondaryButton(
-            label: 'Open profile settings',
-            onPressed: () => context.push('/profile'),
-          ),
         ],
-      ),
+        MockCard(
+          elevated: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Device push settings', style: context.sectionTitle),
+              const SizedBox(height: 4),
+              Text(
+                'Streak reminders are sent to this phone when you have an active streak but have not practiced today.',
+                style: context.bodySecondary,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.page),
+        engagementAsync.when(
+          loading: () => const MockCard(child: MockLoadingView(message: 'Loading push settings…')),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (engagement) {
+            final streakLabel = engagement.practiceStreakDays > 0
+                ? '${engagement.practiceStreakDays}-day streak active'
+                : 'No active streak yet';
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                MockCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const MockSectionTitle(title: 'Your streak'),
+                      const SizedBox(height: AppSpacing.item),
+                      Text(
+                        engagement.streakAtRisk
+                            ? 'Your streak is on the line — practice today to keep it alive.'
+                            : engagement.practiceStreakDays > 0
+                                ? 'Complete one practice today to extend your streak.'
+                                : 'Complete one practice today to start a streak.',
+                        style: context.bodySecondary,
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.local_fire_department_rounded,
+                            size: 18,
+                            color: engagement.streakAtRisk ? const Color(0xFFD97706) : AppColors.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(streakLabel, style: context.cardTitle),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.page),
+                MockCard(
+                  child: SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Daily streak reminders', style: context.cardTitle),
+                    subtitle: Text(
+                      firebaseConfigured
+                          ? 'Get a push notification if you have an active streak but have not practiced today.'
+                          : 'Configure Firebase to enable remote push.',
+                      style: context.caption,
+                    ),
+                    value: firebaseConfigured && engagement.fcmNotificationsEnabled,
+                    onChanged: (!isUpdatingPush && firebaseConfigured) ? onTogglePush : null,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }

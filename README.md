@@ -70,6 +70,7 @@ flutter run \
 - Study Squad community chat (REST history + Socket.IO live messages)
 - FCM streak reminders (toggle in profile)
 - Play Store release guide: see [PLAYSTORE.md](PLAYSTORE.md)
+- **Full store deployment (assets, checklists, both stores):** [store/STORE_DEPLOYMENT.md](store/STORE_DEPLOYMENT.md)
 
 ## Notes
 
@@ -87,8 +88,8 @@ Remote streak reminders require Firebase Cloud Messaging. Without configuration,
 ### 1. Firebase Console
 
 1. Create a project at [Firebase Console](https://console.firebase.google.com/).
-2. Add an **Android** app with package name `com.edumimi.mock_mobile`.
-3. Add an **iOS** app with bundle ID `com.edumimi.mockMobile`.
+2. Add an **Android** app with package name `com.edumimi.mock`.
+3. Add an **iOS** app with bundle ID `com.edumimi.mock`.
 4. Download config files:
    - Android → `google-services.json` → replace `android/app/google-services.json`
    - iOS → `GoogleService-Info.plist` → add to `ios/Runner/` and include in Xcode Runner target

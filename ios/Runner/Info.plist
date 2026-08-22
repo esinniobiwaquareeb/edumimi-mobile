@@ -75,7 +75,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.edumimi.mockMobile</string>
+			<string>com.edumimi.mock</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>mockedumimi</string>

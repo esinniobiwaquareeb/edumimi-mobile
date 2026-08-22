@@ -51,7 +51,7 @@ class AppConfig {
 
   static const firebaseProjectId = String.fromEnvironment(
     'FIREBASE_PROJECT_ID',
-    defaultValue: '',
+    defaultValue: 'edumimi-mock',
   );
 
   static bool get isFirebaseConfigured => firebaseProjectId.isNotEmpty;

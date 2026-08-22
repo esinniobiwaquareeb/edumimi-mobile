@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | App name | mock.edumimi |
-| Package ID | `com.edumimi.mock_mobile` |
+| Package ID | `com.edumimi.mock` |
 | Min SDK | 23 (Android 6.0+) |
 | Category | Education |
 | Content rating | Everyone (exam prep, no UGC moderation required beyond chat reports) |
@@ -61,11 +61,16 @@ flutter build appbundle \
 
 ## Store assets checklist
 
-- [ ] 512×512 hi-res icon
-- [ ] Feature graphic 1024×500
-- [ ] Phone screenshots (dashboard, exam session, packages, community)
-- [ ] Privacy policy URL (cover chat, payments, push tokens)
-- [ ] Data safety form: email, practice data, payment reference, FCM token
+Generated assets live in `store/assets/` — regenerate with `python3 store/generate_store_assets.py`.
+
+- [x] 512×512 hi-res icon (`play-store-icon-512.png`)
+- [x] 1024×1024 App Store icon (`app-store-icon-1024.png`)
+- [x] Feature graphic 1024×500 (`feature-graphic-1024x500.png`)
+- [ ] Phone screenshots (capture from device; frames in `store/assets/screenshot-frames/`)
+- [ ] Privacy policy URL live at https://mock.edumimi.com/privacy
+- [ ] Data safety form: see `store/listings/google-play-data-safety.md`
+
+Full readiness checklists: [store/STORE_DEPLOYMENT.md](store/STORE_DEPLOYMENT.md)
 
 ## Deep links
 

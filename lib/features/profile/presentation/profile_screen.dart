@@ -18,9 +18,9 @@ import 'package:mock_mobile/core/widgets/mock_share_button.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/notifications/notifications_push_actions.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/features/profile/data/profile_repository.dart';
-import 'package:mock_mobile/features/push/data/push_notification_service.dart';
 import 'package:mock_mobile/shared/models/mock_engagement.dart';
 import 'package:mock_mobile/shared/models/mock_user.dart';
 
@@ -50,17 +50,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
   Future<void> _togglePushNotifications(bool enabled) async {
     setState(() => _isUpdatingPush = true);
     try {
-      final service = ref.read(pushNotificationServiceProvider);
-      if (enabled) {
-        final router = GoRouter.of(context);
-        final success = await service.initialize(router);
-        if (!success && mounted) {
-          MockToast.info(context, 'Push notifications are not available on this device yet.');
-        }
-      } else {
-        await service.disable();
-      }
-      ref.invalidate(engagementProvider);
+      await toggleMockPushNotifications(ref: ref, context: context, enabled: enabled);
     } finally {
       if (mounted) setState(() => _isUpdatingPush = false);
     }

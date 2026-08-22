@@ -69,13 +69,22 @@ class PushNotificationService {
   }
 
   Future<void> disable() async {
-    if (_currentToken != null) {
-      await _repository.unregisterFcmToken(_currentToken!);
+    if (!AppConfig.isFirebaseConfigured) {
+      return;
+    }
+
+    if (!_firebaseInitialized) {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      _firebaseInitialized = true;
+    }
+
+    final token = _currentToken ?? await FirebaseMessaging.instance.getToken();
+    if (token != null && token.isNotEmpty) {
+      await _repository.unregisterFcmToken(token);
       _currentToken = null;
     }
-    if (AppConfig.isFirebaseConfigured && _firebaseInitialized) {
-      await FirebaseMessaging.instance.deleteToken();
-    }
+
+    await FirebaseMessaging.instance.deleteToken();
   }
 
   Future<bool> get isEnabled async {

@@ -223,7 +223,7 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
         MockSplitActionRow(
           start: MockSecondaryButton(
             label: exam.isLocked ? 'Browse packages' : 'Browse more mocks',
-            onPressed: () => context.push(exam.isLocked ? '/packages' : '/exams'),
+            onPressed: () => exam.isLocked ? context.push('/packages') : context.go('/exams'),
             expand: true,
           ),
           end: MockPrimaryButton(

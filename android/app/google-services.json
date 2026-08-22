@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "mock-edumimi-dev",
-    "storage_bucket": "mock-edumimi-dev.appspot.com"
+    "project_number": "345341033333",
+    "project_id": "edumimi-mock",
+    "storage_bucket": "edumimi-mock.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:345341033333:android:4564ac6f0815bc9e52313c",
         "android_client_info": {
-          "package_name": "com.edumimi.mock_mobile"
+          "package_name": "com.edumimi.mock"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "placeholder-replace-with-firebase-console-key"
+          "current_key": "AIzaSyCJHuEpHBlicSPkXnTYrR8GsL5uTF7dnp0"
         }
       ],
       "services": {

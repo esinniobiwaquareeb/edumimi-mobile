@@ -1,4 +1,4 @@
-package com.edumimi.mock_mobile
+package com.edumimi.mock
 
 import io.flutter.embedding.android.FlutterActivity
 
