@@ -590,27 +590,137 @@ class MockSegmentedControl<T extends Object> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.item,
-      runSpacing: AppSpacing.item,
-      children: segments.map((segment) {
-        final isSelected = segment == selected;
-        return FilterChip(
-          label: Text(labelBuilder(segment)),
-          selected: isSelected,
-          showCheckmark: false,
-          onSelected: (_) => onChanged(segment),
-          backgroundColor: context.colors.surface,
-          selectedColor: context.appPrimarySoft,
-          side: BorderSide(
-            color: isSelected ? AppColors.primary : context.appBorder,
+    return _MockFilledSegmentShell(
+      child: Row(
+        children: segments.map((segment) {
+          final isSelected = segment == selected;
+          return Expanded(
+            child: _MockFilledSegmentButton(
+              label: labelBuilder(segment),
+              isSelected: isSelected,
+              onTap: () => onChanged(segment),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+/// Rounded filled tab bar for screens paired with [TabBarView].
+class MockFilledTabBar extends StatelessWidget implements PreferredSizeWidget {
+  const MockFilledTabBar({
+    super.key,
+    required this.controller,
+    required this.tabs,
+    this.padding = const EdgeInsets.fromLTRB(
+      AppSpacing.page,
+      0,
+      AppSpacing.page,
+      AppSpacing.item,
+    ),
+  });
+
+  final TabController controller;
+  final List<Widget> tabs;
+  final EdgeInsets padding;
+
+  static const _barHeight = 44.0;
+
+  @override
+  Size get preferredSize => Size.fromHeight(padding.vertical + _barHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding,
+      child: _MockFilledSegmentShell(
+        height: _barHeight,
+        child: TabBar(
+          controller: controller,
+          dividerHeight: 0,
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicator: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            color: AppColors.primary,
           ),
-          labelStyle: context.caption.copyWith(
-            color: isSelected ? AppColors.primary : context.appTextSecondary,
-            fontWeight: FontWeight.w600,
+          labelColor: Colors.white,
+          unselectedLabelColor: context.appTextSecondary,
+          labelStyle: context.caption.copyWith(fontWeight: FontWeight.w700),
+          unselectedLabelStyle: context.caption.copyWith(fontWeight: FontWeight.w600),
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+          splashFactory: NoSplash.splashFactory,
+          tabs: tabs,
+        ),
+      ),
+    );
+  }
+}
+
+class _MockFilledSegmentShell extends StatelessWidget {
+  const _MockFilledSegmentShell({
+    required this.child,
+    this.height,
+  });
+
+  final Widget child;
+  final double? height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: context.appNeutralSoft,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(color: context.appBorder),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _MockFilledSegmentButton extends StatelessWidget {
+  const _MockFilledSegmentButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        splashFactory: NoSplash.splashFactory,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
           ),
-        );
-      }).toList(),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: context.caption.copyWith(
+              color: isSelected ? Colors.white : context.appTextSecondary,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -819,7 +929,8 @@ class MockAppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onProfileTap,
     this.onCommunityTap,
     this.onNotificationsTap,
-    this.showNotificationBadge = false,
+    this.communityBadgeCount = 0,
+    this.notificationBadgeCount = 0,
   });
 
   final String? userName;
@@ -828,7 +939,8 @@ class MockAppHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onProfileTap;
   final VoidCallback? onCommunityTap;
   final VoidCallback? onNotificationsTap;
-  final bool showNotificationBadge;
+  final int communityBadgeCount;
+  final int notificationBadgeCount;
 
   @override
   Size get preferredSize => const Size.fromHeight(56);
@@ -913,17 +1025,59 @@ class MockAppHeader extends StatelessWidget implements PreferredSizeWidget {
                     icon: AppIcons.community,
                     tooltip: 'Study Squad chat',
                     onTap: onCommunityTap!,
+                    badgeCount: communityBadgeCount,
                   ),
                 if (onNotificationsTap != null)
                   _MockHeaderIconButton(
                     icon: AppIcons.notifications,
                     tooltip: 'Notifications',
                     onTap: onNotificationsTap!,
-                    showBadge: showNotificationBadge,
+                    badgeCount: notificationBadgeCount,
                   ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class MockCountBadge extends StatelessWidget {
+  const MockCountBadge({
+    super.key,
+    required this.count,
+    this.color,
+  });
+
+  final int count;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    final label = count > 99 ? '99+' : '$count';
+    final badgeColor = color ?? AppColors.primary;
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+      padding: EdgeInsets.symmetric(horizontal: count > 9 ? 4 : 0),
+      decoration: BoxDecoration(
+        color: badgeColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: context.colors.surface, width: 1.5),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        label,
+        style: context.caption.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: 10,
+          height: 1,
         ),
       ),
     );
@@ -935,13 +1089,13 @@ class _MockHeaderIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
-    this.showBadge = false,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;
-  final bool showBadge;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -965,22 +1119,11 @@ class _MockHeaderIconButton extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   Icon(icon, size: 20, color: context.appTextSecondary),
-                  if (showBadge)
+                  if (badgeCount > 0)
                     Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: streakAtRiskColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: context.colors.surface,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
+                      top: 4,
+                      right: 4,
+                      child: MockCountBadge(count: badgeCount),
                     ),
                 ],
               ),
@@ -990,8 +1133,6 @@ class _MockHeaderIconButton extends StatelessWidget {
       ),
     );
   }
-
-  static const streakAtRiskColor = Color(0xFFD97706);
 }
 
 class MockNavDestination {

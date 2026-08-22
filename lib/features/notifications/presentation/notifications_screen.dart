@@ -10,6 +10,7 @@ import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/notifications/data/unread_counts_repository.dart';
 import 'package:mock_mobile/features/notifications/notifications_push_actions.dart';
 import 'package:mock_mobile/features/notifications/utils/app_activity_notifications.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
@@ -31,6 +32,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _markActivityRead());
+  }
+
+  Future<void> _markActivityRead() async {
+    try {
+      await ref.read(unreadCountsRepositoryProvider).markActivityRead();
+      invalidateUnreadSummary(ref);
+    } catch (_) {}
   }
 
   @override
@@ -43,6 +52,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
     setState(() => _isUpdatingPush = true);
     try {
       await toggleMockPushNotifications(ref: ref, context: context, enabled: enabled);
+      invalidateUnreadSummary(ref);
     } finally {
       if (mounted) {
         setState(() => _isUpdatingPush = false);
@@ -71,7 +81,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
         automaticallyImplyLeading: false,
         leading: const MockBackButton(),
         title: Text('Notifications', style: context.cardTitle),
-        bottom: TabBar(
+        bottom: MockFilledTabBar(
           controller: _tabController,
           tabs: const [
             Tab(text: 'Activity'),

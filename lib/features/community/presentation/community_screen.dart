@@ -12,6 +12,7 @@ import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/community/data/community_repository.dart';
 import 'package:mock_mobile/features/community/data/community_socket_service.dart';
+import 'package:mock_mobile/features/notifications/data/unread_counts_repository.dart';
 import 'package:mock_mobile/shared/models/community.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
@@ -63,6 +64,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     await ref.read(communityRepositoryProvider).joinRoom(room.id);
     await _loadMessages(room.id);
     await ref.read(communityRepositoryProvider).markRoomRead(room.id);
+    invalidateUnreadSummary(ref);
+    ref.invalidate(communityRoomsProvider);
 
     _messageSub?.cancel();
     _reactionSub?.cancel();
@@ -86,7 +89,15 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
 
     _messageSub = socket.messages.listen((message) {
       if (message.roomId != room.id) {
+        invalidateUnreadSummary(ref);
+        ref.invalidate(communityRoomsProvider);
         return;
+      }
+      if (!message.isOwn) {
+        ref.read(communityRepositoryProvider).markRoomRead(room.id).then((_) {
+          invalidateUnreadSummary(ref);
+          ref.invalidate(communityRoomsProvider);
+        });
       }
       setState(() {
         final existingIndex = _messages.indexWhere(
@@ -311,10 +322,19 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                       ),
                       title: Text(room.name, style: context.cardTitle),
                       subtitle: Text(room.description ?? room.type, style: context.bodySecondary),
-                      trailing: MockLongArrowIcon(
-                        direction: MockLongArrowDirection.right,
-                        size: AppIcons.forwardSize,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (room.unreadCount > 0) ...[
+                            MockCountBadge(count: room.unreadCount),
+                            const SizedBox(width: AppSpacing.item),
+                          ],
+                          MockLongArrowIcon(
+                            direction: MockLongArrowDirection.right,
+                            size: AppIcons.forwardSize,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
+                          ),
+                        ],
                       ),
                       onTap: () => _selectRoom(room),
                     ),

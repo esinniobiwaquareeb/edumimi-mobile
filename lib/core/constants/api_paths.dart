@@ -23,6 +23,8 @@ class ApiPaths {
   static const studyInsights = '/my/study-insights';
   static const leaderboard = '/leaderboard';
   static const engagement = '/me/engagement';
+  static const unreadSummary = '/me/unread-summary';
+  static const activityRead = '/me/activity/read';
   static const packages = '/packages';
   static const myPurchases = '/my/purchases';
   static const verifyPayment = '/payments/verify';

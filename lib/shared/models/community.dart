@@ -8,6 +8,7 @@ class CommunityRoom extends Equatable {
     this.description,
     this.emoji,
     required this.type,
+    this.unreadCount = 0,
   });
 
   factory CommunityRoom.fromJson(Map<String, dynamic> json) {
@@ -18,6 +19,7 @@ class CommunityRoom extends Equatable {
       description: json['description']?.toString(),
       emoji: json['emoji']?.toString(),
       type: json['type']?.toString() ?? 'GENERAL',
+      unreadCount: _asInt(json['unreadCount']),
     );
   }
 
@@ -27,9 +29,20 @@ class CommunityRoom extends Equatable {
   final String? description;
   final String? emoji;
   final String type;
+  final int unreadCount;
 
   @override
-  List<Object?> get props => [id, slug];
+  List<Object?> get props => [id, slug, unreadCount];
+}
+
+int _asInt(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return int.tryParse(value?.toString() ?? '') ?? 0;
 }
 
 class CommunityMessage extends Equatable {

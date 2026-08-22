@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
-import 'package:mock_mobile/features/payments/data/payment_repository.dart';
+import 'package:mock_mobile/features/notifications/data/unread_counts_repository.dart';
+import 'package:mock_mobile/shared/models/mock_unread_summary.dart';
 
 class MainShellScreen extends ConsumerWidget {
   const MainShellScreen({super.key, required this.navigationShell});
@@ -21,11 +22,8 @@ class MainShellScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user;
-    final engagementAsync = ref.watch(engagementProvider);
-
-    final engagement = engagementAsync.valueOrNull;
-    final streakAtRisk = engagement?.streakAtRisk ?? false;
-    final showNotificationBadge = streakAtRisk && !(engagement?.fcmNotificationsEnabled ?? false);
+    final unreadAsync = ref.watch(unreadSummaryProvider);
+    final unread = unreadAsync.valueOrNull ?? MockUnreadSummary.empty;
 
     return Scaffold(
       extendBody: true,
@@ -36,7 +34,8 @@ class MainShellScreen extends ConsumerWidget {
         onProfileTap: () => context.push('/profile'),
         onCommunityTap: () => context.push('/community'),
         onNotificationsTap: () => context.push('/notifications'),
-        showNotificationBadge: showNotificationBadge,
+        communityBadgeCount: unread.communityUnread,
+        notificationBadgeCount: unread.notificationUnread,
       ),
       body: Stack(
         clipBehavior: Clip.none,

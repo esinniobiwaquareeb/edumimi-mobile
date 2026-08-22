@@ -67,7 +67,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
         automaticallyImplyLeading: false,
         leading: const MockBackButton(),
         title: const Text('My profile'),
-        bottom: TabBar(
+        bottom: MockFilledTabBar(
           controller: _tabController,
           tabs: const [
             Tab(text: 'Personal'),
@@ -519,20 +519,15 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
             children: [
               Text('Appearance', style: context.sectionTitle),
               const SizedBox(height: AppSpacing.section),
-              ...AppThemeMode.values.map(
-                (mode) => RadioListTile<AppThemeMode>(
-                  value: mode,
-                  groupValue: _currentThemeMode(),
-                  onChanged: (value) {
-                    if (value != null) widget.onThemeChanged(value);
-                  },
-                  title: Text(switch (mode) {
-                    AppThemeMode.light => 'Light',
-                    AppThemeMode.dark => 'Dark',
-                    AppThemeMode.system => 'System default',
-                  }),
-                  contentPadding: EdgeInsets.zero,
-                ),
+              MockSegmentedControl<AppThemeMode>(
+                segments: AppThemeMode.values,
+                selected: _currentThemeMode(),
+                onChanged: widget.onThemeChanged,
+                labelBuilder: (mode) => switch (mode) {
+                  AppThemeMode.light => 'Light',
+                  AppThemeMode.dark => 'Dark',
+                  AppThemeMode.system => 'System',
+                },
               ),
             ],
           ),
