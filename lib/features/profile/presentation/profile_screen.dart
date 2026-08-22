@@ -13,6 +13,7 @@ import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/theme/theme_provider.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/utils/subject_track.dart';
+import 'package:mock_mobile/core/utils/mock_preparation_profile.dart';
 import 'package:mock_mobile/core/utils/share_utils.dart';
 import 'package:mock_mobile/core/widgets/mock_share_button.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
@@ -642,6 +643,7 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
   int? _paperYearFrom;
   int? _paperYearTo;
   int? _prepYear;
+  var _practiceTimerEnabled = true;
   final _targetScoreController = TextEditingController();
   var _isSaving = false;
   String? _error;
@@ -656,6 +658,7 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
     _paperYearFrom = interests?.paperYearFrom;
     _paperYearTo = interests?.paperYearTo;
     _prepYear = interests?.prepYear ?? DateTime.now().year;
+    _practiceTimerEnabled = resolvePracticeTimerEnabled(interests?.practiceTimerEnabled);
     if (interests?.targetScore != null) {
       _targetScoreController.text = '${interests!.targetScore}';
     }
@@ -685,6 +688,7 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
         'paperYearTo': _paperYearTo,
         'prepYear': _prepYear,
         'targetScore': int.tryParse(_targetScoreController.text.trim()),
+        'practiceTimerEnabled': _practiceTimerEnabled,
       });
       widget.onSaved();
       if (mounted) MockToast.success(context, 'Prep profile saved');
@@ -803,6 +807,33 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
                     ...paperYearOptions().map((y) => DropdownMenuItem(value: y, child: Text('$y'))),
                   ],
                   onChanged: (value) => setState(() => _paperYearTo = value),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.page),
+          const MockSectionTitle(title: 'Practice countdown timer'),
+          const SizedBox(height: AppSpacing.section),
+          Text(
+            'Turn off for untimed mixed practice. Full mocks and past papers always use a countdown.',
+            style: context.pageSubtitle,
+          ),
+          const SizedBox(height: AppSpacing.section),
+          Row(
+            children: [
+              Expanded(
+                child: _SelectableTile(
+                  title: 'Timer on',
+                  selected: _practiceTimerEnabled,
+                  onTap: () => setState(() => _practiceTimerEnabled = true),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.section),
+              Expanded(
+                child: _SelectableTile(
+                  title: 'Timer off',
+                  selected: !_practiceTimerEnabled,
+                  onTap: () => setState(() => _practiceTimerEnabled = false),
                 ),
               ),
             ],

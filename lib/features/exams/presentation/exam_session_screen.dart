@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mock_mobile/core/config/app_config.dart';
 import 'package:mock_mobile/core/constants/mock_voice.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/offline/connectivity_service.dart';
@@ -15,6 +14,8 @@ import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_rich_content.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
+import 'package:mock_mobile/core/utils/mock_preparation_profile.dart';
+import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 
@@ -39,6 +40,8 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
   var _isOfflineSession = false;
   var _showRecoveryNotice = false;
   var _timeLeft = 0;
+  var _elapsedSeconds = 0;
+  var _timerEnabled = true;
   var _warnedFiveMinutes = false;
   var _warnedOneMinute = false;
   String? _error;
@@ -91,6 +94,7 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
   void _applySession(StartAttemptResponse response) {
     final saved = ref.read(examSessionStoreProvider).getSessionForSlug(widget.slug);
     final totalSeconds = response.exam.durationMinutes * 60;
+    _timerEnabled = _resolveTimerEnabled(response.exam.mode);
 
     if (saved != null && saved.attemptId == response.attemptId) {
       _session = response;
@@ -128,6 +132,7 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
         exam: saved.exam,
         resumed: true,
       );
+      _timerEnabled = _resolveTimerEnabled(saved.exam.mode);
       _answers
         ..clear()
         ..addAll(saved.answers);
@@ -147,32 +152,45 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
     return true;
   }
 
+  bool _resolveTimerEnabled(String mode) {
+    final interests = ref.read(authControllerProvider).user?.mockProfile?.interests;
+    return resolveExamTimerEnabled(
+      mode,
+      resolvePracticeTimerEnabled(interests?.practiceTimerEnabled),
+    );
+  }
+
   void _startCountdown() {
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => _tickTimer());
   }
 
   void _tickTimer() {
-    if (!mounted || _timeLeft <= 0) {
+    if (!mounted) {
       return;
     }
 
     setState(() {
-      _timeLeft -= 1;
+      _elapsedSeconds += 1;
+      if (_timerEnabled && _timeLeft > 0) {
+        _timeLeft -= 1;
+      }
     });
 
-    if (_timeLeft == 300 && !_warnedFiveMinutes) {
-      _warnedFiveMinutes = true;
-      _showTimeWarning('5 minutes remaining — start wrapping up!');
-    }
-    if (_timeLeft == 60 && !_warnedOneMinute) {
-      _warnedOneMinute = true;
-      _showTimeWarning('1 minute left — submit now!');
+    if (_timerEnabled) {
+      if (_timeLeft == 300 && !_warnedFiveMinutes) {
+        _warnedFiveMinutes = true;
+        _showTimeWarning('5 minutes remaining — start wrapping up!');
+      }
+      if (_timeLeft == 60 && !_warnedOneMinute) {
+        _warnedOneMinute = true;
+        _showTimeWarning('1 minute left — submit now!');
+      }
     }
 
     unawaited(_persistProgress());
 
-    if (_timeLeft <= 0) {
+    if (_timerEnabled && _timeLeft <= 0) {
       _countdownTimer?.cancel();
       unawaited(_submit(autoSubmit: true));
     }
@@ -203,13 +221,16 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
   int get _reviewCount => _markedForReview.values.where((flagged) => flagged).length;
 
   int get _durationSeconds {
+    if (!_timerEnabled) {
+      return _elapsedSeconds;
+    }
     final total = (_session?.exam.durationMinutes ?? 0) * 60;
-    return total > 0 ? (total - _timeLeft).clamp(0, total) : DateTime.now().difference(_startedAt).inSeconds;
+    return total > 0 ? (total - _timeLeft).clamp(0, total) : _elapsedSeconds;
   }
 
-  bool get _isLowTime => _timeLeft <= 300 && _timeLeft > 60;
+  bool get _isLowTime => _timerEnabled && _timeLeft <= 300 && _timeLeft > 60;
 
-  bool get _isCriticalTime => _timeLeft <= 60 && _timeLeft > 0;
+  bool get _isCriticalTime => _timerEnabled && _timeLeft <= 60 && _timeLeft > 0;
 
   String _formatTime(int seconds) {
     final mins = seconds ~/ 60;
@@ -277,7 +298,7 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
     return MockConfirmDialog.show(
       context,
       title: MockVoice.exitExamTitle,
-      message: MockVoice.exitExamDesc,
+      message: _timerEnabled ? MockVoice.exitExamDesc : MockVoice.exitExamUntimedDesc,
       confirmLabel: MockVoice.exitExamConfirm,
       cancelLabel: MockVoice.exitExamStay,
       variant: MockConfirmDialogVariant.warning,
@@ -525,21 +546,25 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
               margin: const EdgeInsets.symmetric(vertical: 10),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: timerBackground,
+                color: _timerEnabled ? timerBackground : context.appNeutralSoft,
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: context.appBorder),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.schedule, size: 16, color: timerColor),
+                  Icon(
+                    Icons.schedule,
+                    size: 16,
+                    color: _timerEnabled ? timerColor : context.appTextSecondary,
+                  ),
                   const SizedBox(width: 4),
                   Text(
-                    _formatTime(_timeLeft),
+                    _timerEnabled ? _formatTime(_timeLeft) : 'Untimed',
                     style: context.caption.copyWith(
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                      fontFeatures: const [FontFeature.tabularFigures(), FontFeature.slashedZero()],
                       fontWeight: FontWeight.w700,
-                      color: timerColor,
+                      color: _timerEnabled ? timerColor : context.appTextSecondary,
                     ),
                   ),
                 ],
@@ -573,13 +598,13 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
                 child: Center(
                   child: Transform.rotate(
                     angle: -0.35,
-                    child: Text(
-                      AppConfig.appName,
-                      style: context.sectionTitle.copyWith(
-                        fontSize: 42,
-                        fontWeight: FontWeight.w900,
-                        color: context.appTextSecondary.withValues(alpha: 0.08),
-                        letterSpacing: 1.5,
+                    child: Opacity(
+                      opacity: 0.05,
+                      child: Image.asset(
+                        'assets/branding/logo-icon-transparent.png',
+                        width: 180,
+                        height: 180,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),

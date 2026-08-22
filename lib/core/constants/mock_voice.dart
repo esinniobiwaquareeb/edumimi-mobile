@@ -18,6 +18,8 @@ abstract final class MockVoice {
   static const exitExamTitle = 'Exit exam?';
   static const exitExamDesc =
       'Are you sure you want to leave the exam workspace? Your progress is saved, but the timer will continue running.';
+  static const exitExamUntimedDesc =
+      'Are you sure you want to leave the exam workspace? Your progress is saved.';
   static const exitExamConfirm = 'Yes, exit';
   static const exitExamStay = 'Stay';
 

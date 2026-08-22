@@ -124,6 +124,7 @@ class MockInterests extends Equatable {
     this.paperYearFrom,
     this.paperYearTo,
     this.practiceQuestionCount,
+    this.practiceTimerEnabled,
     this.targetScore,
     this.examDate,
   });
@@ -141,6 +142,9 @@ class MockInterests extends Equatable {
       paperYearTo: json['paperYearTo'] is num ? (json['paperYearTo'] as num).toInt() : null,
       practiceQuestionCount:
           json['practiceQuestionCount'] is num ? (json['practiceQuestionCount'] as num).toInt() : null,
+      practiceTimerEnabled: json['practiceTimerEnabled'] is bool
+          ? json['practiceTimerEnabled'] as bool
+          : null,
       targetScore: json['targetScore'] is num ? (json['targetScore'] as num).toInt() : null,
       examDate: json['examDate']?.toString(),
     );
@@ -153,6 +157,7 @@ class MockInterests extends Equatable {
   final int? paperYearFrom;
   final int? paperYearTo;
   final int? practiceQuestionCount;
+  final bool? practiceTimerEnabled;
   final int? targetScore;
   final String? examDate;
 
@@ -164,6 +169,7 @@ class MockInterests extends Equatable {
         'paperYearFrom': paperYearFrom,
         'paperYearTo': paperYearTo,
         'practiceQuestionCount': practiceQuestionCount,
+        'practiceTimerEnabled': practiceTimerEnabled,
         'targetScore': targetScore,
         'examDate': examDate,
       };
@@ -177,6 +183,7 @@ class MockInterests extends Equatable {
         paperYearFrom,
         paperYearTo,
         practiceQuestionCount,
+        practiceTimerEnabled,
         targetScore,
         examDate,
       ];
