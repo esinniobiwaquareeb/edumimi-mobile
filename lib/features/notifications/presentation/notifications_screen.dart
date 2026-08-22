@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mock_mobile/core/config/app_config.dart';
+import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/theme/app_colors.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
@@ -27,6 +28,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
   late final TabController _tabController;
   var _isUpdatingPush = false;
   var _isPreviewingLocal = false;
+  bool? _pushEnabledOverride;
 
   @override
   void initState() {
@@ -41,10 +43,20 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
   }
 
   Future<void> _togglePushNotifications(bool enabled) async {
-    setState(() => _isUpdatingPush = true);
+    setState(() {
+      _isUpdatingPush = true;
+      _pushEnabledOverride = enabled;
+    });
     try {
       await toggleMockPushNotifications(ref: ref, context: context, enabled: enabled);
       invalidateUnreadSummary(ref);
+      if (mounted) {
+        setState(() => _pushEnabledOverride = null);
+      }
+    } on ApiException {
+      if (mounted) {
+        setState(() => _pushEnabledOverride = null);
+      }
     } finally {
       if (mounted) {
         setState(() => _isUpdatingPush = false);
@@ -88,6 +100,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
           _PushNotificationsTab(
             isUpdatingPush: _isUpdatingPush,
             isPreviewingLocal: _isPreviewingLocal,
+            pushEnabledOverride: _pushEnabledOverride,
             onTogglePush: _togglePushNotifications,
             onPreviewLocal: _previewLocalReminder,
           ),
@@ -282,12 +295,14 @@ class _PushNotificationsTab extends ConsumerWidget {
   const _PushNotificationsTab({
     required this.isUpdatingPush,
     required this.isPreviewingLocal,
+    required this.pushEnabledOverride,
     required this.onTogglePush,
     required this.onPreviewLocal,
   });
 
   final bool isUpdatingPush;
   final bool isPreviewingLocal;
+  final bool? pushEnabledOverride;
   final ValueChanged<bool> onTogglePush;
   final VoidCallback onPreviewLocal;
 
@@ -344,8 +359,14 @@ class _PushNotificationsTab extends ConsumerWidget {
         const SizedBox(height: AppSpacing.page),
         engagementAsync.when(
           loading: () => const MockCard(child: MockLoadingView(message: 'Loading push settings…')),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (error, _) => MockCard(
+            child: MockErrorView(
+              message: error.toString(),
+              onRetry: () => ref.invalidate(engagementProvider),
+            ),
+          ),
           data: (engagement) {
+            final pushEnabled = pushEnabledOverride ?? engagement.fcmNotificationsEnabled;
             final streakLabel = engagement.practiceStreakDays > 0
                 ? '${engagement.practiceStreakDays}-day streak active'
                 : 'No active streak yet';
@@ -393,7 +414,7 @@ class _PushNotificationsTab extends ConsumerWidget {
                           : 'Configure Firebase to enable remote push.',
                       style: context.caption,
                     ),
-                    value: firebaseConfigured && engagement.fcmNotificationsEnabled,
+                    value: firebaseConfigured && pushEnabled,
                     onChanged: (!isUpdatingPush && firebaseConfigured) ? onTogglePush : null,
                   ),
                 ),

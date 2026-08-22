@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import UserNotifications
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   var window: UIWindow?
@@ -24,6 +25,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     if let appDelegate = UIApplication.shared.delegate as? FlutterAppDelegate {
       appDelegate.window = window
+      UNUserNotificationCenter.current().delegate = appDelegate
     }
   }
 }

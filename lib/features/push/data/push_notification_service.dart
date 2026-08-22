@@ -6,7 +6,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mock_mobile/core/config/app_config.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/firebase_options.dart';
 
@@ -22,12 +21,13 @@ class PushNotificationService {
   final _localNotifications = FlutterLocalNotificationsPlugin();
   var _localNotificationsReady = false;
   var _firebaseInitialized = false;
+  var _listenersAttached = false;
   String? _currentToken;
 
-  bool get isFirebaseAvailable => AppConfig.isFirebaseConfigured;
+  bool get isFirebaseAvailable => DefaultFirebaseOptions.isConfigured;
 
   Future<bool> initialize(GoRouter router) async {
-    if (!AppConfig.isFirebaseConfigured) {
+    if (!DefaultFirebaseOptions.isConfigured) {
       return false;
     }
 
@@ -39,37 +39,36 @@ class PushNotificationService {
 
     await _ensureLocalNotifications();
 
-    final settings = await FirebaseMessaging.instance.requestPermission();
+    final settings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
     if (settings.authorizationStatus == AuthorizationStatus.denied) {
       return false;
     }
 
-    final token = await FirebaseMessaging.instance.getToken();
+    if (Platform.isIOS) {
+      await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
+
+    final token = await _resolveFcmToken();
     if (token == null || token.isEmpty) {
       return false;
     }
 
     await _registerToken(token);
-    FirebaseMessaging.instance.onTokenRefresh.listen(_registerToken);
-
-    FirebaseMessaging.onMessage.listen((message) {
-      unawaited(_showForegroundNotification(message));
-    });
-
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      _handleNavigation(router, message.data);
-    });
-
-    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) {
-      _handleNavigation(router, initialMessage.data);
-    }
+    _attachMessagingListeners(router);
 
     return true;
   }
 
   Future<void> disable() async {
-    if (!AppConfig.isFirebaseConfigured) {
+    if (!DefaultFirebaseOptions.isConfigured) {
       return;
     }
 
@@ -78,21 +77,13 @@ class PushNotificationService {
       _firebaseInitialized = true;
     }
 
-    final token = _currentToken ?? await FirebaseMessaging.instance.getToken();
+    final token = _currentToken ?? await _resolveFcmToken();
     if (token != null && token.isNotEmpty) {
       await _repository.unregisterFcmToken(token);
       _currentToken = null;
     }
 
     await FirebaseMessaging.instance.deleteToken();
-  }
-
-  Future<bool> get isEnabled async {
-    if (!AppConfig.isFirebaseConfigured) {
-      return false;
-    }
-    final token = await FirebaseMessaging.instance.getToken();
-    return token != null && token.isNotEmpty && _currentToken != null;
   }
 
   /// Preview a streak reminder using local notifications only (no FCM required).
@@ -118,6 +109,44 @@ class PushNotificationService {
       ),
     );
     return true;
+  }
+
+  Future<String?> _resolveFcmToken() async {
+    if (Platform.isIOS) {
+      for (var attempt = 0; attempt < 5; attempt++) {
+        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken != null && apnsToken.isNotEmpty) {
+          break;
+        }
+        await Future<void>.delayed(Duration(milliseconds: 400 * (attempt + 1)));
+      }
+    }
+
+    return FirebaseMessaging.instance.getToken();
+  }
+
+  void _attachMessagingListeners(GoRouter router) {
+    if (_listenersAttached) {
+      return;
+    }
+
+    FirebaseMessaging.instance.onTokenRefresh.listen(_registerToken);
+    FirebaseMessaging.onMessage.listen((message) {
+      unawaited(_showForegroundNotification(message));
+    });
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      _handleNavigation(router, message.data);
+    });
+
+    unawaited(
+      FirebaseMessaging.instance.getInitialMessage().then((initialMessage) {
+        if (initialMessage != null) {
+          _handleNavigation(router, initialMessage.data);
+        }
+      }),
+    );
+
+    _listenersAttached = true;
   }
 
   Future<void> _registerToken(String token) async {

@@ -96,7 +96,9 @@ final myPurchasesProvider = FutureProvider.autoDispose<List<MockPurchase>>((ref)
   return ref.watch(paymentRepositoryProvider).fetchMyPurchases();
 });
 
-final engagementProvider = FutureProvider.autoDispose<MockEngagement>((ref) {
+final engagementProvider = FutureProvider<MockEngagement>((ref) {
+  final keepAliveLink = ref.keepAlive();
+  ref.onDispose(keepAliveLink.close);
   return ref.watch(paymentRepositoryProvider).fetchEngagement();
 });
 

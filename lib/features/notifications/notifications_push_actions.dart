@@ -16,18 +16,25 @@ Future<void> toggleMockPushNotifications({
   try {
     if (enabled) {
       final success = await service.initialize(GoRouter.of(context));
-      if (!success && context.mounted) {
-        MockToast.info(context, 'Push notifications are not available on this device yet.');
-        return;
+      if (!success) {
+        if (context.mounted) {
+          MockToast.info(
+            context,
+            'Allow notifications in Settings to enable streak reminders.',
+          );
+        }
+        throw ApiException('Push permission was not granted.');
       }
     } else {
       await service.disable();
     }
+
     ref.invalidate(engagementProvider);
     await ref.read(engagementProvider.future);
   } on ApiException catch (error) {
     if (context.mounted) {
       MockToast.error(context, error.message);
     }
+    rethrow;
   }
 }

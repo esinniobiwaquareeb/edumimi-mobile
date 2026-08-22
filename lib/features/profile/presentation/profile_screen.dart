@@ -34,6 +34,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   var _isUpdatingPush = false;
+  bool? _pushEnabledOverride;
 
   @override
   void initState() {
@@ -48,11 +49,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
   }
 
   Future<void> _togglePushNotifications(bool enabled) async {
-    setState(() => _isUpdatingPush = true);
+    setState(() {
+      _isUpdatingPush = true;
+      _pushEnabledOverride = enabled;
+    });
     try {
       await toggleMockPushNotifications(ref: ref, context: context, enabled: enabled);
+      if (mounted) {
+        setState(() => _pushEnabledOverride = null);
+      }
+    } on ApiException {
+      if (mounted) {
+        setState(() => _pushEnabledOverride = null);
+      }
     } finally {
-      if (mounted) setState(() => _isUpdatingPush = false);
+      if (mounted) {
+        setState(() => _isUpdatingPush = false);
+      }
     }
   }
 
@@ -85,6 +98,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                   user: user,
                   engagementAsync: engagementAsync,
                   isUpdatingPush: _isUpdatingPush,
+                  pushEnabledOverride: _pushEnabledOverride,
                   themeMode: themeMode,
                   onTogglePush: _togglePushNotifications,
                   onThemeChanged: (mode) => ref.read(themeControllerProvider.notifier).setMode(mode),
@@ -103,6 +117,7 @@ class _PersonalTab extends ConsumerStatefulWidget {
     required this.user,
     required this.engagementAsync,
     required this.isUpdatingPush,
+    required this.pushEnabledOverride,
     required this.themeMode,
     required this.onTogglePush,
     required this.onThemeChanged,
@@ -112,6 +127,7 @@ class _PersonalTab extends ConsumerStatefulWidget {
   final MockUser user;
   final AsyncValue<MockEngagement> engagementAsync;
   final bool isUpdatingPush;
+  final bool? pushEnabledOverride;
   final ThemeMode themeMode;
   final ValueChanged<bool> onTogglePush;
   final ValueChanged<AppThemeMode> onThemeChanged;
@@ -536,7 +552,9 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
         widget.engagementAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (_, __) => const SizedBox.shrink(),
-          data: (engagement) => MockCard(
+          data: (engagement) {
+            final pushEnabled = widget.pushEnabledOverride ?? engagement.fcmNotificationsEnabled;
+            return MockCard(
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text('Daily streak reminders', style: context.cardTitle),
@@ -546,10 +564,11 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
                     : 'Configure Firebase to enable push (see Notifications screen).',
                 style: context.caption,
               ),
-              value: AppConfig.isFirebaseConfigured && engagement.fcmNotificationsEnabled,
+              value: AppConfig.isFirebaseConfigured && pushEnabled,
               onChanged: (AppConfig.isFirebaseConfigured && !widget.isUpdatingPush) ? widget.onTogglePush : null,
             ),
-          ),
+          );
+          },
         ),
         const SizedBox(height: AppSpacing.page),
         MockCard(
