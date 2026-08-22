@@ -17,6 +17,8 @@ void main() {
   test('uses mock portal API prefix', () {
     expect(AppConfig.apiPrefix, '/mock-portal');
     expect(AppConfig.appName, 'Edumimi Mock');
+    expect(AppConfig.apiBaseUrl, isNotEmpty);
+    expect(AppConfig.apiBaseUrl.startsWith('http'), isTrue);
   });
 
   test('returns time-based greeting labels', () {

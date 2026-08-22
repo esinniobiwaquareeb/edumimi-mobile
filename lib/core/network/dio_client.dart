@@ -113,7 +113,10 @@ ApiException _mapDioError(DioException error) {
     return ApiException('Connection timed out. Check your network.');
   }
   if (error.type == DioExceptionType.connectionError) {
-    return ApiException('Cannot reach the server. Check your connection.');
+    return ApiException(
+      'Cannot reach the server at ${AppConfig.apiBaseUrl}. '
+      'Check your connection or rebuild with --dart-define=MOCK_API_URL=...',
+    );
   }
   return ApiException('Request failed.', statusCode: error.response?.statusCode);
 }
