@@ -220,15 +220,18 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
               ),
         ],
         const SizedBox(height: AppSpacing.page),
-        MockPrimaryButton(
-          label: exam.isLocked ? 'Unlock full access' : _startButtonLabel(exam),
-          isLoading: _isStarting,
-          onPressed: exam.isLocked ? () => context.push('/packages') : _start,
-        ),
-        const SizedBox(height: AppSpacing.item),
-        MockSecondaryButton(
-          label: exam.isLocked ? 'Browse packages' : 'Browse more mocks',
-          onPressed: () => context.push(exam.isLocked ? '/packages' : '/exams'),
+        MockSplitActionRow(
+          start: MockSecondaryButton(
+            label: exam.isLocked ? 'Browse packages' : 'Browse more mocks',
+            onPressed: () => context.push(exam.isLocked ? '/packages' : '/exams'),
+            expand: true,
+          ),
+          end: MockPrimaryButton(
+            label: exam.isLocked ? 'Unlock full access' : _startButtonLabel(exam),
+            isLoading: _isStarting,
+            onPressed: exam.isLocked ? () => context.push('/packages') : _start,
+            expand: true,
+          ),
         ),
         const SizedBox(height: AppSpacing.section),
       ],

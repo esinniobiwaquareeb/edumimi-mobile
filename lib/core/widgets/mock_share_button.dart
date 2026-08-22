@@ -12,12 +12,14 @@ class MockShareButton extends StatelessWidget {
     required this.onShare,
     this.isLoading = false,
     this.icon,
+    this.expand = true,
   });
 
   final String label;
   final Future<void> Function(Rect sharePositionOrigin)? onShare;
   final bool isLoading;
   final IconData? icon;
+  final bool expand;
 
   Future<void> _handleShare(BuildContext context) async {
     final origin = sharePositionOriginFromContext(context);
@@ -29,15 +31,17 @@ class MockShareButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Builder(
       builder: (buttonContext) {
+        final onPressed = isLoading ? null : () => _handleShare(buttonContext);
         if (icon == null) {
           return MockSecondaryButton(
             label: isLoading ? 'Sharing…' : label,
-            onPressed: isLoading ? null : () => _handleShare(buttonContext),
+            onPressed: onPressed,
+            expand: expand,
           );
         }
 
-        return OutlinedButton.icon(
-          onPressed: isLoading ? null : () => _handleShare(buttonContext),
+        final button = OutlinedButton.icon(
+          onPressed: onPressed,
           icon: isLoading
               ? const SizedBox(
                   width: 16,
@@ -47,6 +51,9 @@ class MockShareButton extends StatelessWidget {
               : Icon(icon, size: 18),
           label: Text(isLoading ? 'Sharing…' : label),
         );
+
+        if (!expand) return button;
+        return SizedBox(width: double.infinity, child: button);
       },
     );
   }
@@ -94,7 +101,7 @@ class MockChallengeShareButton extends ConsumerStatefulWidget {
     required this.examTitle,
     required this.percentScore,
     this.challengerName = 'I',
-    this.label = 'Challenge a friend',
+    this.label = 'Challenge friend',
   });
 
   final String attemptId;

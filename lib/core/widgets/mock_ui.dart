@@ -17,15 +17,17 @@ class MockPrimaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.isLoading = false,
+    this.expand = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton(
+    final button = FilledButton(
       onPressed: isLoading ? null : onPressed,
       child: isLoading
           ? const SizedBox(
@@ -38,6 +40,8 @@ class MockPrimaryButton extends StatelessWidget {
             )
           : Text(label),
     );
+    if (!expand) return button;
+    return SizedBox(width: double.infinity, child: button);
   }
 }
 
@@ -46,14 +50,43 @@ class MockSecondaryButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.onPressed,
+    this.expand = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton(onPressed: onPressed, child: Text(label));
+    final button = OutlinedButton(onPressed: onPressed, child: Text(label));
+    if (!expand) return button;
+    return SizedBox(width: double.infinity, child: button);
+  }
+}
+
+/// Places two action buttons side-by-side with equal width.
+class MockSplitActionRow extends StatelessWidget {
+  const MockSplitActionRow({
+    super.key,
+    required this.start,
+    required this.end,
+    this.spacing = AppSpacing.item,
+  });
+
+  final Widget start;
+  final Widget end;
+  final double spacing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: start),
+        SizedBox(width: spacing),
+        Expanded(child: end),
+      ],
+    );
   }
 }
 
@@ -748,7 +781,7 @@ class MockBrandLogo extends StatelessWidget {
           ],
         ),
         child: Image.asset(
-          'assets/branding/logo-icon.png',
+          'assets/branding/logo-icon-transparent.png',
           width: logoSize,
           height: logoSize,
           fit: BoxFit.contain,

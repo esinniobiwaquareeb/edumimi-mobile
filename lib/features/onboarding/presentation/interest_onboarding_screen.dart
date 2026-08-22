@@ -10,6 +10,7 @@ import 'package:mock_mobile/core/utils/subject_track.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/onboarding/presentation/widgets/onboarding_widgets.dart';
 import 'package:mock_mobile/features/profile/data/profile_repository.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 
@@ -72,6 +73,26 @@ class _InterestOnboardingScreenState extends ConsumerState<InterestOnboardingScr
     }
   }
 
+  void _goToStep(int step) {
+    setState(() => _step = step);
+  }
+
+  String get _stepTitle {
+    return switch (_step) {
+      1 => 'Which exam are you preparing for?',
+      2 => 'Which subjects do you want to practice?',
+      _ => 'Almost done!',
+    };
+  }
+
+  String get _stepSubtitle {
+    return switch (_step) {
+      1 => 'Pick the exam you are preparing for.',
+      2 => 'Choose your track and subject combo.',
+      _ => 'Optional goals for your dashboard.',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final examTypesAsync = ref.watch(examTypesProvider);
@@ -93,142 +114,185 @@ class _InterestOnboardingScreenState extends ConsumerState<InterestOnboardingScr
         data: (examTypes) => ListView(
           padding: const EdgeInsets.all(AppSpacing.page),
           children: [
-            Text(
-              _step == 1
-                  ? 'Which exam are you preparing for?'
-                  : _step == 2
-                      ? 'Which subjects do you want to practice?'
-                      : 'Almost done!',
-              style: context.pageTitle,
+            OnboardingStepProgress(step: _step, totalSteps: 3),
+            const SizedBox(height: AppSpacing.page),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              child: Text(
+                _stepTitle,
+                key: ValueKey<String>('title-$_step'),
+                style: context.pageTitle,
+              ),
             ),
             const SizedBox(height: AppSpacing.item),
-            Text(
-              _step == 1
-                  ? 'Step 1 of 3 — pick the exam you are preparing for.'
-                  : _step == 2
-                      ? 'Step 2 of 3 — pick your track and subject combo.'
-                      : 'Step 3 of 3 — optional goals for your dashboard.',
-              style: context.pageSubtitle,
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              child: Text(
+                _stepSubtitle,
+                key: ValueKey<String>('subtitle-$_step'),
+                style: context.pageSubtitle,
+              ),
             ),
             const SizedBox(height: AppSpacing.page),
             if (_error != null) ...[
               MockInlineNotice.error(message: _error!),
               const SizedBox(height: AppSpacing.section),
             ],
-            if (_step == 1)
-              ...examTypes.map(
-                (type) => Padding(
+            OnboardingStepTransition(
+              step: _step,
+              child: _buildStepContent(examTypes, subjects),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepContent(List<MockExamType> examTypes, List<MockSubject> subjects) {
+    if (_step == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ...examTypes.asMap().entries.map(
+                (entry) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.section),
-                  child: MockCard(
-                    child: InkWell(
-                      onTap: () => setState(() {
-                        _selectedExamTypeSlug = type.slug;
-                        _selectedTrack = null;
-                        _selectedSubjectIds.clear();
-                        _step = 2;
-                      }),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(type.title, style: context.cardTitle),
-                          if (type.description?.isNotEmpty == true) ...[
-                            const SizedBox(height: AppSpacing.item),
-                            Text(type.description!, style: context.bodySecondary),
+                  child: OnboardingFadeInList(
+                    index: entry.key,
+                    child: MockCard(
+                      child: InkWell(
+                        onTap: () => setState(() {
+                          _selectedExamTypeSlug = entry.value.slug;
+                          _selectedTrack = null;
+                          _selectedSubjectIds.clear();
+                          _step = 2;
+                        }),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(entry.value.title, style: context.cardTitle),
+                            if (entry.value.description?.isNotEmpty == true) ...[
+                              const SizedBox(height: AppSpacing.item),
+                              Text(entry.value.description!, style: context.bodySecondary),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            if (_step == 2) ...[
-              TextButton(onPressed: () => setState(() => _step = 1), child: const Text('← Change exam')),
-              const SizedBox(height: AppSpacing.section),
-              const MockSectionTitle(title: 'Pick your track'),
-              const SizedBox(height: AppSpacing.item),
-              ...mockSubjectTrackOptions.map(
-                (option) => Padding(
+        ],
+      );
+    }
+
+    if (_step == 2) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextButton(onPressed: () => _goToStep(1), child: const Text('← Change exam')),
+          const SizedBox(height: AppSpacing.section),
+          const MockSectionTitle(title: 'Pick your track'),
+          const SizedBox(height: AppSpacing.item),
+          ...mockSubjectTrackOptions.asMap().entries.map(
+                (entry) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.item),
-                  child: _SelectableTile(
-                    title: option.label,
-                    subtitle: option.description,
-                    selected: _selectedTrack == option.track,
-                    onTap: () {
-                      setState(() {
-                        _selectedTrack = option.track;
-                        _selectedSubjectIds
-                          ..clear()
-                          ..addAll(resolveSubjectIdsForTrack(
-                            examTypeSlug: _selectedExamTypeSlug ?? '',
-                            track: option.track,
-                            subjects: subjects.map((s) => (id: s.id, slug: s.slug)).toList(),
-                          ));
-                      });
-                    },
-                  ),
-                ),
-              ),
-              if (_selectedTrack != null) ...[
-                const SizedBox(height: AppSpacing.page),
-                const MockSectionTitle(title: 'Your subject combo'),
-                const SizedBox(height: AppSpacing.item),
-                ...subjects.map(
-                  (subject) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.item),
+                  child: OnboardingFadeInList(
+                    index: entry.key,
                     child: _SelectableTile(
-                      title: subject.name,
-                      selected: _selectedSubjectIds.contains(subject.id),
-                      onTap: () => setState(() {
-                        if (_selectedSubjectIds.contains(subject.id)) {
-                          _selectedSubjectIds.remove(subject.id);
-                        } else {
-                          _selectedSubjectIds.add(subject.id);
-                        }
-                      }),
+                      title: entry.value.label,
+                      subtitle: entry.value.description,
+                      selected: _selectedTrack == entry.value.track,
+                      onTap: () {
+                        setState(() {
+                          _selectedTrack = entry.value.track;
+                          _selectedSubjectIds
+                            ..clear()
+                            ..addAll(resolveSubjectIdsForTrack(
+                              examTypeSlug: _selectedExamTypeSlug ?? '',
+                              track: entry.value.track,
+                              subjects: subjects.map((s) => (id: s.id, slug: s.slug)).toList(),
+                            ));
+                        });
+                      },
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.page),
-                MockPrimaryButton(
-                  label: 'Continue',
-                  onPressed: _selectedSubjectIds.isEmpty ? null : () => setState(() => _step = 3),
+              ),
+          if (_selectedTrack != null) ...[
+            const SizedBox(height: AppSpacing.page),
+            const MockSectionTitle(title: 'Your subject combo'),
+            const SizedBox(height: AppSpacing.item),
+            ...subjects.asMap().entries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.item),
+                    child: OnboardingFadeInList(
+                      index: entry.key,
+                      child: _SelectableTile(
+                        title: entry.value.name,
+                        selected: _selectedSubjectIds.contains(entry.value.id),
+                        onTap: () => setState(() {
+                          if (_selectedSubjectIds.contains(entry.value.id)) {
+                            _selectedSubjectIds.remove(entry.value.id);
+                          } else {
+                            _selectedSubjectIds.add(entry.value.id);
+                          }
+                        }),
+                      ),
+                    ),
+                  ),
                 ),
-              ],
-            ],
-            if (_step == 3) ...[
-              TextButton(onPressed: () => setState(() => _step = 2), child: const Text('← Back to subjects')),
-              const SizedBox(height: AppSpacing.section),
-              DropdownButtonFormField<int>(
-                value: _prepYear,
-                decoration: const InputDecoration(labelText: 'When are you sitting the exam?'),
-                items: prepYearOptions()
-                    .map((year) => DropdownMenuItem(value: year, child: Text('$year')))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => _prepYear = value);
-                },
-              ),
-              const SizedBox(height: AppSpacing.section),
-              MockTextField(
-                label: 'Target score (optional)',
-                controller: _targetScoreController,
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: AppSpacing.page),
-              MockSecondaryButton(
-                label: _isSaving ? 'Saving…' : 'Skip for now',
-                onPressed: _isSaving ? null : () => _finish(includeOptional: false),
-              ),
-              const SizedBox(height: AppSpacing.item),
-              MockPrimaryButton(
-                label: _isSaving ? 'Saving…' : 'Start practicing',
-                isLoading: _isSaving,
-                onPressed: () => _finish(includeOptional: true),
-              ),
-            ],
+            const SizedBox(height: AppSpacing.page),
+            MockPrimaryButton(
+              label: 'Continue',
+              onPressed: _selectedSubjectIds.isEmpty ? null : () => _goToStep(3),
+            ),
           ],
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextButton(onPressed: () => _goToStep(2), child: const Text('← Back to subjects')),
+        const SizedBox(height: AppSpacing.section),
+        OnboardingFadeInList(
+          index: 0,
+          child: DropdownButtonFormField<int>(
+            value: _prepYear,
+            decoration: const InputDecoration(labelText: 'When are you sitting the exam?'),
+            items: prepYearOptions()
+                .map((year) => DropdownMenuItem(value: year, child: Text('$year')))
+                .toList(),
+            onChanged: (value) {
+              if (value != null) setState(() => _prepYear = value);
+            },
+          ),
         ),
-      ),
+        const SizedBox(height: AppSpacing.section),
+        OnboardingFadeInList(
+          index: 1,
+          child: MockTextField(
+            label: 'Target score (optional)',
+            controller: _targetScoreController,
+            keyboardType: TextInputType.number,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.page),
+        MockSplitActionRow(
+          start: MockSecondaryButton(
+            label: _isSaving ? 'Saving…' : 'Skip for now',
+            onPressed: _isSaving ? null : () => _finish(includeOptional: false),
+            expand: true,
+          ),
+          end: MockPrimaryButton(
+            label: _isSaving ? 'Saving…' : 'Start practicing',
+            isLoading: _isSaving,
+            onPressed: () => _finish(includeOptional: true),
+            expand: true,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -248,28 +312,63 @@ class _SelectableTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? context.appPrimarySoft : context.colors.surface,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      child: InkWell(
-        onTap: onTap,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: selected ? context.appPrimarySoft : context.colors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(AppSpacing.section),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(color: selected ? AppColors.primary : context.appBorder),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: context.cardTitle),
-              if (subtitle != null) ...[
-                const SizedBox(height: 4),
-                Text(subtitle!, style: context.caption),
+        border: Border.all(color: selected ? AppColors.primary : context.appBorder),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: context.isDarkMode ? 0.18 : 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.section),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selected ? AppColors.primary : Colors.transparent,
+                    border: Border.all(
+                      color: selected ? AppColors.primary : context.appBorder,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: selected
+                      ? const Icon(Icons.check, size: 14, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(width: AppSpacing.section),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: context.cardTitle),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 4),
+                        Text(subtitle!, style: context.caption),
+                      ],
+                    ],
+                  ),
+                ),
               ],
-            ],
+            ),
           ),
         ),
       ),

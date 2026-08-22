@@ -108,19 +108,20 @@ class _ResultDetailBodyState extends ConsumerState<_ResultDetailBody> {
                 style: context.bodySecondary,
               ),
               const SizedBox(height: AppSpacing.section),
-              MockShareScoreButton(
-                examTitle: exam?.title ?? 'Mock Exam',
-                percentScore: attempt.percentScore,
-                isPreview: isPreview,
-                includeLeaderboard: !isPreview,
-                referralLink: engagement?.referralLink,
-              ),
-              const SizedBox(height: AppSpacing.item),
-              MockChallengeShareButton(
-                attemptId: attempt.id,
-                examTitle: exam?.title ?? 'Mock Exam',
-                percentScore: attempt.percentScore,
-                challengerName: challengerName,
+              MockSplitActionRow(
+                start: MockShareScoreButton(
+                  examTitle: exam?.title ?? 'Mock Exam',
+                  percentScore: attempt.percentScore,
+                  isPreview: isPreview,
+                  includeLeaderboard: !isPreview,
+                  referralLink: engagement?.referralLink,
+                ),
+                end: MockChallengeShareButton(
+                  attemptId: attempt.id,
+                  examTitle: exam?.title ?? 'Mock Exam',
+                  percentScore: attempt.percentScore,
+                  challengerName: challengerName,
+                ),
               ),
             ],
           ),

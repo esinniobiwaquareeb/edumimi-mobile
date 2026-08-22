@@ -80,20 +80,32 @@ class PaymentVerifyScreen extends ConsumerWidget {
                 ),
                 const Spacer(),
                 if (pending) ...[
-                  MockSecondaryButton(
-                    label: 'Check again',
-                    onPressed: () => ref.invalidate(_paymentVerifyProvider(reference)),
+                  MockSplitActionRow(
+                    start: MockSecondaryButton(
+                      label: 'Check again',
+                      onPressed: () => ref.invalidate(_paymentVerifyProvider(reference)),
+                      expand: true,
+                    ),
+                    end: MockPrimaryButton(
+                      label: 'Back to packages',
+                      onPressed: () {
+                        ref.invalidate(myPurchasesProvider);
+                        ref.invalidate(examFeedProvider);
+                        context.go('/packages');
+                      },
+                      expand: true,
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.section),
-                ],
-                MockPrimaryButton(
-                  label: success ? 'Start practicing' : 'Back to packages',
-                  onPressed: () {
-                    ref.invalidate(myPurchasesProvider);
-                    ref.invalidate(examFeedProvider);
-                    context.go(success ? '/dashboard' : '/packages');
-                  },
-                ),
+                ] else
+                  MockPrimaryButton(
+                    label: success ? 'Start practicing' : 'Back to packages',
+                    onPressed: () {
+                      ref.invalidate(myPurchasesProvider);
+                      ref.invalidate(examFeedProvider);
+                      context.go(success ? '/dashboard' : '/packages');
+                    },
+                    expand: true,
+                  ),
               ],
             ),
           );
