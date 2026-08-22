@@ -140,12 +140,15 @@ class MockPortalRepository {
   Future<LeaderboardResponse> fetchLeaderboard({
     required String period,
     String? examTypeSlug,
+    int page = 1,
+    int limit = 10,
   }) {
     return _dio.getData(
       ApiPaths.leaderboard,
       queryParameters: {
         'period': period,
-        'limit': '30',
+        'page': '$page',
+        'limit': '$limit',
         if (examTypeSlug != null && examTypeSlug.isNotEmpty) 'examTypeSlug': examTypeSlug,
       },
       parser: (json) => LeaderboardResponse.fromJson(json as Map<String, dynamic>),
@@ -222,10 +225,11 @@ final examsCatalogProvider = FutureProvider.autoDispose.family<List<MockExam>, S
 });
 
 final leaderboardProvider = FutureProvider.autoDispose
-    .family<LeaderboardResponse, ({String period, String? examTypeSlug})>((ref, params) {
+    .family<LeaderboardResponse, ({String period, String? examTypeSlug, int page})>((ref, params) {
   return ref.watch(mockPortalRepositoryProvider).fetchLeaderboard(
         period: params.period,
         examTypeSlug: params.examTypeSlug,
+        page: params.page,
       );
 });
 

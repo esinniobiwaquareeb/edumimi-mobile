@@ -223,10 +223,15 @@ class LeaderboardEntry extends Equatable {
 }
 
 class LeaderboardResponse extends Equatable {
-  const LeaderboardResponse({required this.period, required this.entries});
+  const LeaderboardResponse({
+    required this.period,
+    required this.entries,
+    this.meta,
+  });
 
   factory LeaderboardResponse.fromJson(Map<String, dynamic> json) {
     final entries = json['entries'];
+    final meta = json['meta'];
     return LeaderboardResponse(
       period: json['period']?.toString() ?? 'week',
       entries: entries is List
@@ -235,14 +240,42 @@ class LeaderboardResponse extends Equatable {
               .map(LeaderboardEntry.fromJson)
               .toList()
           : const [],
+      meta: meta is Map<String, dynamic> ? LeaderboardMeta.fromJson(meta) : null,
     );
   }
 
   final String period;
   final List<LeaderboardEntry> entries;
+  final LeaderboardMeta? meta;
 
   @override
-  List<Object?> get props => [period, entries];
+  List<Object?> get props => [period, entries, meta];
+}
+
+class LeaderboardMeta extends Equatable {
+  const LeaderboardMeta({
+    required this.total,
+    required this.page,
+    required this.limit,
+    required this.totalPages,
+  });
+
+  factory LeaderboardMeta.fromJson(Map<String, dynamic> json) {
+    return LeaderboardMeta(
+      total: _asInt(json['total']),
+      page: _asInt(json['page']) == 0 ? 1 : _asInt(json['page']),
+      limit: _asInt(json['limit']) == 0 ? 10 : _asInt(json['limit']),
+      totalPages: _asInt(json['totalPages']) == 0 ? 1 : _asInt(json['totalPages']),
+    );
+  }
+
+  final int total;
+  final int page;
+  final int limit;
+  final int totalPages;
+
+  @override
+  List<Object?> get props => [total, page, limit, totalPages];
 }
 
 int _asInt(Object? value) {
