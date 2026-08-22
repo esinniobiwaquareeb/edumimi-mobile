@@ -105,8 +105,14 @@ extension DioResponseX on Dio {
 
 ApiException _mapDioError(DioException error) {
   final data = error.response?.data;
-  if (data is Map && data['message'] is String) {
-    return ApiException(data['message'] as String, statusCode: error.response?.statusCode);
+  if (data is Map) {
+    final message = data['message'];
+    if (message is String && message.isNotEmpty) {
+      return ApiException(message, statusCode: error.response?.statusCode);
+    }
+    if (message is List && message.isNotEmpty) {
+      return ApiException(message.first.toString(), statusCode: error.response?.statusCode);
+    }
   }
   if (error.type == DioExceptionType.connectionTimeout ||
       error.type == DioExceptionType.receiveTimeout) {
@@ -118,5 +124,15 @@ ApiException _mapDioError(DioException error) {
       'Check your connection or rebuild with --dart-define=MOCK_API_URL=...',
     );
   }
-  return ApiException('Request failed.', statusCode: error.response?.statusCode);
+  final statusCode = error.response?.statusCode;
+  if (statusCode == 502 || statusCode == 503 || statusCode == 504) {
+    return ApiException(
+      'The server is temporarily unavailable ($statusCode). Try again in a few minutes.',
+      statusCode: statusCode,
+    );
+  }
+  if (statusCode != null && statusCode >= 500) {
+    return ApiException('Server error ($statusCode). Try again later.', statusCode: statusCode);
+  }
+  return ApiException('Request failed.', statusCode: statusCode);
 }

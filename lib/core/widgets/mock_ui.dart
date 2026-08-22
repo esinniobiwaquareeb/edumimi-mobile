@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mock_mobile/core/constants/mock_voice.dart';
 import 'package:mock_mobile/core/theme/app_colors.dart';
@@ -1111,7 +1112,10 @@ class _MockHeaderIconButton extends StatelessWidget {
         child: Tooltip(
           message: tooltip,
           child: InkWell(
-            onTap: onTap,
+            onTap: () {
+              _triggerHeaderIconHaptic(badgeCount);
+              onTap();
+            },
             child: SizedBox(
               width: 38,
               height: 38,
@@ -1132,6 +1136,13 @@ class _MockHeaderIconButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+void _triggerHeaderIconHaptic(int badgeCount) {
+  HapticFeedback.heavyImpact();
+  if (badgeCount > 0) {
+    Future<void>.delayed(const Duration(milliseconds: 40), HapticFeedback.mediumImpact);
   }
 }
 
