@@ -3,11 +3,14 @@ import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/firebase_options.dart';
+
+const _iosPushChannel = MethodChannel('com.edumimi.mock/push');
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -31,40 +34,45 @@ class PushNotificationService {
       return false;
     }
 
-    if (!_firebaseInitialized) {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-      _firebaseInitialized = true;
-    }
+    try {
+      if (!_firebaseInitialized) {
+        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+        FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+        _firebaseInitialized = true;
+      }
 
-    await _ensureLocalNotifications();
+      await _ensureLocalNotifications();
 
-    final settings = await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    if (settings.authorizationStatus == AuthorizationStatus.denied) {
-      return false;
-    }
-
-    if (Platform.isIOS) {
-      await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      final settings = await FirebaseMessaging.instance.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
-    }
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        return false;
+      }
 
-    final token = await _resolveFcmToken();
-    if (token == null || token.isEmpty) {
+      if (Platform.isIOS) {
+        await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        await _registerForRemoteNotificationsOnIos();
+      }
+
+      final token = await _resolveFcmToken();
+      if (token == null || token.isEmpty) {
+        return false;
+      }
+
+      await _registerToken(token);
+      _attachMessagingListeners(router);
+
+      return true;
+    } catch (_) {
       return false;
     }
-
-    await _registerToken(token);
-    _attachMessagingListeners(router);
-
-    return true;
   }
 
   Future<void> disable() async {
@@ -72,18 +80,22 @@ class PushNotificationService {
       return;
     }
 
-    if (!_firebaseInitialized) {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-      _firebaseInitialized = true;
-    }
+    try {
+      if (!_firebaseInitialized) {
+        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+        _firebaseInitialized = true;
+      }
 
-    final token = _currentToken ?? await _resolveFcmToken();
-    if (token != null && token.isNotEmpty) {
-      await _repository.unregisterFcmToken(token);
+      final token = _currentToken ?? await _resolveFcmToken();
+      if (token != null && token.isNotEmpty) {
+        await _repository.unregisterFcmToken(token);
+        _currentToken = null;
+      }
+
+      await FirebaseMessaging.instance.deleteToken();
+    } catch (_) {
       _currentToken = null;
     }
-
-    await FirebaseMessaging.instance.deleteToken();
   }
 
   /// Preview a streak reminder using local notifications only (no FCM required).
@@ -111,18 +123,60 @@ class PushNotificationService {
     return true;
   }
 
+  Future<void> _registerForRemoteNotificationsOnIos() async {
+    try {
+      await _iosPushChannel.invokeMethod<void>('registerForRemoteNotifications');
+    } catch (_) {
+      // Native channel unavailable — Firebase proxy may still register later.
+    }
+  }
+
   Future<String?> _resolveFcmToken() async {
     if (Platform.isIOS) {
-      for (var attempt = 0; attempt < 5; attempt++) {
-        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        if (apnsToken != null && apnsToken.isNotEmpty) {
-          break;
-        }
-        await Future<void>.delayed(Duration(milliseconds: 400 * (attempt + 1)));
-      }
+      await _waitForApnsToken();
     }
 
-    return FirebaseMessaging.instance.getToken();
+    for (var attempt = 0; attempt < 8; attempt++) {
+      try {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null && token.isNotEmpty) {
+          return token;
+        }
+      } on FirebaseException catch (error) {
+        if (!_isApnsTokenPending(error)) {
+          return null;
+        }
+      } catch (_) {
+        return null;
+      }
+
+      await Future<void>.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+    }
+
+    return null;
+  }
+
+  Future<void> _waitForApnsToken() async {
+    for (var attempt = 0; attempt < 20; attempt++) {
+      try {
+        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken != null && apnsToken.isNotEmpty) {
+          return;
+        }
+      } on FirebaseException catch (error) {
+        if (!_isApnsTokenPending(error)) {
+          return;
+        }
+      } catch (_) {
+        return;
+      }
+
+      await Future<void>.delayed(Duration(milliseconds: 400 * (attempt + 1)));
+    }
+  }
+
+  bool _isApnsTokenPending(FirebaseException error) {
+    return error.code == 'apns-token-not-set';
   }
 
   void _attachMessagingListeners(GoRouter router) {
@@ -130,7 +184,9 @@ class PushNotificationService {
       return;
     }
 
-    FirebaseMessaging.instance.onTokenRefresh.listen(_registerToken);
+    FirebaseMessaging.instance.onTokenRefresh.listen((token) {
+      unawaited(_registerTokenSafely(token));
+    });
     FirebaseMessaging.onMessage.listen((message) {
       unawaited(_showForegroundNotification(message));
     });
@@ -155,6 +211,14 @@ class PushNotificationService {
       token: token,
       platform: Platform.isIOS ? 'ios' : 'android',
     );
+  }
+
+  Future<void> _registerTokenSafely(String token) async {
+    try {
+      await _registerToken(token);
+    } catch (_) {
+      // Ignore background refresh failures (e.g. logged out).
+    }
   }
 
   Future<void> _ensureLocalNotifications() async {

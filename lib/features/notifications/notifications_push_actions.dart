@@ -36,5 +36,13 @@ Future<void> toggleMockPushNotifications({
       MockToast.error(context, error.message);
     }
     rethrow;
+  } catch (_) {
+    if (context.mounted) {
+      MockToast.info(
+        context,
+        'Could not update push settings. Check notification permission in Settings.',
+      );
+    }
+    throw ApiException('Could not update push settings.');
   }
 }

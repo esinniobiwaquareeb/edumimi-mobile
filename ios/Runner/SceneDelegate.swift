@@ -27,5 +27,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
       appDelegate.window = window
       UNUserNotificationCenter.current().delegate = appDelegate
     }
+
+    let pushChannel = FlutterMethodChannel(
+      name: "com.edumimi.mock/push",
+      binaryMessenger: flutterViewController.binaryMessenger
+    )
+    pushChannel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "registerForRemoteNotifications":
+        DispatchQueue.main.async {
+          UIApplication.shared.registerForRemoteNotifications()
+          result(nil)
+        }
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
   }
 }
