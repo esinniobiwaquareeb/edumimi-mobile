@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/theme/app_colors.dart';
@@ -13,6 +12,8 @@ import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/utils/text_utils.dart' show formatMockDifficulty, formatMockMode;
 import 'package:mock_mobile/core/widgets/mock_rich_content.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
+import 'package:mock_mobile/features/exams/exam_attempt_utils.dart';
+import 'package:mock_mobile/features/exams/presentation/widgets/exam_attempt_history_card.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 import 'package:mock_mobile/shared/models/mock_attempt.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
@@ -75,7 +76,7 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
     final exam = widget.exam;
     final attemptsAsync = ref.watch(attemptsProvider);
     final pastAttempts = attemptsAsync.maybeWhen(
-      data: (attempts) => _filterExamAttempts(attempts, exam),
+      data: (attempts) => filterSubmittedAttemptsForExam(attempts, exam),
       orElse: () => const <MockAttempt>[],
     );
     final bestScore = _resolveBestScore(exam, pastAttempts);
@@ -205,7 +206,7 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
             children: [
               const MockSectionTitle(title: 'Past attempts'),
               TextButton(
-                onPressed: () => context.push('/results'),
+                onPressed: () => context.push('/exams/${exam.slug}/attempts'),
                 child: const Text('View all'),
               ),
             ],
@@ -214,7 +215,7 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
           ...pastAttempts.take(3).map(
                 (attempt) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.section),
-                  child: _AttemptHistoryCard(attempt: attempt),
+                  child: ExamAttemptHistoryCard(attempt: attempt),
                 ),
               ),
         ],
@@ -281,22 +282,6 @@ String _startButtonLabel(MockExam exam) {
     default:
       return 'Start practice';
   }
-}
-
-List<MockAttempt> _filterExamAttempts(List<MockAttempt> attempts, MockExam exam) {
-  final filtered = attempts
-      .where(
-        (attempt) =>
-            attempt.isSubmitted &&
-            (attempt.exam?.slug == exam.slug || attempt.exam?.id == exam.id),
-      )
-      .toList()
-    ..sort((left, right) {
-      final leftDate = left.submittedAt ?? '';
-      final rightDate = right.submittedAt ?? '';
-      return rightDate.compareTo(leftDate);
-    });
-  return filtered;
 }
 
 double? _resolveBestScore(MockExam exam, List<MockAttempt> attempts) {
@@ -498,50 +483,6 @@ class _QuestionPreviewCard extends StatelessWidget {
             }),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _AttemptHistoryCard extends StatelessWidget {
-  const _AttemptHistoryCard({required this.attempt});
-
-  final MockAttempt attempt;
-
-  @override
-  Widget build(BuildContext context) {
-    final submittedLabel = attempt.submittedAt == null
-        ? 'Submitted'
-        : DateFormat.yMMMd().format(DateTime.parse(attempt.submittedAt!).toLocal());
-
-    return MockCard(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        onTap: () => context.push('/results/${attempt.id}'),
-        child: Row(
-          children: [
-            MockScoreRing(percent: attempt.percentScore),
-            const SizedBox(width: AppSpacing.section),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  MockMetaRow(
-                    label: 'Score',
-                    value: '${attempt.score}/${attempt.totalPossibleScore}',
-                    emphasis: true,
-                  ),
-                  MockMetaRow(label: 'Percent', value: '${attempt.percentScore}%'),
-                  MockMetaRow(label: 'Submitted', value: submittedLabel),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: context.appTextDisabled,
-            ),
-          ],
-        ),
       ),
     );
   }

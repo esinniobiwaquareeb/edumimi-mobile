@@ -38,12 +38,7 @@ class ResultsScreen extends ConsumerWidget {
               return RefreshIndicator(
                 onRefresh: () async => ref.invalidate(attemptsProvider),
                 child: ListView.separated(
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.page,
-                    AppSpacing.page,
-                    AppSpacing.page,
-                    AppSpacing.page + AppSpacing.glassNavClearance,
-                  ),
+                  padding: MockTabScrollPadding.list(context),
                   itemCount: attempts.length,
                   separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.section),
                   itemBuilder: (context, index) {

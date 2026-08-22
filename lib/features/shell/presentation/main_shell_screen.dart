@@ -38,11 +38,41 @@ class MainShellScreen extends ConsumerWidget {
         onNotificationsTap: () => context.push('/notifications'),
         showNotificationBadge: showNotificationBadge,
       ),
-      body: navigationShell,
-      bottomNavigationBar: MockGlassNavBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: navigationShell.goBranch,
-        destinations: _destinations,
+      body: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(child: navigationShell),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: MockGlassNavBar.scrimHeight(context),
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0, 0.55, 1],
+                    colors: [
+                      Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0),
+                      Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.72),
+                      Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.94),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: MockGlassNavBar(
+              selectedIndex: navigationShell.currentIndex,
+              onDestinationSelected: navigationShell.goBranch,
+              destinations: _destinations,
+            ),
+          ),
+        ],
       ),
     );
   }

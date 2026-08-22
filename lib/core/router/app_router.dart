@@ -9,6 +9,7 @@ import 'package:mock_mobile/features/auth/presentation/verify_email_screen.dart'
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/community/presentation/community_screen.dart';
 import 'package:mock_mobile/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:mock_mobile/features/exams/presentation/exam_attempts_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/exam_catalog_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/exam_detail_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/exam_session_screen.dart';
@@ -220,6 +221,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/results/:attemptId',
         builder: (context, state) => ResultDetailScreen(attemptId: state.pathParameters['attemptId']!),
+      ),
+      GoRoute(
+        path: '/exams/:slug/attempts',
+        builder: (context, state) => ExamAttemptsScreen(slug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: '/exams/:slug',

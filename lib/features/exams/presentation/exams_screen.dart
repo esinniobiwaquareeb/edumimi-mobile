@@ -148,12 +148,7 @@ class _ExamsScreenState extends ConsumerState<ExamsScreen> {
               return RefreshIndicator(
                 onRefresh: () async => ref.invalidate(examsCatalogProvider(_selectedExamTypeSlug)),
                 child: ListView.separated(
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.page,
-                    AppSpacing.page,
-                    AppSpacing.page,
-                    AppSpacing.page + AppSpacing.glassNavClearance,
-                  ),
+                  padding: MockTabScrollPadding.list(context),
                   itemCount: filtered.length,
                   separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.section),
                   itemBuilder: (context, index) {

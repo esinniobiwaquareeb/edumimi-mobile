@@ -28,10 +28,13 @@ extension AppThemeContext on BuildContext {
       ? AppColors.darkPrimarySoft.withValues(alpha: 0.22)
       : AppColors.primarySoft.withValues(alpha: 0.35);
 
-  /// Dark glass nav: translucent charcoal, not frosted white.
+  /// Translucent glass nav — keep alpha low enough for blur, high enough to hide scroll text.
   Color get appNavGlassTop =>
-      isDarkMode ? AppColors.darkBackground.withValues(alpha: 0.78) : colors.surface.withValues(alpha: 0.58);
+      isDarkMode ? AppColors.darkBackground.withValues(alpha: 0.62) : Colors.white.withValues(alpha: 0.52);
 
   Color get appNavGlassBottom =>
-      isDarkMode ? AppColors.darkSurface.withValues(alpha: 0.92) : colors.surface.withValues(alpha: 0.82);
+      isDarkMode ? AppColors.darkSurface.withValues(alpha: 0.78) : Colors.white.withValues(alpha: 0.68);
+
+  Color get appNavGlassBorder =>
+      isDarkMode ? Colors.white.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.72);
 }

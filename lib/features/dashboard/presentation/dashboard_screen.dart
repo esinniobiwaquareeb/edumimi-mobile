@@ -86,12 +86,7 @@ class DashboardScreen extends ConsumerWidget {
         ref.invalidate(myPurchasesProvider);
       },
       child: ListView(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.page,
-          AppSpacing.page,
-          AppSpacing.page,
-          AppSpacing.page + AppSpacing.glassNavClearance,
-        ),
+        padding: MockTabScrollPadding.list(context),
         children: [
           const MockPageHeader(
             title: 'Dashboard',

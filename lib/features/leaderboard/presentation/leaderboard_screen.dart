@@ -107,12 +107,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                   leaderboardProvider((period: _period, examTypeSlug: _examTypeSlug, page: _page)),
                 ),
                 child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.page,
-                    AppSpacing.page,
-                    AppSpacing.page,
-                    AppSpacing.page + AppSpacing.glassNavClearance,
-                  ),
+                  padding: MockTabScrollPadding.list(context),
                   children: [
                     MockCard(
                       child: Column(

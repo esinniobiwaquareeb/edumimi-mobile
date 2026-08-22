@@ -982,13 +982,30 @@ class MockGlassNavBar extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final List<MockNavDestination> destinations;
 
+  static const _barRadius = 28.0;
+  static const _horizontalInset = 16.0;
+  static const _barVerticalPadding = 12.0;
+  static const _barContentHeight = 58.0;
+  static const _outerBottomFallback = 10.0;
+  static const _scrollGap = 20.0;
+
+  /// Total space to reserve at the bottom of tab scroll views.
+  static double bottomClearance(BuildContext context) {
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    final pillHeight = _barContentHeight + _barVerticalPadding;
+    return pillHeight + (safeBottom > 0 ? safeBottom : _outerBottomFallback) + _scrollGap;
+  }
+
+  /// Height of the fade scrim placed above the nav in the shell.
+  static double scrimHeight(BuildContext context) => bottomClearance(context) + 12;
+
   bool get _useGlassEffect => Platform.isIOS;
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final barContent = Padding(
-      padding: EdgeInsets.fromLTRB(12, 8, 12, bottomInset > 0 ? 4 : 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Row(
         children: List.generate(destinations.length, (index) {
           final destination = destinations[index];
@@ -1004,51 +1021,79 @@ class MockGlassNavBar extends StatelessWidget {
       ),
     );
 
-    if (_useGlassEffect) {
-      final blurSigma = context.isDarkMode ? 20.0 : 32.0;
-      return ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [context.appNavGlassTop, context.appNavGlassBottom],
-              ),
-              border: Border(
-                top: BorderSide(
-                  color: context.appBorder.withValues(
-                    alpha: context.isDarkMode ? 0.35 : 0.45,
+    final glassSurface = _useGlassEffect
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(_barRadius),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 42, sigmaY: 42),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(_barRadius),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [context.appNavGlassTop, context.appNavGlassBottom],
                   ),
+                  border: Border.all(color: context.appNavGlassBorder, width: 1),
                 ),
+                child: barContent,
               ),
+            ),
+          )
+        : DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_barRadius),
+              color: context.isDarkMode
+                  ? AppColors.darkSurface.withValues(alpha: 0.94)
+                  : context.colors.surface.withValues(alpha: 0.96),
+              border: Border.all(color: context.appBorder.withValues(alpha: 0.65)),
+              boxShadow: [
+                BoxShadow(
+                  color: context.colors.onSurface.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
             child: barContent,
-          ),
-        ),
-      );
-    }
+          );
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.isDarkMode
-            ? AppColors.darkSurface
-            : context.colors.surface,
-        border: Border(
-          top: BorderSide(color: context.appBorder.withValues(alpha: 0.8)),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: context.colors.onSurface.withValues(
-              alpha: context.isDarkMode ? 0.12 : 0.03,
-            ),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        _horizontalInset,
+        0,
+        _horizontalInset,
+        bottomInset > 0 ? bottomInset : 10,
       ),
-      child: barContent,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(_barRadius),
+          boxShadow: [
+            BoxShadow(
+              color: context.colors.onSurface.withValues(
+                alpha: context.isDarkMode ? 0.35 : 0.12,
+              ),
+              blurRadius: 28,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: glassSurface,
+      ),
+    );
+  }
+}
+
+/// Standard scroll padding for main tab screens that sit above [MockGlassNavBar].
+class MockTabScrollPadding {
+  const MockTabScrollPadding._();
+
+  static EdgeInsets list(BuildContext context) {
+    return EdgeInsets.fromLTRB(
+      AppSpacing.page,
+      AppSpacing.page,
+      AppSpacing.page,
+      AppSpacing.page + MockGlassNavBar.bottomClearance(context),
     );
   }
 }
