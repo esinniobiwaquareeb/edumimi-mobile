@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
+import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
@@ -101,7 +102,11 @@ class _ExamTypesScreenState extends ConsumerState<ExamTypesScreen> {
                                   ),
                                   if (type.slug == primarySlug)
                                     const MockChip(label: 'Your exam', tone: MockChipTone.success),
-                                  Icon(Icons.chevron_right, color: context.appTextSecondary),
+                                  MockLongArrowIcon(
+                                    direction: MockLongArrowDirection.right,
+                                    size: AppIcons.forwardSize,
+                                    color: context.appTextSecondary,
+                                  ),
                                 ],
                               ),
                             ),

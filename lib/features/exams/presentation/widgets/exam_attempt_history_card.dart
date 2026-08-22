@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
@@ -39,8 +40,9 @@ class ExamAttemptHistoryCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right,
+            MockLongArrowIcon(
+              direction: MockLongArrowDirection.right,
+              size: AppIcons.forwardSize,
               color: context.appTextDisabled,
             ),
           ],

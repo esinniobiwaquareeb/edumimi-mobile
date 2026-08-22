@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
+import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
@@ -310,7 +311,11 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                       ),
                       title: Text(room.name, style: context.cardTitle),
                       subtitle: Text(room.description ?? room.type, style: context.bodySecondary),
-                      trailing: Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35)),
+                      trailing: MockLongArrowIcon(
+                        direction: MockLongArrowDirection.right,
+                        size: AppIcons.forwardSize,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
+                      ),
                       onTap: () => _selectRoom(room),
                     ),
                   );

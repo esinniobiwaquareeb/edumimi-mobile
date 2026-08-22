@@ -21,7 +21,10 @@ abstract final class AppIcons {
   static const profile = LucideIcons.user;
   static const logout = LucideIcons.logOut;
   static const streak = LucideIcons.flame;
-  static const back = LucideIcons.arrowLeft;
+  /// Use [MockLongArrowIcon] with [MockLongArrowDirection.left] for navigation back.
+  static const backSize = 22.0;
+  static const forwardSize = 18.0;
+  static const navSize = 20.0;
   static const eye = LucideIcons.eye;
   static const eyeOff = LucideIcons.eyeOff;
 }

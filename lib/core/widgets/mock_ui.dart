@@ -9,7 +9,10 @@ import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
+import 'package:mock_mobile/core/widgets/mock_long_arrow_icon.dart';
 import 'package:mock_mobile/shared/models/mock_attempt.dart';
+
+export 'mock_long_arrow_icon.dart';
 
 class MockPrimaryButton extends StatelessWidget {
   const MockPrimaryButton({
@@ -529,9 +532,9 @@ class MockExamCard extends StatelessWidget {
                 if (locked)
                   const MockChip(label: 'Locked', tone: MockChipTone.neutral)
                 else
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
+                  MockLongArrowIcon(
+                    direction: MockLongArrowDirection.right,
+                    size: AppIcons.forwardSize,
                     color: context.appTextDisabled,
                   ),
               ],
@@ -1397,7 +1400,7 @@ class MockScoreRing extends StatelessWidget {
   }
 }
 
-/// Standard back control using the long-tail Lucide arrow ([AppIcons.back]).
+/// Standard back control using the long-tail arrow SVG.
 class MockBackButton extends StatelessWidget {
   const MockBackButton({super.key, this.onPressed});
 
@@ -1406,7 +1409,11 @@ class MockBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(AppIcons.back),
+      icon: const MockLongArrowIcon(
+        direction: MockLongArrowDirection.left,
+        size: AppIcons.backSize,
+        semanticLabel: 'Back',
+      ),
       tooltip: 'Back',
       onPressed: onPressed ?? () => Navigator.of(context).maybePop(),
     );

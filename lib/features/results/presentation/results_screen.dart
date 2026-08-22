@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
@@ -84,8 +85,9 @@ class ResultsScreen extends ConsumerWidget {
                               ),
                             ),
                             if (attempt.isSubmitted)
-                              Icon(
-                                Icons.chevron_right,
+                              MockLongArrowIcon(
+                                direction: MockLongArrowDirection.right,
+                                size: AppIcons.forwardSize,
                                 color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
                               ),
                           ],

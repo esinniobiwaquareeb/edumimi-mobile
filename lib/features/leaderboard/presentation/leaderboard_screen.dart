@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/core/constants/mock_voice.dart';
+import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
@@ -215,11 +216,19 @@ class _LeaderboardPagination extends StatelessWidget {
           const SizedBox(width: AppSpacing.item),
           IconButton(
             onPressed: onPrevious,
-            icon: const Icon(Icons.chevron_left),
+            icon: const MockLongArrowIcon(
+              direction: MockLongArrowDirection.left,
+              size: AppIcons.navSize,
+              semanticLabel: 'Previous page',
+            ),
           ),
           IconButton(
             onPressed: onNext,
-            icon: const Icon(Icons.chevron_right),
+            icon: const MockLongArrowIcon(
+              direction: MockLongArrowDirection.right,
+              size: AppIcons.navSize,
+              semanticLabel: 'Next page',
+            ),
           ),
         ],
       ),
