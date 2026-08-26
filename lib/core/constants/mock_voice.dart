@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 /// Student-friendly product copy aligned with mock-frontend mock-voice.ts.
 abstract final class MockVoice {
   static const brandTagline = 'Exam practice for JAMB, WAEC & NECO';
-  static const leaderboardShareRankLine = " I just ranked among Edumimi's top students.";
+  static const leaderboardShareRankLine = " I just ranked among mock.edumimi's top students.";
 
   static const logOutTitle = 'Log out?';
   static const logOutDesc = 'You can log back in anytime to continue where you stopped.';

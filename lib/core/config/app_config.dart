@@ -42,7 +42,7 @@ class AppConfig {
   }
 
   static const apiPrefix = '/mock-portal';
-  static const appName = 'Edumimi Mock';
+  static const appName = 'mock.edumimi';
   static const deepLinkScheme = 'mockedumimi';
   static const webShareOrigin = String.fromEnvironment(
     'MOCK_WEB_URL',

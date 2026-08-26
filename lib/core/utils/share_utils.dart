@@ -45,16 +45,16 @@ String buildMockResultShareMessage({
       : '';
 
   if (isPreview) {
-    return "I'm preparing for $examTitle on Edumimi and scored $percentScore% on my free preview.${referralLine.isNotEmpty ? referralLine : ' Try a free practice drill: $webOrigin'}";
+    return "I'm preparing for $examTitle on mock.edumimi and scored $percentScore% on my free preview.${referralLine.isNotEmpty ? referralLine : ' Try a free practice drill: $webOrigin'}";
   }
 
   final leaderboardLine = includeLeaderboard ? MockVoice.leaderboardShareRankLine : '';
 
   if (referralLine.isNotEmpty) {
-    return 'I scored $percentScore% on $examTitle on Edumimi.$leaderboardLine$referralLine';
+    return 'I scored $percentScore% on $examTitle on mock.edumimi.$leaderboardLine$referralLine';
   }
 
-  return 'I scored $percentScore% on $examTitle on Edumimi.$leaderboardLine Challenge yourself with free practice: $webOrigin/exams';
+  return 'I scored $percentScore% on $examTitle on mock.edumimi.$leaderboardLine Challenge yourself with free practice: $webOrigin/exams';
 }
 
 /// Builds the friend-challenge message aligned with mock-frontend mock-challenge.ts.
@@ -64,23 +64,23 @@ String buildChallengeShareMessage({
   required num percentScore,
   required String shareUrl,
 }) {
-  return '$challengerName scored $percentScore% on $examTitle on Edumimi. Take the same mock: $shareUrl';
+  return '$challengerName scored $percentScore% on $examTitle on mock.edumimi. Take the same mock: $shareUrl';
 }
 
 String buildReferralShareMessage({required String referralLink, String? referralCode}) {
   final trimmedLink = referralLink.trim();
   if (trimmedLink.isNotEmpty) {
-    return 'Join me on Edumimi Mock practice: $trimmedLink';
+    return 'Join me on mock.edumimi: $trimmedLink';
   }
   final trimmedCode = referralCode?.trim();
   if (trimmedCode != null && trimmedCode.isNotEmpty) {
-    return 'Join me on Edumimi Mock practice. Use my referral code: $trimmedCode';
+    return 'Join me on mock.edumimi. Use my referral code: $trimmedCode';
   }
-  return 'Join me on Edumimi Mock practice: ${AppConfig.webShareOrigin}';
+  return 'Join me on mock.edumimi: ${AppConfig.webShareOrigin}';
 }
 
 String buildParentShareMessage(String shareUrl) {
-  return 'Track my exam prep on Edumimi (read-only): $shareUrl';
+  return 'Track my exam prep on mock.edumimi (read-only): $shareUrl';
 }
 
 /// Heuristic for preview attempts when API previewSubmission is unavailable.
@@ -106,7 +106,7 @@ Future<void> shareMockResult({
       includeLeaderboard: includeLeaderboard,
       referralLink: referralLink,
     ),
-    subject: 'My Edumimi score',
+    subject: 'My mock.edumimi score',
     sharePositionOrigin: sharePositionOrigin,
     context: context,
   );
@@ -123,7 +123,7 @@ Future<void> shareReferral({
       referralLink: referralLink ?? '',
       referralCode: referralCode,
     ),
-    subject: 'Edumimi referral',
+    subject: 'mock.edumimi referral',
     sharePositionOrigin: sharePositionOrigin,
     context: context,
   );
@@ -157,7 +157,7 @@ Future<void> shareChallenge({
       percentScore: percentScore,
       shareUrl: shareUrl,
     ),
-    subject: 'Edumimi challenge',
+    subject: 'mock.edumimi challenge',
     sharePositionOrigin: sharePositionOrigin,
     context: context,
   );
