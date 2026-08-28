@@ -14,18 +14,20 @@ class AuthState extends Equatable {
     this.isInitializing = false,
   });
 
-  const AuthState.initializing() : this(status: AuthStatus.unknown, isInitializing: true);
+  const AuthState.initializing()
+    : this(status: AuthStatus.unknown, isInitializing: true);
   const AuthState.authenticated(AuthSession session)
-      : this(status: AuthStatus.authenticated, session: session);
+    : this(status: AuthStatus.authenticated, session: session);
   const AuthState.unauthenticated({String? errorMessage})
-      : this(status: AuthStatus.unauthenticated, errorMessage: errorMessage);
+    : this(status: AuthStatus.unauthenticated, errorMessage: errorMessage);
 
   final AuthStatus status;
   final AuthSession? session;
   final String? errorMessage;
   final bool isInitializing;
 
-  bool get isAuthenticated => status == AuthStatus.authenticated && session != null;
+  bool get isAuthenticated =>
+      status == AuthStatus.authenticated && session != null;
   MockUser? get user => session?.user;
 
   @override
@@ -55,7 +57,9 @@ class AuthController extends Notifier<AuthState> {
 
       try {
         final freshUser = await _repository.fetchMe();
-        state = AuthState.authenticated(AuthSession(token: stored.token, user: freshUser));
+        state = AuthState.authenticated(
+          AuthSession(token: stored.token, user: freshUser),
+        );
         await _repository.persistSession(token: stored.token, user: freshUser);
       } on ApiException catch (error) {
         if (error.statusCode == 401) {
@@ -78,20 +82,21 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  Future<void> signup({
+  Future<MockSignupResult> signup({
     required String fullName,
     required String email,
     required String password,
     String? referralCode,
   }) async {
     try {
-      final session = await _repository.signup(
+      final result = await _repository.signup(
         fullName: fullName,
         email: email,
         password: password,
         referralCode: referralCode,
       );
-      state = AuthState.authenticated(session);
+      state = const AuthState.unauthenticated();
+      return result;
     } on ApiException catch (error) {
       state = AuthState.unauthenticated(errorMessage: error.message);
       rethrow;
@@ -110,7 +115,9 @@ class AuthController extends Notifier<AuthState> {
     }
     try {
       final freshUser = await _repository.fetchMe();
-      state = AuthState.authenticated(AuthSession(token: current.token, user: freshUser));
+      state = AuthState.authenticated(
+        AuthSession(token: current.token, user: freshUser),
+      );
       await _repository.persistSession(token: current.token, user: freshUser);
     } on ApiException catch (error) {
       if (error.statusCode == 401) {
@@ -129,8 +136,12 @@ class AuthController extends Notifier<AuthState> {
     if (current == null) {
       return;
     }
-    state = AuthState.authenticated(AuthSession(token: current.token, user: user));
+    state = AuthState.authenticated(
+      AuthSession(token: current.token, user: user),
+    );
   }
 }
 
-final authControllerProvider = NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);

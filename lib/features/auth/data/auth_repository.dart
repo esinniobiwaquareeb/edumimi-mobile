@@ -26,10 +26,15 @@ class AuthRepository {
     return AuthSession(token: token, user: user);
   }
 
-  Future<void> persistSession({required String token, required MockUser user}) =>
-      _storage.saveSession(token: token, user: user);
+  Future<void> persistSession({
+    required String token,
+    required MockUser user,
+  }) => _storage.saveSession(token: token, user: user);
 
-  Future<AuthSession> login({required String email, required String password}) async {
+  Future<AuthSession> login({
+    required String email,
+    required String password,
+  }) async {
     final data = await _dio.postData<Map<String, dynamic>>(
       ApiPaths.login,
       data: {'email': email.trim(), 'password': password},
@@ -43,7 +48,7 @@ class AuthRepository {
     return session;
   }
 
-  Future<AuthSession> signup({
+  Future<MockSignupResult> signup({
     required String fullName,
     required String email,
     required String password,
@@ -61,15 +66,19 @@ class AuthRepository {
       parser: (json) => json as Map<String, dynamic>,
     );
 
-    final token = data['access_token']?.toString() ?? '';
-    final user = MockUser.fromJson(data['user'] as Map<String, dynamic>? ?? {});
-    final session = AuthSession(token: token, user: user);
-    await _storage.saveSession(token: token, user: user);
-    return session;
+    return MockSignupResult(
+      requiresVerification: data['requiresVerification'] == true,
+      message:
+          data['message']?.toString() ??
+          'Account created. Check your email to verify it.',
+    );
   }
 
   Future<MockUser> fetchMe() async {
-    return _dio.getData(ApiPaths.me, parser: (json) => MockUser.fromJson(json as Map<String, dynamic>));
+    return _dio.getData(
+      ApiPaths.me,
+      parser: (json) => MockUser.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   Future<void> clearSession() => _storage.clear();
@@ -82,7 +91,10 @@ class AuthRepository {
     );
   }
 
-  Future<void> resetPassword({required String token, required String newPassword}) {
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) {
     return _dio.postData(
       ApiPaths.resetPassword,
       data: {'token': token, 'newPassword': newPassword},
@@ -104,6 +116,16 @@ class AuthRepository {
     }
     return session;
   }
+}
+
+class MockSignupResult {
+  const MockSignupResult({
+    required this.requiresVerification,
+    required this.message,
+  });
+
+  final bool requiresVerification;
+  final String message;
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

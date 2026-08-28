@@ -24,6 +24,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _referralController = TextEditingController();
   var _isLoading = false;
   String? _error;
+  String? _successMessage;
 
   @override
   void initState() {
@@ -52,12 +53,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).signup(
+      final result = await ref
+          .read(authControllerProvider.notifier)
+          .signup(
             fullName: _nameController.text,
             email: _emailController.text,
             password: _passwordController.text,
-            referralCode: _referralController.text.trim().isEmpty ? null : _referralController.text,
+            referralCode: _referralController.text.trim().isEmpty
+                ? null
+                : _referralController.text,
           );
+      if (mounted && result.requiresVerification) {
+        setState(() => _successMessage = result.message);
+      }
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } finally {
@@ -87,42 +95,72 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   children: [
                     const MockBrandLogo(compact: true),
                     const SizedBox(height: AppSpacing.page),
-                    Text('Start free practice in minutes.', style: context.pageSubtitle),
+                    Text(
+                      'Start free practice in minutes.',
+                      style: context.pageSubtitle,
+                    ),
                     const SizedBox(height: AppSpacing.page),
                     MockAuthCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (_error != null) ...[
-                            MockInlineNotice.error(message: _error!),
+                          if (_successMessage != null) ...[
+                            MockInlineNotice.success(message: _successMessage!),
                             const SizedBox(height: AppSpacing.section),
+                            Text(
+                              'Open the verification email to activate your account.',
+                              style: context.body,
+                            ),
+                            const SizedBox(height: AppSpacing.page),
+                            MockPrimaryButton(
+                              label: 'Back to login',
+                              onPressed: () => context.go('/login'),
+                            ),
+                          ] else ...[
+                            if (_error != null) ...[
+                              MockInlineNotice.error(message: _error!),
+                              const SizedBox(height: AppSpacing.section),
+                            ],
+                            MockTextField(
+                              label: 'Full name',
+                              controller: _nameController,
+                              validator: (value) =>
+                                  value != null && value.trim().length >= 2
+                                  ? null
+                                  : 'Enter your name',
+                            ),
+                            const SizedBox(height: AppSpacing.section),
+                            MockTextField(
+                              label: 'Email address',
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) =>
+                                  value != null && value.contains('@')
+                                  ? null
+                                  : 'Enter a valid email',
+                            ),
+                            const SizedBox(height: AppSpacing.section),
+                            MockTextField(
+                              label: 'Referral code (optional)',
+                              controller: _referralController,
+                            ),
+                            const SizedBox(height: AppSpacing.section),
+                            MockTextField(
+                              label: 'Password',
+                              controller: _passwordController,
+                              obscurable: true,
+                              validator: (value) =>
+                                  value != null && value.length >= 8
+                                  ? null
+                                  : 'Use at least 8 characters',
+                            ),
+                            const SizedBox(height: AppSpacing.page),
+                            MockPrimaryButton(
+                              label: 'Create account',
+                              isLoading: _isLoading,
+                              onPressed: _submit,
+                            ),
                           ],
-                          MockTextField(
-                            label: 'Full name',
-                            controller: _nameController,
-                            validator: (value) => value != null && value.trim().length >= 2 ? null : 'Enter your name',
-                          ),
-                          const SizedBox(height: AppSpacing.section),
-                          MockTextField(
-                            label: 'Email address',
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
-                          ),
-                          const SizedBox(height: AppSpacing.section),
-                          MockTextField(
-                            label: 'Referral code (optional)',
-                            controller: _referralController,
-                          ),
-                          const SizedBox(height: AppSpacing.section),
-                      MockTextField(
-                        label: 'Password',
-                        controller: _passwordController,
-                        obscurable: true,
-                        validator: (value) => value != null && value.length >= 8 ? null : 'Use at least 8 characters',
-                      ),
-                          const SizedBox(height: AppSpacing.page),
-                          MockPrimaryButton(label: 'Create account', isLoading: _isLoading, onPressed: _submit),
                         ],
                       ),
                     ),
