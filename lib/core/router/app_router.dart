@@ -134,7 +134,10 @@ final routerProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = ref.watch(routerRefreshNotifierProvider);
 
   return GoRouter(
-    initialLocation: '/splash',
+    initialLocation: const String.fromEnvironment(
+      'MOCK_INITIAL_ROUTE',
+      defaultValue: '/splash',
+    ),
     refreshListenable: refreshNotifier,
     redirect: refreshNotifier.redirect,
     routes: [

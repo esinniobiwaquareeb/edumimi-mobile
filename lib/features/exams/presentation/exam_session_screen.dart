@@ -14,13 +14,19 @@ import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_rich_content.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
+import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:mock_mobile/core/utils/mock_preparation_profile.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 
 class ExamSessionScreen extends ConsumerStatefulWidget {
-  const ExamSessionScreen({super.key, required this.slug, this.attemptId, this.sessionId});
+  const ExamSessionScreen({
+    super.key,
+    required this.slug,
+    this.attemptId,
+    this.sessionId,
+  });
 
   final String slug;
   final String? attemptId;
@@ -68,9 +74,14 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
     });
 
     try {
-      final sessionId = widget.sessionId ?? DateTime.now().millisecondsSinceEpoch.toString();
-      final response = await ref.read(mockPortalRepositoryProvider).startExam(widget.slug, sessionId: sessionId);
-      await ref.read(offlinePracticeCacheProvider).cacheExamQuestions(response.exam);
+      final sessionId =
+          widget.sessionId ?? DateTime.now().millisecondsSinceEpoch.toString();
+      final response = await ref
+          .read(mockPortalRepositoryProvider)
+          .startExam(widget.slug, sessionId: sessionId);
+      await ref
+          .read(offlinePracticeCacheProvider)
+          .cacheExamQuestions(response.exam);
       _applySession(response);
       setState(() {
         _isOfflineSession = false;
@@ -92,7 +103,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
   }
 
   void _applySession(StartAttemptResponse response) {
-    final saved = ref.read(examSessionStoreProvider).getSessionForSlug(widget.slug);
+    final saved = ref
+        .read(examSessionStoreProvider)
+        .getSessionForSlug(widget.slug);
     final totalSeconds = response.exam.durationMinutes * 60;
     _timerEnabled = _resolveTimerEnabled(response.exam.mode);
 
@@ -106,7 +119,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
         ..addAll(saved.markedForReview);
       _currentIndex = saved.currentIndex;
       _startedAt = saved.startedAt;
-      _timeLeft = saved.timeLeftSeconds > 0 ? saved.timeLeftSeconds : totalSeconds;
+      _timeLeft = saved.timeLeftSeconds > 0
+          ? saved.timeLeftSeconds
+          : totalSeconds;
       _showRecoveryNotice = true;
       return;
     }
@@ -121,7 +136,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
   }
 
   bool _restoreSavedSession() {
-    final saved = ref.read(examSessionStoreProvider).getSessionForSlug(widget.slug);
+    final saved = ref
+        .read(examSessionStoreProvider)
+        .getSessionForSlug(widget.slug);
     if (saved == null) {
       return false;
     }
@@ -153,7 +170,11 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
   }
 
   bool _resolveTimerEnabled(String mode) {
-    final interests = ref.read(authControllerProvider).user?.mockProfile?.interests;
+    final interests = ref
+        .read(authControllerProvider)
+        .user
+        ?.mockProfile
+        ?.interests;
     return resolveExamTimerEnabled(
       mode,
       resolvePracticeTimerEnabled(interests?.practiceTimerEnabled),
@@ -162,7 +183,10 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
 
   void _startCountdown() {
     _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => _tickTimer());
+    _countdownTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _tickTimer(),
+    );
   }
 
   void _tickTimer() {
@@ -205,7 +229,8 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
 
   List<MockQuestion> get _questions {
     final questions = _session?.exam.questions ?? const <MockQuestion>[];
-    return [...questions]..sort((left, right) => left.position.compareTo(right.position));
+    return [...questions]
+      ..sort((left, right) => left.position.compareTo(right.position));
   }
 
   MockQuestion? get _currentQuestion {
@@ -218,7 +243,8 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
 
   int get _answeredCount => _answers.length;
 
-  int get _reviewCount => _markedForReview.values.where((flagged) => flagged).length;
+  int get _reviewCount =>
+      _markedForReview.values.where((flagged) => flagged).length;
 
   int get _durationSeconds {
     if (!_timerEnabled) {
@@ -244,7 +270,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
       return;
     }
 
-    await ref.read(examSessionStoreProvider).saveSession(
+    await ref
+        .read(examSessionStoreProvider)
+        .saveSession(
           slug: widget.slug,
           attemptId: session.attemptId,
           exam: session.exam,
@@ -262,7 +290,10 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
   }
 
   Future<void> _toggleReview(String questionId) async {
-    setState(() => _markedForReview[questionId] = !(_markedForReview[questionId] ?? false));
+    setState(
+      () => _markedForReview[questionId] =
+          !(_markedForReview[questionId] ?? false),
+    );
     await _persistProgress();
   }
 
@@ -298,7 +329,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
     return MockConfirmDialog.show(
       context,
       title: MockVoice.exitExamTitle,
-      message: _timerEnabled ? MockVoice.exitExamDesc : MockVoice.exitExamUntimedDesc,
+      message: _timerEnabled
+          ? MockVoice.exitExamDesc
+          : MockVoice.exitExamUntimedDesc,
       confirmLabel: MockVoice.exitExamConfirm,
       cancelLabel: MockVoice.exitExamStay,
       variant: MockConfirmDialogVariant.warning,
@@ -329,7 +362,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
     _countdownTimer?.cancel();
     final durationSeconds = _durationSeconds;
     final payload = Map<String, int>.from(_answers);
-    final connectivity = await ref.read(connectivityServiceProvider).currentStatus();
+    final connectivity = await ref
+        .read(connectivityServiceProvider)
+        .currentStatus();
 
     try {
       if (!connectivity.isOnline) {
@@ -337,7 +372,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
         return;
       }
 
-      final result = await ref.read(mockPortalRepositoryProvider).submitAttempt(
+      final result = await ref
+          .read(mockPortalRepositoryProvider)
+          .submitAttempt(
             attemptId: session.attemptId,
             answers: payload,
             durationSeconds: durationSeconds,
@@ -350,7 +387,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
       context.go('/results/${result.id}');
       MockToast.success(
         context,
-        autoSubmit ? 'Time up — submitted · ${result.percentScore}%' : 'Submitted · ${result.percentScore}%',
+        autoSubmit
+            ? 'Time up — submitted · ${result.percentScore}%'
+            : 'Submitted · ${result.percentScore}%',
       );
     } on ApiException catch (error) {
       if (_shouldQueueOffline(error, connectivity.isOnline)) {
@@ -372,7 +411,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
       return true;
     }
     final message = error.message.toLowerCase();
-    return message.contains('network') || message.contains('connection') || message.contains('timeout');
+    return message.contains('network') ||
+        message.contains('connection') ||
+        message.contains('timeout');
   }
 
   Future<void> _queueOfflineSubmit(
@@ -407,7 +448,12 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, AppSpacing.page),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              0,
+              AppSpacing.page,
+              AppSpacing.page,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -422,8 +468,12 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
                 Flexible(
                   child: GridView.builder(
                     shrinkWrap: true,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 5,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: MockAdaptiveLayout.isWide(context)
+                          ? 10
+                          : MockAdaptiveLayout.isTablet(context)
+                          ? 8
+                          : 5,
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
                       childAspectRatio: 1,
@@ -457,7 +507,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
                           backgroundColor: background,
                           foregroundColor: foreground,
                           side: BorderSide(
-                            color: isCurrent ? AppColors.primary : context.appBorder,
+                            color: isCurrent
+                                ? AppColors.primary
+                                : context.appBorder,
                             width: isCurrent ? 1.5 : 1,
                           ),
                         ),
@@ -465,7 +517,12 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
                           Navigator.of(context).pop();
                           unawaited(_goToQuestion(index));
                         },
-                        child: Text('${index + 1}', style: context.caption.copyWith(fontWeight: FontWeight.w700)),
+                        child: Text(
+                          '${index + 1}',
+                          style: context.caption.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -499,13 +556,13 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
     final timerBackground = _isCriticalTime
         ? context.appErrorSoft
         : _isLowTime
-            ? context.appWarningSoft
-            : context.appNeutralSoft;
+        ? context.appWarningSoft
+        : context.appNeutralSoft;
     final timerColor = _isCriticalTime
         ? AppColors.error
         : _isLowTime
-            ? AppColors.warning
-            : context.appTextSecondary;
+        ? AppColors.warning
+        : context.appTextSecondary;
 
     return PopScope(
       canPop: false,
@@ -556,15 +613,22 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
                   Icon(
                     Icons.schedule,
                     size: 16,
-                    color: _timerEnabled ? timerColor : context.appTextSecondary,
+                    color: _timerEnabled
+                        ? timerColor
+                        : context.appTextSecondary,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     _timerEnabled ? _formatTime(_timeLeft) : 'Untimed',
                     style: context.caption.copyWith(
-                      fontFeatures: const [FontFeature.tabularFigures(), FontFeature.slashedZero()],
+                      fontFeatures: const [
+                        FontFeature.tabularFigures(),
+                        FontFeature.slashedZero(),
+                      ],
                       fontWeight: FontWeight.w700,
-                      color: _timerEnabled ? timerColor : context.appTextSecondary,
+                      color: _timerEnabled
+                          ? timerColor
+                          : context.appTextSecondary,
                     ),
                   ),
                 ],
@@ -575,7 +639,9 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
                 padding: const EdgeInsets.only(left: 4),
                 child: Icon(
                   Icons.wifi_off_outlined,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.45),
                 ),
               ),
             IconButton(
@@ -586,7 +652,11 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
             TextButton(
               onPressed: _isSubmitting ? null : _requestSubmit,
               child: _isSubmitting
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('Submit'),
             ),
           ],
@@ -612,149 +682,216 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
               ),
             ),
             question == null
-                ? const MockEmptyState(title: 'No questions', message: 'This exam has no questions yet.')
+                ? const MockEmptyState(
+                    title: 'No questions',
+                    message: 'This exam has no questions yet.',
+                  )
                 : ListView(
-                padding: const EdgeInsets.all(AppSpacing.page),
-                children: [
-                  if (_isOfflineSession) ...[
-                    MockInlineNotice.info(message: 'Offline mode — answers stay on this device until you reconnect.'),
-                    const SizedBox(height: AppSpacing.section),
-                  ],
-                  if (_showRecoveryNotice) ...[
-                    MockInlineNotice.info(
-                      message: 'Saved session restored. You can continue from where you stopped.',
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MockAdaptiveLayout.pageInset(context),
+                      vertical: AppSpacing.page,
                     ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => setState(() => _showRecoveryNotice = false),
-                        child: const Text('Dismiss'),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.section),
-                  ],
-                  LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 4,
-                    borderRadius: BorderRadius.circular(999),
-                    backgroundColor: context.appNeutralSoft,
-                    color: AppColors.success,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '$_answeredCount of $total answered · $_reviewCount flagged',
-                    style: context.caption,
-                  ),
-                  const SizedBox(height: AppSpacing.page),
-                  if (question.hasQuestionGroup) ...[
-                    MockCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (question.questionGroupTitle?.isNotEmpty ?? false)
-                            Text(question.questionGroupTitle!, style: context.cardTitle),
-                          if (question.questionGroupText?.isNotEmpty ?? false) ...[
-                            if (question.questionGroupTitle?.isNotEmpty ?? false) const SizedBox(height: 8),
-                            MockRichContent(
-                              content: question.questionGroupText,
-                              format: question.contentFormat,
-                            ),
-                          ],
-                          if (question.questionGroupInstructions?.isNotEmpty ?? false) ...[
-                            const SizedBox(height: 8),
-                            MockRichContent(
-                              content: question.questionGroupInstructions,
-                              format: question.contentFormat,
-                              style: context.bodySecondary.copyWith(fontSize: 14),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  if (question.instructions?.isNotEmpty ?? false) ...[
-                    MockCard(
-                      child: MockRichContent(
-                        content: question.instructions,
-                        format: question.contentFormat,
-                        style: context.bodySecondary.copyWith(fontSize: 14),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  MockCard(
-                    child: MockRichContent(
-                      content: question.questionText,
-                      format: question.contentFormat,
-                      style: context.cardTitle.copyWith(fontSize: 16, height: 1.45),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...List.generate(question.options.length, (index) {
-                    final selected = _answers[question.id] == index;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          alignment: Alignment.centerLeft,
-                          backgroundColor: selected ? context.appPrimarySoft : context.colors.surface,
-                          side: BorderSide(
-                            color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
-                          ),
-                        ),
-                        onPressed: () => _updateAnswer(question.id, index),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: MockRichContent(
-                            content: question.options[index],
-                            format: question.contentFormat,
-                            inline: true,
-                            style: context.body.copyWith(fontSize: 15),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => _toggleReview(question.id),
-                    icon: Icon(
-                      (_markedForReview[question.id] ?? false) ? Icons.bookmark : Icons.bookmark_outline,
-                      size: 18,
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: (_markedForReview[question.id] ?? false)
-                          ? context.appWarningSoft
-                          : context.colors.surface,
-                      foregroundColor: (_markedForReview[question.id] ?? false)
-                          ? AppColors.warning
-                          : context.appTextSecondary,
-                    ),
-                    label: Text(
-                      (_markedForReview[question.id] ?? false) ? 'Flagged for review' : 'Flag for review',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
                     children: [
-                      Expanded(
-                        child: MockSecondaryButton(
-                          label: 'Previous',
-                          onPressed: _currentIndex == 0 ? null : () => _goToQuestion(_currentIndex - 1),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: MockPrimaryButton(
-                          label: _currentIndex >= total - 1 ? 'Review & submit' : 'Next',
-                          onPressed: _currentIndex >= total - 1 ? _requestSubmit : () => _goToQuestion(_currentIndex + 1),
+                      MockContentWidth(
+                        maxWidth: MockAdaptiveLayout.readingMaxWidth,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (_isOfflineSession) ...[
+                              MockInlineNotice.info(
+                                message:
+                                    'Offline mode — answers stay on this device until you reconnect.',
+                              ),
+                              const SizedBox(height: AppSpacing.section),
+                            ],
+                            if (_showRecoveryNotice) ...[
+                              MockInlineNotice.info(
+                                message:
+                                    'Saved session restored. You can continue from where you stopped.',
+                              ),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () => setState(
+                                    () => _showRecoveryNotice = false,
+                                  ),
+                                  child: const Text('Dismiss'),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.section),
+                            ],
+                            LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 4,
+                              borderRadius: BorderRadius.circular(999),
+                              backgroundColor: context.appNeutralSoft,
+                              color: AppColors.success,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '$_answeredCount of $total answered · $_reviewCount flagged',
+                              style: context.caption,
+                            ),
+                            const SizedBox(height: AppSpacing.page),
+                            if (question.hasQuestionGroup) ...[
+                              MockCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (question
+                                            .questionGroupTitle
+                                            ?.isNotEmpty ??
+                                        false)
+                                      Text(
+                                        question.questionGroupTitle!,
+                                        style: context.cardTitle,
+                                      ),
+                                    if (question
+                                            .questionGroupText
+                                            ?.isNotEmpty ??
+                                        false) ...[
+                                      if (question
+                                              .questionGroupTitle
+                                              ?.isNotEmpty ??
+                                          false)
+                                        const SizedBox(height: 8),
+                                      MockRichContent(
+                                        content: question.questionGroupText,
+                                        format: question.contentFormat,
+                                      ),
+                                    ],
+                                    if (question
+                                            .questionGroupInstructions
+                                            ?.isNotEmpty ??
+                                        false) ...[
+                                      const SizedBox(height: 8),
+                                      MockRichContent(
+                                        content:
+                                            question.questionGroupInstructions,
+                                        format: question.contentFormat,
+                                        style: context.bodySecondary.copyWith(
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            if (question.instructions?.isNotEmpty ?? false) ...[
+                              MockCard(
+                                child: MockRichContent(
+                                  content: question.instructions,
+                                  format: question.contentFormat,
+                                  style: context.bodySecondary.copyWith(
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            MockCard(
+                              child: MockRichContent(
+                                content: question.questionText,
+                                format: question.contentFormat,
+                                style: context.cardTitle.copyWith(
+                                  fontSize: 16,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...List.generate(question.options.length, (index) {
+                              final selected = _answers[question.id] == index;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    alignment: Alignment.centerLeft,
+                                    backgroundColor: selected
+                                        ? context.appPrimarySoft
+                                        : context.colors.surface,
+                                    side: BorderSide(
+                                      color: selected
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.primary
+                                          : Theme.of(context).dividerColor,
+                                    ),
+                                  ),
+                                  onPressed: () =>
+                                      _updateAnswer(question.id, index),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: MockRichContent(
+                                      content: question.options[index],
+                                      format: question.contentFormat,
+                                      inline: true,
+                                      style: context.body.copyWith(
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: () => _toggleReview(question.id),
+                              icon: Icon(
+                                (_markedForReview[question.id] ?? false)
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_outline,
+                                size: 18,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor:
+                                    (_markedForReview[question.id] ?? false)
+                                    ? context.appWarningSoft
+                                    : context.colors.surface,
+                                foregroundColor:
+                                    (_markedForReview[question.id] ?? false)
+                                    ? AppColors.warning
+                                    : context.appTextSecondary,
+                              ),
+                              label: Text(
+                                (_markedForReview[question.id] ?? false)
+                                    ? 'Flagged for review'
+                                    : 'Flag for review',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: MockSecondaryButton(
+                                    label: 'Previous',
+                                    onPressed: _currentIndex == 0
+                                        ? null
+                                        : () =>
+                                              _goToQuestion(_currentIndex - 1),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: MockPrimaryButton(
+                                    label: _currentIndex >= total - 1
+                                        ? 'Review & submit'
+                                        : 'Next',
+                                    onPressed: _currentIndex >= total - 1
+                                        ? _requestSubmit
+                                        : () =>
+                                              _goToQuestion(_currentIndex + 1),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
           ],
         ),
       ),

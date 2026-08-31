@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mock_mobile/core/constants/mock_voice.dart';
@@ -648,7 +649,9 @@ class MockFilledTabBar extends StatelessWidget implements PreferredSizeWidget {
           labelColor: Colors.white,
           unselectedLabelColor: context.appTextSecondary,
           labelStyle: context.caption.copyWith(fontWeight: FontWeight.w700),
-          unselectedLabelStyle: context.caption.copyWith(fontWeight: FontWeight.w600),
+          unselectedLabelStyle: context.caption.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
           overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           splashFactory: NoSplash.splashFactory,
           tabs: tabs,
@@ -659,10 +662,7 @@ class MockFilledTabBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _MockFilledSegmentShell extends StatelessWidget {
-  const _MockFilledSegmentShell({
-    required this.child,
-    this.height,
-  });
+  const _MockFilledSegmentShell({required this.child, this.height});
 
   final Widget child;
   final double? height;
@@ -917,7 +917,7 @@ class MockScreenBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(padding: padding, child: child);
+    return MockContentFrame(padding: padding, child: child);
   }
 }
 
@@ -1045,11 +1045,7 @@ class MockAppHeader extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class MockCountBadge extends StatelessWidget {
-  const MockCountBadge({
-    super.key,
-    required this.count,
-    this.color,
-  });
+  const MockCountBadge({super.key, required this.count, this.color});
 
   final int count;
   final Color? color;
@@ -1142,7 +1138,10 @@ class _MockHeaderIconButton extends StatelessWidget {
 void _triggerHeaderIconHaptic(int badgeCount) {
   HapticFeedback.heavyImpact();
   if (badgeCount > 0) {
-    Future<void>.delayed(const Duration(milliseconds: 40), HapticFeedback.mediumImpact);
+    Future<void>.delayed(
+      const Duration(milliseconds: 40),
+      HapticFeedback.mediumImpact,
+    );
   }
 }
 
@@ -1179,13 +1178,19 @@ class MockGlassNavBar extends StatelessWidget {
 
   /// Total space to reserve at the bottom of tab scroll views.
   static double bottomClearance(BuildContext context) {
+    if (MockAdaptiveLayout.isTablet(context)) {
+      return AppSpacing.page;
+    }
     final safeBottom = MediaQuery.paddingOf(context).bottom;
     final pillHeight = _barContentHeight + _barVerticalPadding;
-    return pillHeight + (safeBottom > 0 ? safeBottom : _outerBottomFallback) + _scrollGap;
+    return pillHeight +
+        (safeBottom > 0 ? safeBottom : _outerBottomFallback) +
+        _scrollGap;
   }
 
   /// Height of the fade scrim placed above the nav in the shell.
-  static double scrimHeight(BuildContext context) => bottomClearance(context) + 12;
+  static double scrimHeight(BuildContext context) =>
+      MockAdaptiveLayout.isTablet(context) ? 0 : bottomClearance(context) + 12;
 
   bool get _useGlassEffect => Platform.isIOS;
 
@@ -1222,7 +1227,10 @@ class MockGlassNavBar extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [context.appNavGlassTop, context.appNavGlassBottom],
                   ),
-                  border: Border.all(color: context.appNavGlassBorder, width: 1),
+                  border: Border.all(
+                    color: context.appNavGlassBorder,
+                    width: 1,
+                  ),
                 ),
                 child: barContent,
               ),
@@ -1234,7 +1242,9 @@ class MockGlassNavBar extends StatelessWidget {
               color: context.isDarkMode
                   ? AppColors.darkSurface.withValues(alpha: 0.94)
                   : context.colors.surface.withValues(alpha: 0.96),
-              border: Border.all(color: context.appBorder.withValues(alpha: 0.65)),
+              border: Border.all(
+                color: context.appBorder.withValues(alpha: 0.65),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: context.colors.onSurface.withValues(alpha: 0.12),

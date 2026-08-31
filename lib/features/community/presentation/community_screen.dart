@@ -9,6 +9,7 @@ import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
+import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/community/data/community_repository.dart';
 import 'package:mock_mobile/features/community/data/community_socket_service.dart';
@@ -31,7 +32,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   var _hasMore = false;
   var _isLoadingMessages = false;
   CommunityPresence? _presence;
-  CommunityConnectionState _connectionState = CommunityConnectionState.disconnected;
+  CommunityConnectionState _connectionState =
+      CommunityConnectionState.disconnected;
   StreamSubscription<CommunityMessage>? _messageSub;
   StreamSubscription<dynamic>? _reactionSub;
   StreamSubscription<CommunityPresence>? _presenceSub;
@@ -101,7 +103,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
       }
       setState(() {
         final existingIndex = _messages.indexWhere(
-          (item) => item.clientNonce != null && item.clientNonce == message.clientNonce,
+          (item) =>
+              item.clientNonce != null &&
+              item.clientNonce == message.clientNonce,
         );
         if (existingIndex >= 0) {
           _messages[existingIndex] = message;
@@ -117,9 +121,13 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         return;
       }
       setState(() {
-        final index = _messages.indexWhere((item) => item.id == payload.messageId);
+        final index = _messages.indexWhere(
+          (item) => item.id == payload.messageId,
+        );
         if (index >= 0) {
-          _messages[index] = _messages[index].copyWith(reactions: payload.reactions);
+          _messages[index] = _messages[index].copyWith(
+            reactions: payload.reactions,
+          );
         }
       });
     });
@@ -153,8 +161,12 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     }
     setState(() => _isLoadingMessages = true);
     try {
-      final before = loadOlder && _messages.isNotEmpty ? _messages.first.id : null;
-      final page = await ref.read(communityRepositoryProvider).fetchMessages(roomId, before: before);
+      final before = loadOlder && _messages.isNotEmpty
+          ? _messages.first.id
+          : null;
+      final page = await ref
+          .read(communityRepositoryProvider)
+          .fetchMessages(roomId, before: before);
       if (!mounted) {
         return;
       }
@@ -228,7 +240,10 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     } catch (error) {
       _removeOptimisticMessage(clientNonce);
       if (mounted) {
-        MockToast.error(context, 'Could not send message. Check your connection.');
+        MockToast.error(
+          context,
+          'Could not send message. Check your connection.',
+        );
       }
     } finally {
       if (mounted) {
@@ -277,7 +292,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         appBar: const MockDetailAppBar(title: 'Study Squad'),
         body: const MockEmptyState(
           title: 'Verify your email first',
-          message: 'Community chat is available after you verify your mock.edumimi account.',
+          message:
+              'Community chat is available after you verify your mock.edumimi account.',
         ),
       );
     }
@@ -288,14 +304,17 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         body: roomsAsync.when(
           loading: () => const MockLoadingView(message: 'Loading rooms…'),
           error: (error, _) => MockErrorView(
-            message: error is ApiException ? error.message : 'Could not load chat rooms. Check your connection.',
+            message: error is ApiException
+                ? error.message
+                : 'Could not load chat rooms. Check your connection.',
             onRetry: () => ref.invalidate(communityRoomsProvider),
           ),
           data: (rooms) {
             if (rooms.isEmpty) {
               return const MockEmptyState(
                 title: 'No study rooms yet',
-                message: 'Chat rooms will appear here once your school sets them up. Pull down to refresh.',
+                message:
+                    'Chat rooms will appear here once your school sets them up. Pull down to refresh.',
               );
             }
             return RefreshIndicator(
@@ -303,40 +322,53 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
               child: ListView.separated(
                 padding: const EdgeInsets.all(AppSpacing.page),
                 itemCount: rooms.length,
-                separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.section),
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AppSpacing.section),
                 itemBuilder: (context, index) {
                   final room = rooms[index];
-                  return MockCard(
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: context.appNeutralSoft,
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                          border: Border.all(color: context.appBorder),
-                        ),
-                        child: Text(room.emoji ?? '💬', style: const TextStyle(fontSize: 22)),
-                      ),
-                      title: Text(room.name, style: context.cardTitle),
-                      subtitle: Text(room.description ?? room.type, style: context.bodySecondary),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (room.unreadCount > 0) ...[
-                            MockCountBadge(count: room.unreadCount),
-                            const SizedBox(width: AppSpacing.item),
-                          ],
-                          MockLongArrowIcon(
-                            direction: MockLongArrowDirection.right,
-                            size: AppIcons.forwardSize,
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
+                  return MockContentWidth(
+                    child: MockCard(
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          width: 44,
+                          height: 44,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: context.appNeutralSoft,
+                            borderRadius: BorderRadius.circular(
+                              AppSpacing.radiusMd,
+                            ),
+                            border: Border.all(color: context.appBorder),
                           ),
-                        ],
+                          child: Text(
+                            room.emoji ?? '💬',
+                            style: const TextStyle(fontSize: 22),
+                          ),
+                        ),
+                        title: Text(room.name, style: context.cardTitle),
+                        subtitle: Text(
+                          room.description ?? room.type,
+                          style: context.bodySecondary,
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (room.unreadCount > 0) ...[
+                              MockCountBadge(count: room.unreadCount),
+                              const SizedBox(width: AppSpacing.item),
+                            ],
+                            MockLongArrowIcon(
+                              direction: MockLongArrowDirection.right,
+                              size: AppIcons.forwardSize,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.35),
+                            ),
+                          ],
+                        ),
+                        onTap: () => _selectRoom(room),
                       ),
-                      onTap: () => _selectRoom(room),
                     ),
                   );
                 },
@@ -353,16 +385,18 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${room.emoji ?? '💬'} ${room.name}', style: context.cardTitle),
+            Text(
+              '${room.emoji ?? '💬'} ${room.name}',
+              style: context.cardTitle,
+            ),
             if (_presence != null)
-              Text(
-                '${_presence!.onlineCount} online',
-                style: context.caption,
-              ),
+              Text('${_presence!.onlineCount} online', style: context.caption),
           ],
         ),
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(_connectionState == CommunityConnectionState.connected ? 0.5 : 36),
+          preferredSize: Size.fromHeight(
+            _connectionState == CommunityConnectionState.connected ? 0.5 : 36,
+          ),
           child: Column(
             children: [
               if (_connectionState != CommunityConnectionState.connected)
@@ -388,37 +422,53 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
             child: _isLoadingMessages && _messages.isEmpty
                 ? const MockLoadingView(message: 'Loading messages…')
                 : _messages.isEmpty
-                    ? MockEmptyState(
-                        title: 'No messages yet',
-                        message: _connectionState == CommunityConnectionState.connected
-                            ? 'Be the first to say hello in this room.'
-                            : 'Message history loads over REST. Live chat reconnects automatically.',
-                        actionLabel: _connectionState != CommunityConnectionState.connected ? 'Retry connection' : null,
-                        onAction: _connectionState != CommunityConnectionState.connected ? _retryConnection : null,
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(AppSpacing.page),
-                        itemCount: _messages.length + (_hasMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (_hasMore && index == 0) {
-                            return TextButton(
-                              onPressed: () => _loadMessages(room.id, loadOlder: true),
-                              child: const Text('Load older messages'),
-                            );
-                          }
-                          final messageIndex = _hasMore ? index - 1 : index;
-                          final message = _messages[messageIndex];
-                          return _MessageBubble(
-                            message: message,
-                            onReact: (emoji) => ref.read(communitySocketServiceProvider).toggleReaction(message.id, emoji),
-                          );
-                        },
-                      ),
+                ? MockEmptyState(
+                    title: 'No messages yet',
+                    message:
+                        _connectionState == CommunityConnectionState.connected
+                        ? 'Be the first to say hello in this room.'
+                        : 'Message history loads over REST. Live chat reconnects automatically.',
+                    actionLabel:
+                        _connectionState != CommunityConnectionState.connected
+                        ? 'Retry connection'
+                        : null,
+                    onAction:
+                        _connectionState != CommunityConnectionState.connected
+                        ? _retryConnection
+                        : null,
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MockAdaptiveLayout.pageInset(context),
+                      vertical: AppSpacing.page,
+                    ),
+                    itemCount: _messages.length + (_hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (_hasMore && index == 0) {
+                        return TextButton(
+                          onPressed: () =>
+                              _loadMessages(room.id, loadOlder: true),
+                          child: const Text('Load older messages'),
+                        );
+                      }
+                      final messageIndex = _hasMore ? index - 1 : index;
+                      final message = _messages[messageIndex];
+                      return _MessageBubble(
+                        message: message,
+                        onReact: (emoji) => ref
+                            .read(communitySocketServiceProvider)
+                            .toggleReaction(message.id, emoji),
+                      );
+                    },
+                  ),
           ),
           if (_presence != null && _presence!.typingUsers.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: AppSpacing.item),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.page,
+                vertical: AppSpacing.item,
+              ),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -434,7 +484,12 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                 color: context.colors.surface,
                 border: Border(top: BorderSide(color: context.appBorder)),
               ),
-              padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.item, AppSpacing.page, AppSpacing.page),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                AppSpacing.item,
+                AppSpacing.page,
+                AppSpacing.page,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -443,15 +498,20 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                       minLines: 1,
                       maxLines: 4,
                       decoration: InputDecoration(
-                        hintText: _connectionState == CommunityConnectionState.connected
+                        hintText:
+                            _connectionState ==
+                                CommunityConnectionState.connected
                             ? 'Say something helpful…'
                             : 'Reconnecting to live chat…',
                       ),
                       onChanged: (value) {
-                        if (_connectionState != CommunityConnectionState.connected) {
+                        if (_connectionState !=
+                            CommunityConnectionState.connected) {
                           return;
                         }
-                        ref.read(communitySocketServiceProvider).setTyping(
+                        ref
+                            .read(communitySocketServiceProvider)
+                            .setTyping(
                               room.id,
                               user?.displayName ?? 'Student',
                               value.trim().isNotEmpty,
@@ -461,9 +521,18 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                   ),
                   const SizedBox(width: AppSpacing.item),
                   IconButton(
-                    onPressed: (_isSending || _connectionState != CommunityConnectionState.connected) ? null : _sendMessage,
+                    onPressed:
+                        (_isSending ||
+                            _connectionState !=
+                                CommunityConnectionState.connected)
+                        ? null
+                        : _sendMessage,
                     icon: _isSending
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Icon(Icons.send),
                   ),
                 ],
@@ -485,10 +554,22 @@ class _ConnectionBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (state) {
-      CommunityConnectionState.connecting => ('Connecting to live chat…', Colors.orange.shade700),
-      CommunityConnectionState.reconnecting => ('Reconnecting… showing cached messages', Colors.orange.shade700),
-      CommunityConnectionState.error => ('Live chat unavailable', Colors.red.shade700),
-      CommunityConnectionState.disconnected => ('Offline — messages refresh every 20s', Colors.grey.shade700),
+      CommunityConnectionState.connecting => (
+        'Connecting to live chat…',
+        Colors.orange.shade700,
+      ),
+      CommunityConnectionState.reconnecting => (
+        'Reconnecting… showing cached messages',
+        Colors.orange.shade700,
+      ),
+      CommunityConnectionState.error => (
+        'Live chat unavailable',
+        Colors.red.shade700,
+      ),
+      CommunityConnectionState.disconnected => (
+        'Offline — messages refresh every 20s',
+        Colors.grey.shade700,
+      ),
       CommunityConnectionState.connected => ('', Colors.transparent),
     };
 
@@ -499,11 +580,17 @@ class _ConnectionBanner extends StatelessWidget {
     return Material(
       color: color.withValues(alpha: 0.12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.page,
+          vertical: 8,
+        ),
         child: Row(
           children: [
-            Expanded(child: Text(label, style: context.caption.copyWith(color: color))),
-            if (state == CommunityConnectionState.error || state == CommunityConnectionState.disconnected)
+            Expanded(
+              child: Text(label, style: context.caption.copyWith(color: color)),
+            ),
+            if (state == CommunityConnectionState.error ||
+                state == CommunityConnectionState.disconnected)
               TextButton(onPressed: onRetry, child: const Text('Retry')),
           ],
         ),
@@ -521,7 +608,9 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final time = DateTime.tryParse(message.createdAt);
-    final formattedTime = time == null ? '' : DateFormat.jm().format(time.toLocal());
+    final formattedTime = time == null
+        ? ''
+        : DateFormat.jm().format(time.toLocal());
     final theme = Theme.of(context);
 
     return Align(
@@ -529,16 +618,25 @@ class _MessageBubble extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.section),
         padding: const EdgeInsets.all(AppSpacing.section),
-        constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
+        constraints: BoxConstraints(
+          maxWidth: MockAdaptiveLayout.isTablet(context)
+              ? 560
+              : MediaQuery.sizeOf(context).width * 0.82,
+        ),
         decoration: BoxDecoration(
-          color: message.isOwn ? context.appNeutralSoft : context.colors.surface,
+          color: message.isOwn
+              ? context.appNeutralSoft
+              : context.colors.surface,
           borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
           border: Border.all(color: theme.dividerColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(message.senderDisplayName, style: context.caption.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              message.senderDisplayName,
+              style: context.caption.copyWith(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: AppSpacing.item),
             Text(message.content, style: context.body),
             const SizedBox(height: AppSpacing.item),

@@ -7,6 +7,7 @@ import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/utils/text_utils.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
+import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 
 class ExamsScreen extends ConsumerStatefulWidget {
@@ -44,94 +45,111 @@ class _ExamsScreenState extends ConsumerState<ExamsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.page, AppSpacing.page, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const MockPageHeader(
-                title: 'Practice',
-                subtitle: 'Browse mocks and drills by exam type.',
-              ),
-              const SizedBox(height: AppSpacing.section),
-              Row(
-                children: [
-                  Expanded(
-                    child: MockSecondaryButton(
-                      label: 'Exam catalog',
-                      onPressed: () => context.push('/exam-types'),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.item),
-                  Expanded(
-                    child: MockSecondaryButton(
-                      label: 'Post-UTME',
-                      onPressed: () => context.push('/post-utme'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.section),
-              TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Search exams…',
-                  prefixIcon: Icon(Icons.search),
+        MockContentWidth(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              AppSpacing.page,
+              AppSpacing.page,
+              0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const MockPageHeader(
+                  title: 'Practice',
+                  subtitle: 'Browse mocks and drills by exam type.',
                 ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: AppSpacing.section),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
+                const SizedBox(height: AppSpacing.section),
+                Row(
                   children: [
-                    for (final filter in _modeFilters) ...[
-                      _ExamTypeChip(
-                        label: filter.label,
-                        selected: _selectedMode == filter.value,
-                        onSelected: () => setState(() => _selectedMode = filter.value),
+                    Expanded(
+                      child: MockSecondaryButton(
+                        label: 'Exam catalog',
+                        onPressed: () => context.push('/exam-types'),
                       ),
-                      const SizedBox(width: AppSpacing.item),
-                    ],
+                    ),
+                    const SizedBox(width: AppSpacing.item),
+                    Expanded(
+                      child: MockSecondaryButton(
+                        label: 'Post-UTME',
+                        onPressed: () => context.push('/post-utme'),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: AppSpacing.section),
-              examTypesAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (types) => SingleChildScrollView(
+                const SizedBox(height: AppSpacing.section),
+                TextField(
+                  controller: _searchController,
+                  decoration: const InputDecoration(
+                    hintText: 'Search exams…',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: AppSpacing.section),
+                SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _ExamTypeChip(
-                        label: 'All',
-                        selected: _selectedExamTypeSlug == null,
-                        onSelected: () => setState(() => _selectedExamTypeSlug = null),
-                      ),
-                      const SizedBox(width: AppSpacing.item),
-                      ...types.map(
-                        (type) => Padding(
-                          padding: const EdgeInsets.only(right: AppSpacing.item),
-                          child: _ExamTypeChip(
-                            label: type.title,
-                            selected: _selectedExamTypeSlug == type.slug,
-                            onSelected: () => setState(() => _selectedExamTypeSlug = type.slug),
-                          ),
+                      for (final filter in _modeFilters) ...[
+                        _ExamTypeChip(
+                          label: filter.label,
+                          selected: _selectedMode == filter.value,
+                          onSelected: () =>
+                              setState(() => _selectedMode = filter.value),
                         ),
-                      ),
+                        const SizedBox(width: AppSpacing.item),
+                      ],
                     ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.section),
+                examTypesAsync.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (types) => SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _ExamTypeChip(
+                          label: 'All',
+                          selected: _selectedExamTypeSlug == null,
+                          onSelected: () =>
+                              setState(() => _selectedExamTypeSlug = null),
+                        ),
+                        const SizedBox(width: AppSpacing.item),
+                        ...types.map(
+                          (type) => Padding(
+                            padding: const EdgeInsets.only(
+                              right: AppSpacing.item,
+                            ),
+                            child: _ExamTypeChip(
+                              label: type.title,
+                              selected: _selectedExamTypeSlug == type.slug,
+                              onSelected: () => setState(
+                                () => _selectedExamTypeSlug = type.slug,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.section),
         Expanded(
           child: examsAsync.when(
             loading: () => const MockLoadingView(message: 'Loading exams…'),
-            error: (error, _) => MockErrorView(message: error.toString(), onRetry: () => ref.invalidate(examsCatalogProvider(_selectedExamTypeSlug))),
+            error: (error, _) => MockErrorView(
+              message: error.toString(),
+              onRetry: () =>
+                  ref.invalidate(examsCatalogProvider(_selectedExamTypeSlug)),
+            ),
             data: (exams) {
               final filtered = exams.where((exam) {
                 if (_selectedMode != null && exam.mode != _selectedMode) {
@@ -143,23 +161,34 @@ class _ExamsScreenState extends ConsumerState<ExamsScreen> {
                     exam.examTypeLabel.toLowerCase().contains(query);
               }).toList();
               if (filtered.isEmpty) {
-                return const MockEmptyState(title: 'No exams found', message: 'Try another exam type filter.');
+                return const MockEmptyState(
+                  title: 'No exams found',
+                  message: 'Try another exam type filter.',
+                );
               }
               return RefreshIndicator(
-                onRefresh: () async => ref.invalidate(examsCatalogProvider(_selectedExamTypeSlug)),
+                onRefresh: () async =>
+                    ref.invalidate(examsCatalogProvider(_selectedExamTypeSlug)),
                 child: ListView.separated(
                   padding: MockTabScrollPadding.list(context),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.section),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppSpacing.section),
                   itemBuilder: (context, index) {
                     final exam = filtered[index];
-                    final subtitle = [exam.examTypeLabel, exam.subjectLabel].where((part) => part.isNotEmpty).join(' · ');
-                    return MockExamCard(
-                      title: exam.title,
-                      subtitle: subtitle,
-                      meta: '${formatMockMode(exam.mode)} · ${exam.totalQuestions} questions',
-                      locked: exam.isLocked,
-                      onTap: () => context.push('/exams/${exam.slug}'),
+                    final subtitle = [
+                      exam.examTypeLabel,
+                      exam.subjectLabel,
+                    ].where((part) => part.isNotEmpty).join(' · ');
+                    return MockContentWidth(
+                      child: MockExamCard(
+                        title: exam.title,
+                        subtitle: subtitle,
+                        meta:
+                            '${formatMockMode(exam.mode)} · ${exam.totalQuestions} questions',
+                        locked: exam.isLocked,
+                        onTap: () => context.push('/exams/${exam.slug}'),
+                      ),
                     );
                   },
                 ),
@@ -196,7 +225,11 @@ class _ExamTypeChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? context.appPrimarySoft : context.colors.surface,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: selected ? AppColors.primary.withValues(alpha: 0.4) : context.appBorder),
+            border: Border.all(
+              color: selected
+                  ? AppColors.primary.withValues(alpha: 0.4)
+                  : context.appBorder,
+            ),
           ),
           child: Text(
             label,

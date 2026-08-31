@@ -10,6 +10,7 @@ import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
+import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:mock_mobile/features/notifications/data/notifications_repository.dart';
 import 'package:mock_mobile/features/notifications/data/unread_counts_repository.dart';
 import 'package:mock_mobile/features/notifications/notifications_push_actions.dart';
@@ -21,10 +22,12 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with SingleTickerProviderStateMixin {
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   var _isUpdatingPush = false;
   var _isPreviewingLocal = false;
@@ -48,7 +51,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
       _pushEnabledOverride = enabled;
     });
     try {
-      await toggleMockPushNotifications(ref: ref, context: context, enabled: enabled);
+      await toggleMockPushNotifications(
+        ref: ref,
+        context: context,
+        enabled: enabled,
+      );
       invalidateUnreadSummary(ref);
       if (mounted) {
         setState(() => _pushEnabledOverride = null);
@@ -67,9 +74,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> with 
   Future<void> _previewLocalReminder() async {
     setState(() => _isPreviewingLocal = true);
     try {
-      final success = await ref.read(pushNotificationServiceProvider).previewLocalStreakReminder();
+      final success = await ref
+          .read(pushNotificationServiceProvider)
+          .previewLocalStreakReminder();
       if (!success && mounted) {
-        MockToast.info(context, 'Allow notifications in system settings to preview reminders.');
+        MockToast.info(
+          context,
+          'Allow notifications in system settings to preview reminders.',
+        );
       }
     } finally {
       if (mounted) {
@@ -114,10 +126,12 @@ class _ActivityNotificationsTab extends ConsumerStatefulWidget {
   const _ActivityNotificationsTab();
 
   @override
-  ConsumerState<_ActivityNotificationsTab> createState() => _ActivityNotificationsTabState();
+  ConsumerState<_ActivityNotificationsTab> createState() =>
+      _ActivityNotificationsTabState();
 }
 
-class _ActivityNotificationsTabState extends ConsumerState<_ActivityNotificationsTab> {
+class _ActivityNotificationsTabState
+    extends ConsumerState<_ActivityNotificationsTab> {
   var _isMarkingAll = false;
 
   Future<void> _markAllAsRead() async {
@@ -162,7 +176,8 @@ class _ActivityNotificationsTabState extends ConsumerState<_ActivityNotification
         if (items.isEmpty) {
           return const MockEmptyState(
             title: 'No notifications yet',
-            message: 'Payments, package unlocks, and submitted scores will show up here.',
+            message:
+                'Payments, package unlocks, and submitted scores will show up here.',
           );
         }
 
@@ -170,12 +185,19 @@ class _ActivityNotificationsTabState extends ConsumerState<_ActivityNotification
           children: [
             if (unreadCount > 0)
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.page, AppSpacing.page, AppSpacing.page, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.page,
+                  AppSpacing.page,
+                  AppSpacing.page,
+                  0,
+                ),
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: _isMarkingAll ? null : _markAllAsRead,
-                    child: Text(_isMarkingAll ? 'Marking all read…' : 'Mark all as read'),
+                    child: Text(
+                      _isMarkingAll ? 'Marking all read…' : 'Mark all as read',
+                    ),
                   ),
                 ),
               ),
@@ -188,7 +210,8 @@ class _ActivityNotificationsTabState extends ConsumerState<_ActivityNotification
                 child: ListView.separated(
                   padding: const EdgeInsets.all(AppSpacing.page),
                   itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.section),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppSpacing.section),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     return _NotificationCard(
@@ -207,10 +230,7 @@ class _ActivityNotificationsTabState extends ConsumerState<_ActivityNotification
 }
 
 class _NotificationCard extends StatelessWidget {
-  const _NotificationCard({
-    required this.item,
-    required this.onTap,
-  });
+  const _NotificationCard({required this.item, required this.onTap});
 
   final MockNotification item;
   final VoidCallback onTap;
@@ -228,63 +248,69 @@ class _NotificationCard extends StatelessWidget {
         ? DateFormat('d MMM · HH:mm').format(parsed.toLocal())
         : 'Recently';
 
-    return MockCard(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        onTap: onTap,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: item.isRead ? context.appNeutralSoft : context.appPrimarySoft,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                border: Border.all(color: context.appBorder),
+    return MockContentWidth(
+      child: MockCard(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          onTap: onTap,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: item.isRead
+                      ? context.appNeutralSoft
+                      : context.appPrimarySoft,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  border: Border.all(color: context.appBorder),
+                ),
+                child: Icon(icon, size: 20, color: AppColors.primary),
               ),
-              child: Icon(icon, size: 20, color: AppColors.primary),
-            ),
-            const SizedBox(width: AppSpacing.section),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: context.cardTitle.copyWith(
-                            fontWeight: item.isRead ? FontWeight.w600 : FontWeight.w700,
+              const SizedBox(width: AppSpacing.section),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.title,
+                            style: context.cardTitle.copyWith(
+                              fontWeight: item.isRead
+                                  ? FontWeight.w600
+                                  : FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
-                      if (!item.isRead)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
+                        if (!item.isRead)
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(item.message, style: context.bodySecondary),
-                  const SizedBox(height: AppSpacing.item),
-                  Text(timestamp, style: context.caption),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(item.message, style: context.bodySecondary),
+                    const SizedBox(height: AppSpacing.item),
+                    Text(timestamp, style: context.caption),
+                  ],
+                ),
               ),
-            ),
-            if (item.route != null)
-              MockLongArrowIcon(
-                direction: MockLongArrowDirection.right,
-                size: 18,
-                color: context.appTextDisabled,
-              ),
-          ],
+              if (item.route != null)
+                MockLongArrowIcon(
+                  direction: MockLongArrowDirection.right,
+                  size: 18,
+                  color: context.appTextDisabled,
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -322,9 +348,18 @@ class _PushNotificationsTab extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.info_outline_rounded, color: Colors.orange.shade800, size: 22),
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.orange.shade800,
+                      size: 22,
+                    ),
                     const SizedBox(width: AppSpacing.item),
-                    Expanded(child: Text('Push not configured', style: context.sectionTitle)),
+                    Expanded(
+                      child: Text(
+                        'Push not configured',
+                        style: context.sectionTitle,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.item),
@@ -334,7 +369,9 @@ class _PushNotificationsTab extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.section),
                 MockSecondaryButton(
-                  label: isPreviewingLocal ? 'Sending preview…' : 'Preview local reminder',
+                  label: isPreviewingLocal
+                      ? 'Sending preview…'
+                      : 'Preview local reminder',
                   onPressed: isPreviewingLocal ? null : onPreviewLocal,
                 ),
               ],
@@ -358,7 +395,9 @@ class _PushNotificationsTab extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.page),
         engagementAsync.when(
-          loading: () => const MockCard(child: MockLoadingView(message: 'Loading push settings…')),
+          loading: () => const MockCard(
+            child: MockLoadingView(message: 'Loading push settings…'),
+          ),
           error: (error, _) => MockCard(
             child: MockErrorView(
               message: error.toString(),
@@ -366,7 +405,8 @@ class _PushNotificationsTab extends ConsumerWidget {
             ),
           ),
           data: (engagement) {
-            final pushEnabled = pushEnabledOverride ?? engagement.fcmNotificationsEnabled;
+            final pushEnabled =
+                pushEnabledOverride ?? engagement.fcmNotificationsEnabled;
             final streakLabel = engagement.practiceStreakDays > 0
                 ? '${engagement.practiceStreakDays}-day streak active'
                 : 'No active streak yet';
@@ -384,8 +424,8 @@ class _PushNotificationsTab extends ConsumerWidget {
                         engagement.streakAtRisk
                             ? 'Your streak is on the line — practice today to keep it alive.'
                             : engagement.practiceStreakDays > 0
-                                ? 'Complete one practice today to extend your streak.'
-                                : 'Complete one practice today to start a streak.',
+                            ? 'Complete one practice today to extend your streak.'
+                            : 'Complete one practice today to start a streak.',
                         style: context.bodySecondary,
                       ),
                       const SizedBox(height: AppSpacing.section),
@@ -394,7 +434,9 @@ class _PushNotificationsTab extends ConsumerWidget {
                           Icon(
                             Icons.local_fire_department_rounded,
                             size: 18,
-                            color: engagement.streakAtRisk ? const Color(0xFFD97706) : AppColors.primary,
+                            color: engagement.streakAtRisk
+                                ? const Color(0xFFD97706)
+                                : AppColors.primary,
                           ),
                           const SizedBox(width: 6),
                           Text(streakLabel, style: context.cardTitle),
@@ -407,7 +449,10 @@ class _PushNotificationsTab extends ConsumerWidget {
                 MockCard(
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text('Daily streak reminders', style: context.cardTitle),
+                    title: Text(
+                      'Daily streak reminders',
+                      style: context.cardTitle,
+                    ),
                     subtitle: Text(
                       firebaseConfigured
                           ? 'Get a push notification if you have an active streak but have not practiced today.'
@@ -415,7 +460,9 @@ class _PushNotificationsTab extends ConsumerWidget {
                       style: context.caption,
                     ),
                     value: firebaseConfigured && pushEnabled,
-                    onChanged: (!isUpdatingPush && firebaseConfigured) ? onTogglePush : null,
+                    onChanged: (!isUpdatingPush && firebaseConfigured)
+                        ? onTogglePush
+                        : null,
                   ),
                 ),
               ],

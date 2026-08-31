@@ -7,6 +7,7 @@ import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/utils/text_utils.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
+import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
@@ -18,14 +19,17 @@ typedef ExamCatalogParams = ({
   int? paperYearTo,
 });
 
-final examCatalogProvider = FutureProvider.autoDispose.family<List<MockExam>, ExamCatalogParams>((ref, params) {
-  return ref.watch(mockPortalRepositoryProvider).fetchExams(
-        examTypeSlug: params.examTypeSlug,
-        subjectSlug: params.subjectSlug,
-        paperYearFrom: params.paperYearFrom,
-        paperYearTo: params.paperYearTo,
-      );
-});
+final examCatalogProvider = FutureProvider.autoDispose
+    .family<List<MockExam>, ExamCatalogParams>((ref, params) {
+      return ref
+          .watch(mockPortalRepositoryProvider)
+          .fetchExams(
+            examTypeSlug: params.examTypeSlug,
+            subjectSlug: params.subjectSlug,
+            paperYearFrom: params.paperYearFrom,
+            paperYearTo: params.paperYearTo,
+          );
+    });
 
 class ExamCatalogScreen extends ConsumerStatefulWidget {
   const ExamCatalogScreen({super.key, required this.examTypeSlug});
@@ -45,7 +49,11 @@ class _ExamCatalogScreenState extends ConsumerState<ExamCatalogScreen> {
   @override
   void initState() {
     super.initState();
-    final interests = ref.read(authControllerProvider).user?.mockProfile?.interests;
+    final interests = ref
+        .read(authControllerProvider)
+        .user
+        ?.mockProfile
+        ?.interests;
     _paperYearFrom = interests?.paperYearFrom;
     _paperYearTo = interests?.paperYearTo;
   }
@@ -58,7 +66,9 @@ class _ExamCatalogScreenState extends ConsumerState<ExamCatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final examTypeAsync = ref.watch(examTypeDetailProvider(widget.examTypeSlug));
+    final examTypeAsync = ref.watch(
+      examTypeDetailProvider(widget.examTypeSlug),
+    );
     final catalogParams = (
       examTypeSlug: widget.examTypeSlug,
       subjectSlug: _selectedSubjectSlug,
@@ -68,98 +78,133 @@ class _ExamCatalogScreenState extends ConsumerState<ExamCatalogScreen> {
     final examsAsync = ref.watch(examCatalogProvider(catalogParams));
 
     return Scaffold(
-      appBar: MockDetailAppBar(title: examTypeAsync.maybeWhen(data: (type) => type.title, orElse: () => 'Practice')),
+      appBar: MockDetailAppBar(
+        title: examTypeAsync.maybeWhen(
+          data: (type) => type.title,
+          orElse: () => 'Practice',
+        ),
+      ),
       body: examTypeAsync.when(
         loading: () => const MockLoadingView(message: 'Loading catalog…'),
-        error: (error, _) => MockErrorView(message: error.toString(), onRetry: () => ref.invalidate(examTypeDetailProvider(widget.examTypeSlug))),
+        error: (error, _) => MockErrorView(
+          message: error.toString(),
+          onRetry: () =>
+              ref.invalidate(examTypeDetailProvider(widget.examTypeSlug)),
+        ),
         data: (examType) {
-          final subjects = [...examType.subjects]..sort((a, b) => a.name.compareTo(b.name));
+          final subjects = [...examType.subjects]
+            ..sort((a, b) => a.name.compareTo(b.name));
           final query = _searchController.text.trim().toLowerCase();
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.page),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (widget.examTypeSlug == 'jamb')
-                      TextButton(
-                        onPressed: () => context.push('/jamb/syllabus'),
-                        child: const Text('JAMB syllabus & novels →'),
+              MockContentWidth(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.page),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.examTypeSlug == 'jamb')
+                        TextButton(
+                          onPressed: () => context.push('/jamb/syllabus'),
+                          child: const Text('JAMB syllabus & novels →'),
+                        ),
+                      TextField(
+                        controller: _searchController,
+                        decoration: const InputDecoration(
+                          hintText: 'Search exams…',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                        onChanged: (_) => setState(() {}),
                       ),
-                    TextField(
-                      controller: _searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Search exams…',
-                        prefixIcon: Icon(Icons.search),
+                      const SizedBox(height: AppSpacing.section),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _FilterChip(
+                              label: 'All subjects',
+                              selected: _selectedSubjectSlug == null,
+                              onTap: () =>
+                                  setState(() => _selectedSubjectSlug = null),
+                            ),
+                            ...subjects.map(
+                              (subject) => _FilterChip(
+                                label: subject.name,
+                                selected: _selectedSubjectSlug == subject.slug,
+                                onTap: () => setState(
+                                  () => _selectedSubjectSlug = subject.slug,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    const SizedBox(height: AppSpacing.section),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
+                      const SizedBox(height: AppSpacing.section),
+                      Row(
                         children: [
-                          _FilterChip(
-                            label: 'All subjects',
-                            selected: _selectedSubjectSlug == null,
-                            onTap: () => setState(() => _selectedSubjectSlug = null),
+                          Expanded(
+                            child: DropdownButtonFormField<int?>(
+                              value: _paperYearFrom,
+                              decoration: const InputDecoration(
+                                labelText: 'From year',
+                              ),
+                              items: [
+                                const DropdownMenuItem<int?>(
+                                  value: null,
+                                  child: Text('Any'),
+                                ),
+                                ...List.generate(15, (index) {
+                                  final year = DateTime.now().year - index;
+                                  return DropdownMenuItem(
+                                    value: year,
+                                    child: Text('$year'),
+                                  );
+                                }),
+                              ],
+                              onChanged: (value) =>
+                                  setState(() => _paperYearFrom = value),
+                            ),
                           ),
-                          ...subjects.map(
-                            (subject) => _FilterChip(
-                              label: subject.name,
-                              selected: _selectedSubjectSlug == subject.slug,
-                              onTap: () => setState(() => _selectedSubjectSlug = subject.slug),
+                          const SizedBox(width: AppSpacing.section),
+                          Expanded(
+                            child: DropdownButtonFormField<int?>(
+                              value: _paperYearTo,
+                              decoration: const InputDecoration(
+                                labelText: 'To year',
+                              ),
+                              items: [
+                                const DropdownMenuItem<int?>(
+                                  value: null,
+                                  child: Text('Any'),
+                                ),
+                                ...List.generate(15, (index) {
+                                  final year = DateTime.now().year - index;
+                                  return DropdownMenuItem(
+                                    value: year,
+                                    child: Text('$year'),
+                                  );
+                                }),
+                              ],
+                              onChanged: (value) =>
+                                  setState(() => _paperYearTo = value),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.section),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<int?>(
-                            value: _paperYearFrom,
-                            decoration: const InputDecoration(labelText: 'From year'),
-                            items: [
-                              const DropdownMenuItem<int?>(value: null, child: Text('Any')),
-                              ...List.generate(15, (index) {
-                                final year = DateTime.now().year - index;
-                                return DropdownMenuItem(value: year, child: Text('$year'));
-                              }),
-                            ],
-                            onChanged: (value) => setState(() => _paperYearFrom = value),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.section),
-                        Expanded(
-                          child: DropdownButtonFormField<int?>(
-                            value: _paperYearTo,
-                            decoration: const InputDecoration(labelText: 'To year'),
-                            items: [
-                              const DropdownMenuItem<int?>(value: null, child: Text('Any')),
-                              ...List.generate(15, (index) {
-                                final year = DateTime.now().year - index;
-                                return DropdownMenuItem(value: year, child: Text('$year'));
-                              }),
-                            ],
-                            onChanged: (value) => setState(() => _paperYearTo = value),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Expanded(
                 child: examsAsync.when(
-                  loading: () => const MockLoadingView(message: 'Loading exams…'),
+                  loading: () =>
+                      const MockLoadingView(message: 'Loading exams…'),
                   error: (error, _) => MockErrorView(
                     message: error.toString(),
-                    onRetry: () => ref.invalidate(examCatalogProvider(catalogParams)),
+                    onRetry: () =>
+                        ref.invalidate(examCatalogProvider(catalogParams)),
                   ),
                   data: (exams) {
                     final filtered = exams.where((exam) {
@@ -168,34 +213,51 @@ class _ExamCatalogScreenState extends ConsumerState<ExamCatalogScreen> {
                           !exam.subjectLabel.toLowerCase().contains(query)) {
                         return false;
                       }
-                      if (_selectedSubjectSlug != null && exam.subject?.slug != _selectedSubjectSlug) {
+                      if (_selectedSubjectSlug != null &&
+                          exam.subject?.slug != _selectedSubjectSlug) {
                         return false;
                       }
                       return true;
                     }).toList();
 
                     if (filtered.isEmpty) {
-                      return const MockEmptyState(title: 'No exams found', message: 'Try another filter.');
+                      return const MockEmptyState(
+                        title: 'No exams found',
+                        message: 'Try another filter.',
+                      );
                     }
 
                     return RefreshIndicator(
-                      onRefresh: () async => ref.invalidate(examCatalogProvider(catalogParams)),
+                      onRefresh: () async =>
+                          ref.invalidate(examCatalogProvider(catalogParams)),
                       child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, AppSpacing.page),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.page,
+                          0,
+                          AppSpacing.page,
+                          AppSpacing.page,
+                        ),
                         itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.section),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: AppSpacing.section),
                         itemBuilder: (context, index) {
                           final exam = filtered[index];
-                          final subtitle = [exam.examTypeLabel, exam.subjectLabel]
-                              .where((part) => part.isNotEmpty)
-                              .join(' · ');
-                          final yearLabel = exam.examYear != null ? '${exam.examYear} · ' : '';
-                          return MockExamCard(
-                            title: exam.title,
-                            subtitle: subtitle,
-                            meta: '$yearLabel${formatMockMode(exam.mode)} · ${exam.totalQuestions} questions',
-                            locked: exam.isLocked,
-                            onTap: () => context.push('/exams/${exam.slug}'),
+                          final subtitle = [
+                            exam.examTypeLabel,
+                            exam.subjectLabel,
+                          ].where((part) => part.isNotEmpty).join(' · ');
+                          final yearLabel = exam.examYear != null
+                              ? '${exam.examYear} · '
+                              : '';
+                          return MockContentWidth(
+                            child: MockExamCard(
+                              title: exam.title,
+                              subtitle: subtitle,
+                              meta:
+                                  '$yearLabel${formatMockMode(exam.mode)} · ${exam.totalQuestions} questions',
+                              locked: exam.isLocked,
+                              onTap: () => context.push('/exams/${exam.slug}'),
+                            ),
                           );
                         },
                       ),
@@ -212,7 +274,11 @@ class _ExamCatalogScreenState extends ConsumerState<ExamCatalogScreen> {
 }
 
 class _FilterChip extends StatelessWidget {
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;
@@ -232,7 +298,9 @@ class _FilterChip extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: selected ? AppColors.primary : context.appBorder),
+              border: Border.all(
+                color: selected ? AppColors.primary : context.appBorder,
+              ),
             ),
             child: Text(
               label,
