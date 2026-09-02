@@ -95,13 +95,16 @@ class MockAttempt extends Equatable {
           : int.tryParse(json['durationSeconds']?.toString() ?? ''),
       answers: answers,
       topicStats: topicStats is List
-          ? topicStats.whereType<Map<String, dynamic>>().map(MockTopicStat.fromJson).toList()
+          ? topicStats
+                .whereType<Map<String, dynamic>>()
+                .map(MockTopicStat.fromJson)
+                .toList()
           : const [],
       remediationSuggestions: remediationSuggestions is List
           ? remediationSuggestions
-              .whereType<Map<String, dynamic>>()
-              .map(MockRemediationSuggestion.fromJson)
-              .toList()
+                .whereType<Map<String, dynamic>>()
+                .map(MockRemediationSuggestion.fromJson)
+                .toList()
           : const [],
       exam: json['exam'] is Map<String, dynamic>
           ? MockExam.fromJson(json['exam'] as Map<String, dynamic>)
@@ -146,9 +149,19 @@ class MockWeakTopic extends Equatable {
       );
     }
     if (json is String && json.isNotEmpty) {
-      return MockWeakTopic(topic: json, percent: 0, questionCount: 0, correctCount: 0);
+      return MockWeakTopic(
+        topic: json,
+        percent: 0,
+        questionCount: 0,
+        correctCount: 0,
+      );
     }
-    return const MockWeakTopic(topic: '', percent: 0, questionCount: 0, correctCount: 0);
+    return const MockWeakTopic(
+      topic: '',
+      percent: 0,
+      questionCount: 0,
+      correctCount: 0,
+    );
   }
 
   final String topic;
@@ -175,7 +188,10 @@ class MockStudyInsights extends Equatable {
     final weakTopics = json['weakTopics'];
     return MockStudyInsights(
       weakTopics: weakTopics is List
-          ? weakTopics.map(MockWeakTopic.fromJson).where((topic) => topic.topic.isNotEmpty).toList()
+          ? weakTopics
+                .map(MockWeakTopic.fromJson)
+                .where((topic) => topic.topic.isNotEmpty)
+                .toList()
           : const [],
       streakDays: _asInt(json['streakDays']),
       submittedAttempts: _asInt(json['submittedAttempts']),
@@ -230,17 +246,26 @@ class LeaderboardResponse extends Equatable {
   });
 
   factory LeaderboardResponse.fromJson(Map<String, dynamic> json) {
-    final entries = json['entries'];
-    final meta = json['meta'];
+    final payload = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : json;
+    final entries = payload['entries'];
+    final meta = payload['meta'];
     return LeaderboardResponse(
-      period: json['period']?.toString() ?? 'week',
+      period: payload['period']?.toString() ?? 'week',
       entries: entries is List
           ? entries
-              .whereType<Map<String, dynamic>>()
-              .map(LeaderboardEntry.fromJson)
-              .toList()
+                .whereType<Map>()
+                .map(
+                  (item) => LeaderboardEntry.fromJson(
+                    Map<String, dynamic>.from(item),
+                  ),
+                )
+                .toList()
           : const [],
-      meta: meta is Map<String, dynamic> ? LeaderboardMeta.fromJson(meta) : null,
+      meta: meta is Map
+          ? LeaderboardMeta.fromJson(Map<String, dynamic>.from(meta))
+          : null,
     );
   }
 
@@ -265,7 +290,9 @@ class LeaderboardMeta extends Equatable {
       total: _asInt(json['total']),
       page: _asInt(json['page']) == 0 ? 1 : _asInt(json['page']),
       limit: _asInt(json['limit']) == 0 ? 10 : _asInt(json['limit']),
-      totalPages: _asInt(json['totalPages']) == 0 ? 1 : _asInt(json['totalPages']),
+      totalPages: _asInt(json['totalPages']) == 0
+          ? 1
+          : _asInt(json['totalPages']),
     );
   }
 

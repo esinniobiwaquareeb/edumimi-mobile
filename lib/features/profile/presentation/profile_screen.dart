@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mock_mobile/core/config/app_config.dart';
 import 'package:mock_mobile/core/constants/mock_voice.dart';
 import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
@@ -19,7 +18,6 @@ import 'package:mock_mobile/core/widgets/mock_share_button.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
-import 'package:mock_mobile/features/notifications/notifications_push_actions.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/features/profile/data/profile_repository.dart';
 import 'package:mock_mobile/shared/models/mock_engagement.dart';
@@ -35,8 +33,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  var _isUpdatingPush = false;
-  bool? _pushEnabledOverride;
 
   @override
   void initState() {
@@ -48,31 +44,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  Future<void> _togglePushNotifications(bool enabled) async {
-    setState(() {
-      _isUpdatingPush = true;
-      _pushEnabledOverride = enabled;
-    });
-    try {
-      await toggleMockPushNotifications(
-        ref: ref,
-        context: context,
-        enabled: enabled,
-      );
-      if (mounted) {
-        setState(() => _pushEnabledOverride = null);
-      }
-    } on ApiException {
-      if (mounted) {
-        setState(() => _pushEnabledOverride = null);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isUpdatingPush = false);
-      }
-    }
   }
 
   @override
@@ -102,11 +73,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               children: [
                 _PersonalTab(
                   user: user,
-                  engagementAsync: engagementAsync,
-                  isUpdatingPush: _isUpdatingPush,
-                  pushEnabledOverride: _pushEnabledOverride,
                   themeMode: themeMode,
-                  onTogglePush: _togglePushNotifications,
                   onThemeChanged: (mode) =>
                       ref.read(themeControllerProvider.notifier).setMode(mode),
                   onUserUpdated: () =>
@@ -127,21 +94,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 class _PersonalTab extends ConsumerStatefulWidget {
   const _PersonalTab({
     required this.user,
-    required this.engagementAsync,
-    required this.isUpdatingPush,
-    required this.pushEnabledOverride,
     required this.themeMode,
-    required this.onTogglePush,
     required this.onThemeChanged,
     required this.onUserUpdated,
   });
 
   final MockUser user;
-  final AsyncValue<MockEngagement> engagementAsync;
-  final bool isUpdatingPush;
-  final bool? pushEnabledOverride;
   final ThemeMode themeMode;
-  final ValueChanged<bool> onTogglePush;
   final ValueChanged<AppThemeMode> onThemeChanged;
   final VoidCallback onUserUpdated;
 
@@ -155,17 +114,9 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
   late final TextEditingController _currentPasswordController;
   late final TextEditingController _newPasswordController;
   late final TextEditingController _confirmPasswordController;
-  late final TextEditingController _pinPasswordController;
-  late final TextEditingController _pinController;
-  late final TextEditingController _confirmPinController;
-  late final TextEditingController _currentPinController;
-  late final TextEditingController _newPinController;
-  late final TextEditingController _confirmNewPinController;
   late final TextEditingController _bulkLicenseController;
   var _isSavingProfile = false;
   var _isChangingPassword = false;
-  var _isUpdatingTransactionPin = false;
-  var _hasTransactionPin = false;
   var _isUploadingAvatar = false;
   var _isRedeemingLicense = false;
   String? _error;
@@ -178,24 +129,7 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
     _currentPasswordController = TextEditingController();
     _newPasswordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
-    _pinPasswordController = TextEditingController();
-    _pinController = TextEditingController();
-    _confirmPinController = TextEditingController();
-    _currentPinController = TextEditingController();
-    _newPinController = TextEditingController();
-    _confirmNewPinController = TextEditingController();
     _bulkLicenseController = TextEditingController();
-    _hasTransactionPin = widget.user.hasTransactionPin;
-    _loadTransactionPinStatus();
-  }
-
-  Future<void> _loadTransactionPinStatus() async {
-    try {
-      final profile = await ref.read(profileRepositoryProvider).fetchMe();
-      if (mounted) {
-        setState(() => _hasTransactionPin = profile.hasTransactionPin);
-      }
-    } catch (_) {}
   }
 
   @override
@@ -205,12 +139,6 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
-    _pinPasswordController.dispose();
-    _pinController.dispose();
-    _confirmPinController.dispose();
-    _currentPinController.dispose();
-    _newPinController.dispose();
-    _confirmNewPinController.dispose();
     _bulkLicenseController.dispose();
     super.dispose();
   }
@@ -264,58 +192,6 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
       setState(() => _error = error.message);
     } finally {
       if (mounted) setState(() => _isChangingPassword = false);
-    }
-  }
-
-  Future<void> _saveTransactionPin() async {
-    setState(() {
-      _isUpdatingTransactionPin = true;
-      _error = null;
-    });
-    try {
-      if (_hasTransactionPin) {
-        if (_newPinController.text.length < 4 ||
-            _newPinController.text != _confirmNewPinController.text) {
-          setState(() => _error = 'Enter matching 4–6 digit PINs.');
-          return;
-        }
-        await ref
-            .read(profileRepositoryProvider)
-            .changeTransactionPin(
-              currentPin: _currentPinController.text,
-              newPin: _newPinController.text,
-              confirmPin: _confirmNewPinController.text,
-            );
-      } else {
-        if (_pinPasswordController.text.isEmpty ||
-            _pinController.text.length < 4 ||
-            _pinController.text != _confirmPinController.text) {
-          setState(
-            () => _error = 'Enter your password and matching 4–6 digit PINs.',
-          );
-          return;
-        }
-        await ref
-            .read(profileRepositoryProvider)
-            .setupTransactionPin(
-              password: _pinPasswordController.text,
-              pin: _pinController.text,
-              confirmPin: _confirmPinController.text,
-            );
-        setState(() => _hasTransactionPin = true);
-      }
-      _pinPasswordController.clear();
-      _pinController.clear();
-      _confirmPinController.clear();
-      _currentPinController.clear();
-      _newPinController.clear();
-      _confirmNewPinController.clear();
-      widget.onUserUpdated();
-      if (mounted) MockToast.success(context, 'Transaction PIN saved');
-    } on ApiException catch (error) {
-      setState(() => _error = error.message);
-    } finally {
-      if (mounted) setState(() => _isUpdatingTransactionPin = false);
     }
   }
 
@@ -597,78 +473,6 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
         ),
         const SizedBox(height: AppSpacing.page),
         MockCard(
-          child: _ProfileExpansion(
-            icon: Icons.shield_outlined,
-            title: 'Transaction PIN',
-            subtitle: _hasTransactionPin
-                ? 'Update your payment confirmation PIN.'
-                : 'Add a PIN to confirm package payments.',
-            child: Column(
-              children: [
-                if (_hasTransactionPin) ...[
-                  MockTextField(
-                    label: 'Current PIN',
-                    controller: _currentPinController,
-                    obscurable: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: AppSpacing.section),
-                  MockTextField(
-                    label: 'New PIN',
-                    controller: _newPinController,
-                    obscurable: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: AppSpacing.section),
-                  MockTextField(
-                    label: 'Confirm new PIN',
-                    controller: _confirmNewPinController,
-                    obscurable: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                ] else ...[
-                  MockTextField(
-                    label: 'Account password',
-                    controller: _pinPasswordController,
-                    obscurable: true,
-                  ),
-                  const SizedBox(height: AppSpacing.section),
-                  MockTextField(
-                    label: 'Transaction PIN',
-                    controller: _pinController,
-                    obscurable: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: AppSpacing.section),
-                  MockTextField(
-                    label: 'Confirm PIN',
-                    controller: _confirmPinController,
-                    obscurable: true,
-                    keyboardType: TextInputType.number,
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.section),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(
-                    width: 240,
-                    child: MockPrimaryButton(
-                      label: _isUpdatingTransactionPin
-                          ? 'Saving…'
-                          : (_hasTransactionPin
-                                ? 'Update transaction PIN'
-                                : 'Create transaction PIN'),
-                      isLoading: _isUpdatingTransactionPin,
-                      onPressed: _saveTransactionPin,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.page),
-        MockCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -685,32 +489,6 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
                 },
               ),
               const SizedBox(height: AppSpacing.section),
-              const Divider(),
-              widget.engagementAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (engagement) {
-                  final pushEnabled =
-                      widget.pushEnabledOverride ??
-                      engagement.fcmNotificationsEnabled;
-                  return SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text('Daily reminders', style: context.cardTitle),
-                    subtitle: Text(
-                      AppConfig.isFirebaseConfigured
-                          ? '${engagement.practiceStreakDays}-day streak'
-                          : 'Set up notifications from the Notifications screen.',
-                      style: context.caption,
-                    ),
-                    value: AppConfig.isFirebaseConfigured && pushEnabled,
-                    onChanged:
-                        (AppConfig.isFirebaseConfigured &&
-                            !widget.isUpdatingPush)
-                        ? widget.onTogglePush
-                        : null,
-                  );
-                },
-              ),
             ],
           ),
         ),

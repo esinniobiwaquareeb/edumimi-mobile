@@ -40,7 +40,10 @@ class ResultsScreen extends ConsumerWidget {
               onRetry: () => ref.invalidate(attemptsProvider),
             ),
             data: (attempts) {
-              if (attempts.isEmpty) {
+              final submittedAttempts = attempts
+                  .where((attempt) => attempt.isSubmitted)
+                  .toList();
+              if (submittedAttempts.isEmpty) {
                 return const MockEmptyState(
                   title: 'No attempts yet',
                   message:
@@ -48,7 +51,10 @@ class ResultsScreen extends ConsumerWidget {
                 );
               }
               return RefreshIndicator(
-                onRefresh: () async => ref.invalidate(attemptsProvider),
+                onRefresh: () async {
+                  ref.invalidate(attemptsProvider);
+                  await ref.read(attemptsProvider.future);
+                },
                 child: MockAdaptiveLayout.isWide(context)
                     ? GridView.builder(
                         padding: MockTabScrollPadding.list(context),
@@ -59,17 +65,19 @@ class ResultsScreen extends ConsumerWidget {
                               crossAxisSpacing: AppSpacing.section,
                               mainAxisSpacing: AppSpacing.section,
                             ),
-                        itemCount: attempts.length,
+                        itemCount: submittedAttempts.length,
                         itemBuilder: (context, index) =>
-                            _AttemptCard(attempt: attempts[index]),
+                            _AttemptCard(attempt: submittedAttempts[index]),
                       )
                     : ListView.separated(
                         padding: MockTabScrollPadding.list(context),
-                        itemCount: attempts.length,
+                        itemCount: submittedAttempts.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: AppSpacing.section),
                         itemBuilder: (context, index) => MockContentWidth(
-                          child: _AttemptCard(attempt: attempts[index]),
+                          child: _AttemptCard(
+                            attempt: submittedAttempts[index],
+                          ),
                         ),
                       ),
               );

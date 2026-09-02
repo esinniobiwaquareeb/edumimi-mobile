@@ -21,6 +21,7 @@ class PackagesScreen extends ConsumerStatefulWidget {
 class _PackagesScreenState extends ConsumerState<PackagesScreen> {
   final _agentCodeController = TextEditingController();
   var _checkoutSlug = '';
+  var _showAgentCode = false;
 
   @override
   void dispose() {
@@ -108,17 +109,30 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
                         'Get timed full mocks and extended practice access.',
                   ),
                   const SizedBox(height: AppSpacing.page),
-                  MockCard(
-                    child: TextField(
-                      controller: _agentCodeController,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: const InputDecoration(
-                        labelText: 'Agent / tutor code (optional)',
-                        hintText: 'AGT-XXXXXX',
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () =>
+                          setState(() => _showAgentCode = !_showAgentCode),
+                      child: Text(
+                        _showAgentCode
+                            ? 'Hide agent or tutor code'
+                            : 'Have an agent or tutor code?',
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.page),
+                  if (_showAgentCode) ...[
+                    const SizedBox(height: AppSpacing.item),
+                    TextField(
+                      controller: _agentCodeController,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: const InputDecoration(
+                        labelText: 'Agent or tutor code',
+                        hintText: 'AGT-XXXXXX',
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.section),
                   packagesAsync.when(
                     loading: () =>
                         const MockLoadingView(message: 'Loading packages…'),

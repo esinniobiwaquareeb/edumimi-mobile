@@ -25,7 +25,10 @@ class MockPortalRepository {
         if (json is! List) {
           return <MockExamType>[];
         }
-        return json.whereType<Map<String, dynamic>>().map(MockExamType.fromJson).toList();
+        return json
+            .whereType<Map<String, dynamic>>()
+            .map(MockExamType.fromJson)
+            .toList();
       },
     );
   }
@@ -41,9 +44,11 @@ class MockPortalRepository {
     return _dio.getData(
       ApiPaths.exams,
       queryParameters: {
-        if (examTypeSlug != null && examTypeSlug.isNotEmpty) 'examTypeSlug': examTypeSlug,
+        if (examTypeSlug != null && examTypeSlug.isNotEmpty)
+          'examTypeSlug': examTypeSlug,
         if (mode != null && mode.isNotEmpty) 'mode': mode,
-        if (subjectSlug != null && subjectSlug.isNotEmpty) 'subjectSlug': subjectSlug,
+        if (subjectSlug != null && subjectSlug.isNotEmpty)
+          'subjectSlug': subjectSlug,
         if (paperYearFrom != null) 'paperYearFrom': paperYearFrom.toString(),
         if (paperYearTo != null) 'paperYearTo': paperYearTo.toString(),
         if (examYear != null) 'examYear': examYear.toString(),
@@ -52,7 +57,10 @@ class MockPortalRepository {
         if (json is! List) {
           return <MockExam>[];
         }
-        return json.whereType<Map<String, dynamic>>().map(MockExam.fromJson).toList();
+        return json
+            .whereType<Map<String, dynamic>>()
+            .map(MockExam.fromJson)
+            .toList();
       },
     );
   }
@@ -83,12 +91,15 @@ class MockPortalRepository {
       ApiPaths.startExam(slug),
       data: {
         'sessionId': sessionId,
-        if (challengeToken != null && challengeToken.isNotEmpty) 'challengeToken': challengeToken,
+        if (challengeToken != null && challengeToken.isNotEmpty)
+          'challengeToken': challengeToken,
         if (adaptive) 'adaptive': true,
-        if (focusTopics != null && focusTopics.isNotEmpty) 'focusTopics': focusTopics,
+        if (focusTopics != null && focusTopics.isNotEmpty)
+          'focusTopics': focusTopics,
         if (questionCount != null) 'questionCount': questionCount,
       },
-      parser: (json) => StartAttemptResponse.fromJson(json as Map<String, dynamic>),
+      parser: (json) =>
+          StartAttemptResponse.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -111,7 +122,10 @@ class MockPortalRepository {
         if (json is! List) {
           return <MockAttempt>[];
         }
-        return json.whereType<Map<String, dynamic>>().map(MockAttempt.fromJson).toList();
+        return json
+            .whereType<Map<String, dynamic>>()
+            .map(MockAttempt.fromJson)
+            .toList();
       },
     );
   }
@@ -126,14 +140,16 @@ class MockPortalRepository {
   Future<MockChallengeShare> fetchChallengeShare(String attemptId) {
     return _dio.getData(
       ApiPaths.attemptChallenge(attemptId),
-      parser: (json) => MockChallengeShare.fromJson(json as Map<String, dynamic>),
+      parser: (json) =>
+          MockChallengeShare.fromJson(json as Map<String, dynamic>),
     );
   }
 
   Future<MockStudyInsights> fetchStudyInsights() {
     return _dio.getData(
       ApiPaths.studyInsights,
-      parser: (json) => MockStudyInsights.fromJson(json as Map<String, dynamic>),
+      parser: (json) =>
+          MockStudyInsights.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -141,7 +157,7 @@ class MockPortalRepository {
     required String period,
     String? examTypeSlug,
     int page = 1,
-    int limit = 10,
+    int limit = 25,
   }) {
     return _dio.getData(
       ApiPaths.leaderboard,
@@ -149,23 +165,31 @@ class MockPortalRepository {
         'period': period,
         'page': '$page',
         'limit': '$limit',
-        if (examTypeSlug != null && examTypeSlug.isNotEmpty) 'examTypeSlug': examTypeSlug,
+        if (examTypeSlug != null && examTypeSlug.isNotEmpty)
+          'examTypeSlug': examTypeSlug,
       },
-      parser: (json) => LeaderboardResponse.fromJson(json as Map<String, dynamic>),
+      parser: (json) {
+        if (json is! Map) {
+          return const LeaderboardResponse(period: 'week', entries: []);
+        }
+        return LeaderboardResponse.fromJson(Map<String, dynamic>.from(json));
+      },
     );
   }
 
   Future<MockPublicChallenge> fetchPublicChallenge(String token) {
     return _dio.getData(
       ApiPaths.publicChallenge(token),
-      parser: (json) => MockPublicChallenge.fromJson(json as Map<String, dynamic>),
+      parser: (json) =>
+          MockPublicChallenge.fromJson(json as Map<String, dynamic>),
     );
   }
 
   Future<JambSyllabusModule> fetchJambSyllabus() {
     return _dio.getData(
       ApiPaths.jambSyllabus,
-      parser: (json) => JambSyllabusModule.fromJson(json as Map<String, dynamic>),
+      parser: (json) =>
+          JambSyllabusModule.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -176,7 +200,10 @@ class MockPortalRepository {
         final data = json as Map<String, dynamic>;
         final packs = data['packs'];
         if (packs is! List) return <PostUtmePackSummary>[];
-        return packs.whereType<Map<String, dynamic>>().map(PostUtmePackSummary.fromJson).toList();
+        return packs
+            .whereType<Map<String, dynamic>>()
+            .map(PostUtmePackSummary.fromJson)
+            .toList();
       },
     );
   }
@@ -184,14 +211,16 @@ class MockPortalRepository {
   Future<PostUtmePackDetail> fetchPostUtmePackDetail(String slug) {
     return _dio.getData(
       ApiPaths.postUtmePackDetail(slug),
-      parser: (json) => PostUtmePackDetail.fromJson(json as Map<String, dynamic>),
+      parser: (json) =>
+          PostUtmePackDetail.fromJson(json as Map<String, dynamic>),
     );
   }
 
   Future<ParentProgressView> fetchParentView(String token) {
     return _dio.getData(
       ApiPaths.publicParentView(token),
-      parser: (json) => ParentProgressView.fromJson(json as Map<String, dynamic>),
+      parser: (json) =>
+          ParentProgressView.fromJson(json as Map<String, dynamic>),
     );
   }
 }
@@ -204,7 +233,9 @@ final examFeedProvider = FutureProvider.autoDispose<MockExamFeed>((ref) {
   return ref.watch(mockPortalRepositoryProvider).fetchExamFeed();
 });
 
-final studyInsightsProvider = FutureProvider.autoDispose<MockStudyInsights>((ref) {
+final studyInsightsProvider = FutureProvider.autoDispose<MockStudyInsights>((
+  ref,
+) {
   return ref.watch(mockPortalRepositoryProvider).fetchStudyInsights();
 });
 
@@ -212,51 +243,76 @@ final attemptsProvider = FutureProvider.autoDispose<List<MockAttempt>>((ref) {
   return ref.watch(mockPortalRepositoryProvider).fetchAttempts();
 });
 
-final attemptDetailProvider = FutureProvider.autoDispose.family<MockAttempt, String>((ref, attemptId) {
-  return ref.watch(mockPortalRepositoryProvider).fetchAttemptDetail(attemptId);
-});
+final attemptDetailProvider = FutureProvider.autoDispose
+    .family<MockAttempt, String>((ref, attemptId) {
+      return ref
+          .watch(mockPortalRepositoryProvider)
+          .fetchAttemptDetail(attemptId);
+    });
 
 final examTypesProvider = FutureProvider.autoDispose<List<MockExamType>>((ref) {
   return ref.watch(mockPortalRepositoryProvider).fetchExamTypes();
 });
 
-final examsCatalogProvider = FutureProvider.autoDispose.family<List<MockExam>, String?>((ref, examTypeSlug) {
-  return ref.watch(mockPortalRepositoryProvider).fetchExams(examTypeSlug: examTypeSlug);
-});
+final examsCatalogProvider = FutureProvider.autoDispose
+    .family<List<MockExam>, String?>((ref, examTypeSlug) {
+      return ref
+          .watch(mockPortalRepositoryProvider)
+          .fetchExams(examTypeSlug: examTypeSlug);
+    });
 
 final leaderboardProvider = FutureProvider.autoDispose
-    .family<LeaderboardResponse, ({String period, String? examTypeSlug, int page})>((ref, params) {
-  return ref.watch(mockPortalRepositoryProvider).fetchLeaderboard(
-        period: params.period,
-        examTypeSlug: params.examTypeSlug,
-        page: params.page,
-      );
-});
+    .family<
+      LeaderboardResponse,
+      ({String period, String? examTypeSlug, int page})
+    >((ref, params) {
+      return ref
+          .watch(mockPortalRepositoryProvider)
+          .fetchLeaderboard(
+            period: params.period,
+            examTypeSlug: params.examTypeSlug,
+            page: params.page,
+          );
+    });
 
-final examDetailProvider = FutureProvider.autoDispose.family<MockExam, String>((ref, slug) {
+final examDetailProvider = FutureProvider.autoDispose.family<MockExam, String>((
+  ref,
+  slug,
+) {
   return ref.watch(mockPortalRepositoryProvider).fetchExamDetail(slug);
 });
 
-final examTypeDetailProvider = FutureProvider.autoDispose.family<MockExamType, String>((ref, slug) {
-  return ref.watch(mockPortalRepositoryProvider).fetchExamTypeDetail(slug);
-});
+final examTypeDetailProvider = FutureProvider.autoDispose
+    .family<MockExamType, String>((ref, slug) {
+      return ref.watch(mockPortalRepositoryProvider).fetchExamTypeDetail(slug);
+    });
 
-final publicChallengeProvider = FutureProvider.autoDispose.family<MockPublicChallenge, String>((ref, token) {
-  return ref.watch(mockPortalRepositoryProvider).fetchPublicChallenge(token);
-});
+final publicChallengeProvider = FutureProvider.autoDispose
+    .family<MockPublicChallenge, String>((ref, token) {
+      return ref
+          .watch(mockPortalRepositoryProvider)
+          .fetchPublicChallenge(token);
+    });
 
-final jambSyllabusProvider = FutureProvider.autoDispose<JambSyllabusModule>((ref) {
+final jambSyllabusProvider = FutureProvider.autoDispose<JambSyllabusModule>((
+  ref,
+) {
   return ref.watch(mockPortalRepositoryProvider).fetchJambSyllabus();
 });
 
-final postUtmePacksProvider = FutureProvider.autoDispose<List<PostUtmePackSummary>>((ref) {
-  return ref.watch(mockPortalRepositoryProvider).fetchPostUtmePacks();
-});
+final postUtmePacksProvider =
+    FutureProvider.autoDispose<List<PostUtmePackSummary>>((ref) {
+      return ref.watch(mockPortalRepositoryProvider).fetchPostUtmePacks();
+    });
 
-final postUtmePackDetailProvider = FutureProvider.autoDispose.family<PostUtmePackDetail, String>((ref, slug) {
-  return ref.watch(mockPortalRepositoryProvider).fetchPostUtmePackDetail(slug);
-});
+final postUtmePackDetailProvider = FutureProvider.autoDispose
+    .family<PostUtmePackDetail, String>((ref, slug) {
+      return ref
+          .watch(mockPortalRepositoryProvider)
+          .fetchPostUtmePackDetail(slug);
+    });
 
-final parentViewProvider = FutureProvider.autoDispose.family<ParentProgressView, String>((ref, token) {
-  return ref.watch(mockPortalRepositoryProvider).fetchParentView(token);
-});
+final parentViewProvider = FutureProvider.autoDispose
+    .family<ParentProgressView, String>((ref, token) {
+      return ref.watch(mockPortalRepositoryProvider).fetchParentView(token);
+    });

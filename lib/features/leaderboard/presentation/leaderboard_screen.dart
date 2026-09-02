@@ -18,7 +18,7 @@ class LeaderboardScreen extends ConsumerStatefulWidget {
 }
 
 class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
-  String _period = 'week';
+  String _period = 'month';
   String? _examTypeSlug;
   int _page = 1;
 
@@ -34,6 +34,16 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
       _examTypeSlug = value;
       _page = 1;
     });
+  }
+
+  Future<void> _refreshLeaderboard() async {
+    final provider = leaderboardProvider((
+      period: _period,
+      examTypeSlug: _examTypeSlug,
+      page: _page,
+    ));
+    ref.invalidate(provider);
+    await ref.read(provider.future);
   }
 
   @override
@@ -133,13 +143,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                   : response.entries;
               final meta = response.meta;
               return RefreshIndicator(
-                onRefresh: () async => ref.invalidate(
-                  leaderboardProvider((
-                    period: _period,
-                    examTypeSlug: _examTypeSlug,
-                    page: _page,
-                  )),
-                ),
+                onRefresh: _refreshLeaderboard,
                 child: ListView(
                   padding: MockTabScrollPadding.list(context),
                   children: [

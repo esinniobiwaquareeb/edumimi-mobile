@@ -166,6 +166,12 @@ class _ActivityNotificationsTab extends ConsumerStatefulWidget {
 
 class _ActivityNotificationsTabState
     extends ConsumerState<_ActivityNotificationsTab> {
+  Future<void> _refreshNotifications() async {
+    invalidateUnreadSummary(ref);
+    ref.invalidate(notificationsProvider);
+    await ref.read(notificationsProvider.future);
+  }
+
   Future<void> _openNotification(MockNotification item) async {
     if (!item.isRead) {
       await ref.read(notificationsRepositoryProvider).markAsRead(item.id);
@@ -202,10 +208,7 @@ class _ActivityNotificationsTabState
           children: [
             Expanded(
               child: RefreshIndicator(
-                onRefresh: () async {
-                  ref.invalidate(notificationsProvider);
-                  invalidateUnreadSummary(ref);
-                },
+                onRefresh: _refreshNotifications,
                 child: ListView.separated(
                   padding: const EdgeInsets.all(AppSpacing.page),
                   itemCount: items.length,

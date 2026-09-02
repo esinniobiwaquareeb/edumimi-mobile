@@ -14,12 +14,13 @@ class NotificationsRepository {
       ApiPaths.notifications,
       queryParameters: unreadOnly ? const {'unreadOnly': 'true'} : null,
       parser: (json) {
-        if (json is! List) {
-          return <MockNotification>[];
-        }
-        return json
-            .whereType<Map<String, dynamic>>()
-            .map(MockNotification.fromJson)
+        final items = _extractNotificationItems(json);
+        return items
+            .whereType<Map>()
+            .map((item) => MockNotification.fromJson(
+                  Map<String, dynamic>.from(item),
+                ))
+            .where((item) => item.id.isNotEmpty)
             .toList();
       },
     );
@@ -40,6 +41,21 @@ class NotificationsRepository {
       parser: (_) {},
     );
   }
+}
+
+List<dynamic> _extractNotificationItems(dynamic json) {
+  if (json is List) {
+    return json;
+  }
+
+  if (json is Map) {
+    final payload = json['data'] ?? json['notifications'] ?? json['items'];
+    if (payload is List) {
+      return payload;
+    }
+  }
+
+  return const [];
 }
 
 final notificationsRepositoryProvider = Provider<NotificationsRepository>((

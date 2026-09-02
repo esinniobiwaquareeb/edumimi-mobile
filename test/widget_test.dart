@@ -8,6 +8,7 @@ import 'package:mock_mobile/core/storage/app_prefs_storage.dart';
 import 'package:mock_mobile/core/utils/rich_content_utils.dart';
 import 'package:mock_mobile/core/utils/share_utils.dart';
 import 'package:mock_mobile/core/utils/text_utils.dart';
+import 'package:mock_mobile/core/utils/mock_date_time.dart';
 import 'package:mock_mobile/shared/models/mock_attempt.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 import 'package:mock_mobile/shared/models/mock_user.dart';
@@ -27,6 +28,17 @@ void main() {
     expect(mockTimeBasedGreeting(DateTime(2026, 1, 1, 18)), 'Good evening');
   });
 
+  test('formats user-facing dates without requiring locale initialization', () {
+    final formatted = MockDateTime.dateTime('2026-10-02T13:25:29.857Z');
+
+    expect(formatted, contains('2026'));
+    expect(formatted, matches(RegExp(r'\b(AM|PM)\b')));
+    expect(
+      MockDateTime.compactDateTime('not-a-date', fallback: 'Recently'),
+      'Recently',
+    );
+  });
+
   test('derives first name from display name', () {
     const user = MockUser(
       id: '1',
@@ -44,7 +56,12 @@ void main() {
     expect(normalizeMathToken(r'$$\frac{a}{b}$$')?.displayMode, isTrue);
     expect(normalizeMathToken(r'\(y=mx+c\)')?.expression, 'y=mx+c');
     expect(hasMathContent(r'Solve $x^2 + 1 = 0$'), isTrue);
-    expect(splitRichContent(r'If $a$ then $b$'), ['If ', r'$a$', ' then ', r'$b$']);
+    expect(splitRichContent(r'If $a$ then $b$'), [
+      'If ',
+      r'$a$',
+      ' then ',
+      r'$b$',
+    ]);
   });
 
   test('persists onboarding seen flag', () async {
@@ -114,7 +131,9 @@ void main() {
       'Ada scored 82% on JAMB Physics on mock.edumimi. Take the same mock: https://mock.edumimi.com/challenge/abc',
     );
     expect(
-      buildReferralShareMessage(referralLink: 'https://mock.edumimi.com/?ref=ADA123'),
+      buildReferralShareMessage(
+        referralLink: 'https://mock.edumimi.com/?ref=ADA123',
+      ),
       'Join me on mock.edumimi: https://mock.edumimi.com/?ref=ADA123',
     );
   });
@@ -168,7 +187,12 @@ void main() {
         {'topic': 'Algebra', 'total': 10, 'correct': 9, 'percent': 90},
       ],
       'remediationSuggestions': [
-        {'topic': 'Geometry', 'percent': 40, 'questionCount': 5, 'correctCount': 2},
+        {
+          'topic': 'Geometry',
+          'percent': 40,
+          'questionCount': 5,
+          'correctCount': 2,
+        },
       ],
       'exam': {
         'id': 'exam-1',
@@ -240,7 +264,12 @@ void main() {
       durationMinutes: 45,
       totalQuestions: 2,
       questions: const [
-        MockQuestion(id: 'q1', questionText: 'Q1', options: ['A', 'B'], position: 1),
+        MockQuestion(
+          id: 'q1',
+          questionText: 'Q1',
+          options: ['A', 'B'],
+          position: 1,
+        ),
       ],
     );
 
