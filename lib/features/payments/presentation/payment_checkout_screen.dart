@@ -7,13 +7,18 @@ import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentCheckoutScreen extends ConsumerStatefulWidget {
-  const PaymentCheckoutScreen({super.key, required this.authorizationUrl, required this.paymentReference});
+  const PaymentCheckoutScreen({
+    super.key,
+    required this.authorizationUrl,
+    required this.paymentReference,
+  });
 
   final String authorizationUrl;
   final String paymentReference;
 
   @override
-  ConsumerState<PaymentCheckoutScreen> createState() => _PaymentCheckoutScreenState();
+  ConsumerState<PaymentCheckoutScreen> createState() =>
+      _PaymentCheckoutScreenState();
 }
 
 class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
@@ -24,6 +29,7 @@ class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
   @override
   void initState() {
     super.initState();
+    final authorizationUri = _trustedCheckoutUri(widget.authorizationUrl);
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -47,11 +53,41 @@ class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
               context.go(redirect);
               return NavigationDecision.prevent;
             }
+            if (_trustedCheckoutUri(request.url) == null) {
+              setState(() {
+                _isLoading = false;
+                _loadError =
+                    'For your security, this payment link was blocked.';
+              });
+              return NavigationDecision.prevent;
+            }
             return NavigationDecision.navigate;
           },
         ),
-      )
-      ..loadRequest(Uri.parse(widget.authorizationUrl));
+      );
+
+    if (authorizationUri == null) {
+      _isLoading = false;
+      _loadError = 'This payment link is invalid or untrusted.';
+      return;
+    }
+    _controller.loadRequest(authorizationUri);
+  }
+
+  Uri? _trustedCheckoutUri(String rawUrl) {
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null || uri.scheme != 'https') {
+      return null;
+    }
+
+    final host = uri.host.toLowerCase();
+    final webHost = Uri.parse(AppConfig.webShareOrigin).host.toLowerCase();
+    final isPaystackHost =
+        host == 'paystack.com' ||
+        host.endsWith('.paystack.com') ||
+        host == 'paystack.co' ||
+        host.endsWith('.paystack.co');
+    return isPaystackHost || host == webHost ? uri : null;
   }
 
   String? _resolvePaymentRedirect(String url) {
@@ -63,11 +99,13 @@ class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
     final webHost = Uri.parse(AppConfig.webShareOrigin).host;
     final isVerifyPath = uri.path.contains('/payments/verify');
     final isWebCallback = uri.host == webHost && isVerifyPath;
-    final isMockReference = uri.queryParameters.containsKey('reference') ||
+    final isMockReference =
+        uri.queryParameters.containsKey('reference') ||
         uri.queryParameters.containsKey('trxref');
 
     if (isWebCallback || (isVerifyPath && isMockReference)) {
-      final reference = uri.queryParameters['reference'] ??
+      final reference =
+          uri.queryParameters['reference'] ??
           uri.queryParameters['trxref'] ??
           widget.paymentReference;
       if (reference.isNotEmpty) {
@@ -75,8 +113,12 @@ class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
       }
     }
 
-    if (isMockReference && uri.queryParameters.values.any((value) => value.startsWith('MOCK-'))) {
-      final reference = uri.queryParameters['reference'] ?? uri.queryParameters['trxref'] ?? widget.paymentReference;
+    if (isMockReference &&
+        uri.queryParameters.values.any((value) => value.startsWith('MOCK-'))) {
+      final reference =
+          uri.queryParameters['reference'] ??
+          uri.queryParameters['trxref'] ??
+          widget.paymentReference;
       return '/payments/verify?reference=${Uri.encodeComponent(reference)}';
     }
 
@@ -99,11 +141,16 @@ class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
   }
 
   Future<void> _retryLoad() async {
+    final authorizationUri = _trustedCheckoutUri(widget.authorizationUrl);
+    if (authorizationUri == null) {
+      setState(() => _loadError = 'This payment link is invalid or untrusted.');
+      return;
+    }
     setState(() {
       _loadError = null;
       _isLoading = true;
     });
-    await _controller.loadRequest(Uri.parse(widget.authorizationUrl));
+    await _controller.loadRequest(authorizationUri);
   }
 
   @override
@@ -128,11 +175,9 @@ class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
           children: [
             if (_loadError == null) WebViewWidget(controller: _controller),
             if (_loadError != null)
-              MockErrorView(
-                message: _loadError!,
-                onRetry: _retryLoad,
-              ),
-            if (_isLoading && _loadError == null) const MockLoadingView(message: 'Opening Paystack…'),
+              MockErrorView(message: _loadError!, onRetry: _retryLoad),
+            if (_isLoading && _loadError == null)
+              const MockLoadingView(message: 'Opening Paystack…'),
           ],
         ),
       ),

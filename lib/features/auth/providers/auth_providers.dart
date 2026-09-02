@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
+import 'package:mock_mobile/core/offline/offline_storage.dart';
 import 'package:mock_mobile/features/auth/data/auth_repository.dart';
 import 'package:mock_mobile/shared/models/mock_user.dart';
 
@@ -104,7 +105,10 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout({bool localOnly = false}) async {
-    await _repository.clearSession();
+    await Future.wait([
+      _repository.clearSession(),
+      OfflineStorage.clearAccountData(),
+    ]);
     state = const AuthState.unauthenticated();
   }
 

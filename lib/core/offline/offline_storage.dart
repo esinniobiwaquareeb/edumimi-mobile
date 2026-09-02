@@ -20,4 +20,12 @@ class OfflineStorage {
   static Box<Map> get practiceBox => Hive.box<Map>(practiceBoxName);
   static Box<Map> get sessionBox => Hive.box<Map>(sessionBoxName);
   static Box<Map> get pendingBox => Hive.box<Map>(pendingBoxName);
+
+  static Future<void> clearAccountData() async {
+    await Future.wait([
+      practiceBox.clear(),
+      sessionBox.clear(),
+      pendingBox.clear(),
+    ]);
+  }
 }

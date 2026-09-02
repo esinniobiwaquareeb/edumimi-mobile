@@ -16,7 +16,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 void main() {
   test('uses mock portal API prefix', () {
     expect(AppConfig.apiPrefix, '/mock-portal');
-    expect(AppConfig.appName, 'Edumimi Mock');
+    expect(AppConfig.appName, 'mock.edumimi');
     expect(AppConfig.apiBaseUrl, isNotEmpty);
     expect(AppConfig.apiBaseUrl.startsWith('http'), isTrue);
   });
@@ -111,11 +111,11 @@ void main() {
         percentScore: 82,
         shareUrl: 'https://mock.edumimi.com/challenge/abc',
       ),
-      'Ada scored 82% on JAMB Physics on Edumimi. Take the same mock: https://mock.edumimi.com/challenge/abc',
+      'Ada scored 82% on JAMB Physics on mock.edumimi. Take the same mock: https://mock.edumimi.com/challenge/abc',
     );
     expect(
       buildReferralShareMessage(referralLink: 'https://mock.edumimi.com/?ref=ADA123'),
-      'Join me on Edumimi Mock practice: https://mock.edumimi.com/?ref=ADA123',
+      'Join me on mock.edumimi: https://mock.edumimi.com/?ref=ADA123',
     );
   });
 

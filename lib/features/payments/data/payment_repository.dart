@@ -14,13 +14,17 @@ class PaymentRepository {
     return _dio.getData(
       ApiPaths.packages,
       queryParameters: {
-        if (examTypeSlug != null && examTypeSlug.isNotEmpty) 'examTypeSlug': examTypeSlug,
+        if (examTypeSlug != null && examTypeSlug.isNotEmpty)
+          'examTypeSlug': examTypeSlug,
       },
       parser: (json) {
         if (json is! List) {
           return <MockPackage>[];
         }
-        return json.whereType<Map<String, dynamic>>().map(MockPackage.fromJson).toList();
+        return json
+            .whereType<Map<String, dynamic>>()
+            .map(MockPackage.fromJson)
+            .toList();
       },
     );
   }
@@ -32,7 +36,10 @@ class PaymentRepository {
         if (json is! List) {
           return <MockPurchase>[];
         }
-        return json.whereType<Map<String, dynamic>>().map(MockPurchase.fromJson).toList();
+        return json
+            .whereType<Map<String, dynamic>>()
+            .map(MockPurchase.fromJson)
+            .toList();
       },
     );
   }
@@ -40,13 +47,11 @@ class PaymentRepository {
   Future<CheckoutResponse> initializeCheckout(
     String slug, {
     String? agentCode,
-    required String transactionPin,
   }) {
     return _dio.postData(
       ApiPaths.packageCheckout(slug),
       data: {
         if (agentCode != null && agentCode.isNotEmpty) 'agentCode': agentCode,
-        'transactionPin': transactionPin,
       },
       parser: (json) => CheckoutResponse.fromJson(json as Map<String, dynamic>),
     );
@@ -67,7 +72,10 @@ class PaymentRepository {
     );
   }
 
-  Future<void> registerFcmToken({required String token, required String platform}) {
+  Future<void> registerFcmToken({
+    required String token,
+    required String platform,
+  }) {
     return _dio.postData(
       ApiPaths.fcmRegister,
       data: {'token': token, 'platform': platform},
@@ -92,7 +100,9 @@ final packagesProvider = FutureProvider.autoDispose<List<MockPackage>>((ref) {
   return ref.watch(paymentRepositoryProvider).fetchPackages();
 });
 
-final myPurchasesProvider = FutureProvider.autoDispose<List<MockPurchase>>((ref) {
+final myPurchasesProvider = FutureProvider.autoDispose<List<MockPurchase>>((
+  ref,
+) {
   return ref.watch(paymentRepositoryProvider).fetchMyPurchases();
 });
 
@@ -103,9 +113,13 @@ final engagementProvider = FutureProvider<MockEngagement>((ref) {
 });
 
 bool hasActivePackageSlug(List<MockPurchase> purchases, String slug) {
-  return purchases.any((purchase) => purchase.package?.slug == slug && purchase.isActive);
+  return purchases.any(
+    (purchase) => purchase.package?.slug == slug && purchase.isActive,
+  );
 }
 
 bool hasPendingPackageSlug(List<MockPurchase> purchases, String slug) {
-  return purchases.any((purchase) => purchase.package?.slug == slug && purchase.isPending);
+  return purchases.any(
+    (purchase) => purchase.package?.slug == slug && purchase.isPending,
+  );
 }

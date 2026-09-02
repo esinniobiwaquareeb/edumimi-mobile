@@ -32,7 +32,8 @@ class ProfileScreen extends ConsumerStatefulWidget {
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTickerProviderStateMixin {
+class _ProfileScreenState extends ConsumerState<ProfileScreen>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   var _isUpdatingPush = false;
   bool? _pushEnabledOverride;
@@ -55,7 +56,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
       _pushEnabledOverride = enabled;
     });
     try {
-      await toggleMockPushNotifications(ref: ref, context: context, enabled: enabled);
+      await toggleMockPushNotifications(
+        ref: ref,
+        context: context,
+        enabled: enabled,
+      );
       if (mounted) {
         setState(() => _pushEnabledOverride = null);
       }
@@ -102,10 +107,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                   pushEnabledOverride: _pushEnabledOverride,
                   themeMode: themeMode,
                   onTogglePush: _togglePushNotifications,
-                  onThemeChanged: (mode) => ref.read(themeControllerProvider.notifier).setMode(mode),
-                  onUserUpdated: () => ref.read(authControllerProvider.notifier).refreshUser(),
+                  onThemeChanged: (mode) =>
+                      ref.read(themeControllerProvider.notifier).setMode(mode),
+                  onUserUpdated: () =>
+                      ref.read(authControllerProvider.notifier).refreshUser(),
                 ),
-                _PrepProfileTab(user: user, onSaved: () => ref.read(authControllerProvider.notifier).refreshUser()),
+                _PrepProfileTab(
+                  user: user,
+                  onSaved: () =>
+                      ref.read(authControllerProvider.notifier).refreshUser(),
+                ),
                 _ReferralTab(engagementAsync: engagementAsync),
               ],
             ),
@@ -210,7 +221,9 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
       _error = null;
     });
     try {
-      await ref.read(profileRepositoryProvider).updateProfile(
+      await ref
+          .read(profileRepositoryProvider)
+          .updateProfile(
             fullName: _nameController.text,
             phone: _phoneController.text,
           );
@@ -237,7 +250,9 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
       _error = null;
     });
     try {
-      await ref.read(profileRepositoryProvider).changePassword(
+      await ref
+          .read(profileRepositoryProvider)
+          .changePassword(
             currentPassword: _currentPasswordController.text,
             newPassword: _newPasswordController.text,
           );
@@ -259,11 +274,14 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
     });
     try {
       if (_hasTransactionPin) {
-        if (_newPinController.text.length < 4 || _newPinController.text != _confirmNewPinController.text) {
+        if (_newPinController.text.length < 4 ||
+            _newPinController.text != _confirmNewPinController.text) {
           setState(() => _error = 'Enter matching 4–6 digit PINs.');
           return;
         }
-        await ref.read(profileRepositoryProvider).changeTransactionPin(
+        await ref
+            .read(profileRepositoryProvider)
+            .changeTransactionPin(
               currentPin: _currentPinController.text,
               newPin: _newPinController.text,
               confirmPin: _confirmNewPinController.text,
@@ -272,10 +290,14 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
         if (_pinPasswordController.text.isEmpty ||
             _pinController.text.length < 4 ||
             _pinController.text != _confirmPinController.text) {
-          setState(() => _error = 'Enter your password and matching 4–6 digit PINs.');
+          setState(
+            () => _error = 'Enter your password and matching 4–6 digit PINs.',
+          );
           return;
         }
-        await ref.read(profileRepositoryProvider).setupTransactionPin(
+        await ref
+            .read(profileRepositoryProvider)
+            .setupTransactionPin(
               password: _pinPasswordController.text,
               pin: _pinController.text,
               confirmPin: _confirmPinController.text,
@@ -299,7 +321,11 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
 
   Future<void> _pickAvatar() async {
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1024, imageQuality: 85);
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      imageQuality: 85,
+    );
     if (file == null) return;
     setState(() => _isUploadingAvatar = true);
     try {
@@ -335,7 +361,9 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
 
   Future<void> _resendVerification() async {
     try {
-      await ref.read(profileRepositoryProvider).resendVerification(widget.user.email);
+      await ref
+          .read(profileRepositoryProvider)
+          .resendVerification(widget.user.email);
       if (mounted) {
         MockToast.success(context, 'Verification email sent');
       }
@@ -346,8 +374,13 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
 
   Future<void> _shareParentLink(Rect sharePositionOrigin) async {
     try {
-      final link = await ref.read(profileRepositoryProvider).fetchParentShareLink();
-      await shareParentProgressLink(link.shareUrl, sharePositionOrigin: sharePositionOrigin);
+      final link = await ref
+          .read(profileRepositoryProvider)
+          .fetchParentShareLink();
+      await shareParentProgressLink(
+        link.shareUrl,
+        sharePositionOrigin: sharePositionOrigin,
+      );
     } on ApiException catch (error) {
       if (mounted) MockToast.error(context, error.message);
     }
@@ -390,7 +423,9 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
 
   @override
   Widget build(BuildContext context) {
-    final verified = widget.user.isVerified == true || widget.user.mockProfile?.isVerified == true;
+    final verified =
+        widget.user.isVerified == true ||
+        widget.user.mockProfile?.isVerified == true;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.page),
@@ -401,10 +436,18 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
               Stack(
                 children: [
                   widget.user.avatarUrl?.isNotEmpty == true
-                      ? CircleAvatar(radius: 28, backgroundImage: NetworkImage(widget.user.avatarUrl!))
-                      : MockUserAvatar(initials: widget.user.initials, size: 56),
+                      ? CircleAvatar(
+                          radius: 28,
+                          backgroundImage: NetworkImage(widget.user.avatarUrl!),
+                        )
+                      : MockUserAvatar(
+                          initials: widget.user.initials,
+                          size: 56,
+                        ),
                   if (_isUploadingAvatar)
-                    const Positioned.fill(child: CircularProgressIndicator(strokeWidth: 2)),
+                    const Positioned.fill(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                 ],
               ),
               const SizedBox(width: AppSpacing.section),
@@ -417,7 +460,10 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
                     if (verified)
                       const Padding(
                         padding: EdgeInsets.only(top: AppSpacing.item),
-                        child: MockChip(label: 'Verified', tone: MockChipTone.success),
+                        child: MockChip(
+                          label: 'Verified',
+                          tone: MockChipTone.success,
+                        ),
                       ),
                   ],
                 ),
@@ -428,7 +474,12 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
         const SizedBox(height: AppSpacing.section),
         Row(
           children: [
-            Expanded(child: MockSecondaryButton(label: 'Change photo', onPressed: _isUploadingAvatar ? null : _pickAvatar)),
+            Expanded(
+              child: MockSecondaryButton(
+                label: 'Change photo',
+                onPressed: _isUploadingAvatar ? null : _pickAvatar,
+              ),
+            ),
             const SizedBox(width: AppSpacing.item),
             if (widget.user.avatarUrl?.isNotEmpty == true)
               Expanded(
@@ -447,9 +498,15 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
               children: [
                 Text('Email verification required', style: context.cardTitle),
                 const SizedBox(height: AppSpacing.item),
-                Text('A confirmation link was sent to ${widget.user.email}.', style: context.bodySecondary),
+                Text(
+                  'A confirmation link was sent to ${widget.user.email}.',
+                  style: context.bodySecondary,
+                ),
                 const SizedBox(height: AppSpacing.section),
-                MockSecondaryButton(label: 'Resend verification email', onPressed: _resendVerification),
+                MockSecondaryButton(
+                  label: 'Resend verification email',
+                  onPressed: _resendVerification,
+                ),
               ],
             ),
           ),
@@ -459,74 +516,155 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
           MockInlineNotice.error(message: _error!),
           const SizedBox(height: AppSpacing.section),
         ],
-        MockTextField(label: 'Full name', controller: _nameController),
-        const SizedBox(height: AppSpacing.section),
-        MockTextField(label: 'Phone (optional)', controller: _phoneController, keyboardType: TextInputType.phone),
-        const SizedBox(height: AppSpacing.section),
-        TextFormField(
-          initialValue: widget.user.email,
-          readOnly: true,
-          enabled: false,
-          keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(labelText: 'Email'),
-        ),
-        const SizedBox(height: AppSpacing.page),
-        MockPrimaryButton(label: _isSavingProfile ? 'Saving…' : 'Save personal info', isLoading: _isSavingProfile, onPressed: _saveProfile),
-        const SizedBox(height: AppSpacing.page),
         MockCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Change password', style: context.sectionTitle),
+              Text('Personal details', style: context.sectionTitle),
               const SizedBox(height: AppSpacing.section),
-              MockTextField(label: 'Current password', controller: _currentPasswordController, obscurable: true),
+              MockTextField(label: 'Full name', controller: _nameController),
               const SizedBox(height: AppSpacing.section),
-              MockTextField(label: 'New password', controller: _newPasswordController, obscurable: true),
+              MockTextField(
+                label: 'Phone (optional)',
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+              ),
               const SizedBox(height: AppSpacing.section),
-              MockTextField(label: 'Confirm new password', controller: _confirmPasswordController, obscurable: true),
+              TextFormField(
+                initialValue: widget.user.email,
+                readOnly: true,
+                enabled: false,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(labelText: 'Email'),
+              ),
               const SizedBox(height: AppSpacing.section),
-              MockPrimaryButton(
-                label: _isChangingPassword ? 'Updating…' : 'Update password',
-                isLoading: _isChangingPassword,
-                onPressed: _changePassword,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: 220,
+                  child: MockPrimaryButton(
+                    label: _isSavingProfile ? 'Saving…' : 'Save changes',
+                    isLoading: _isSavingProfile,
+                    onPressed: _saveProfile,
+                  ),
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.page),
         MockCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Transaction PIN', style: context.sectionTitle),
-              const SizedBox(height: AppSpacing.item),
-              Text(
-                'Authorize package payments with a 4–6 digit PIN.',
-                style: context.caption,
-              ),
-              const SizedBox(height: AppSpacing.section),
-              if (_hasTransactionPin) ...[
-                MockTextField(label: 'Current PIN', controller: _currentPinController, obscurable: true, keyboardType: TextInputType.number),
+          child: _ProfileExpansion(
+            icon: Icons.lock_outline_rounded,
+            title: 'Password',
+            subtitle: 'Change the password used to sign in.',
+            child: Column(
+              children: [
+                MockTextField(
+                  label: 'Current password',
+                  controller: _currentPasswordController,
+                  obscurable: true,
+                ),
                 const SizedBox(height: AppSpacing.section),
-                MockTextField(label: 'New PIN', controller: _newPinController, obscurable: true, keyboardType: TextInputType.number),
+                MockTextField(
+                  label: 'New password',
+                  controller: _newPasswordController,
+                  obscurable: true,
+                ),
                 const SizedBox(height: AppSpacing.section),
-                MockTextField(label: 'Confirm new PIN', controller: _confirmNewPinController, obscurable: true, keyboardType: TextInputType.number),
-              ] else ...[
-                MockTextField(label: 'Account password', controller: _pinPasswordController, obscurable: true),
+                MockTextField(
+                  label: 'Confirm new password',
+                  controller: _confirmPasswordController,
+                  obscurable: true,
+                ),
                 const SizedBox(height: AppSpacing.section),
-                MockTextField(label: 'Transaction PIN', controller: _pinController, obscurable: true, keyboardType: TextInputType.number),
-                const SizedBox(height: AppSpacing.section),
-                MockTextField(label: 'Confirm PIN', controller: _confirmPinController, obscurable: true, keyboardType: TextInputType.number),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: 220,
+                    child: MockPrimaryButton(
+                      label: _isChangingPassword
+                          ? 'Updating…'
+                          : 'Update password',
+                      isLoading: _isChangingPassword,
+                      onPressed: _changePassword,
+                    ),
+                  ),
+                ),
               ],
-              const SizedBox(height: AppSpacing.section),
-              MockPrimaryButton(
-                label: _isUpdatingTransactionPin
-                    ? 'Saving…'
-                    : (_hasTransactionPin ? 'Update transaction PIN' : 'Create transaction PIN'),
-                isLoading: _isUpdatingTransactionPin,
-                onPressed: _saveTransactionPin,
-              ),
-            ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.page),
+        MockCard(
+          child: _ProfileExpansion(
+            icon: Icons.shield_outlined,
+            title: 'Transaction PIN',
+            subtitle: _hasTransactionPin
+                ? 'Update your payment confirmation PIN.'
+                : 'Add a PIN to confirm package payments.',
+            child: Column(
+              children: [
+                if (_hasTransactionPin) ...[
+                  MockTextField(
+                    label: 'Current PIN',
+                    controller: _currentPinController,
+                    obscurable: true,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: AppSpacing.section),
+                  MockTextField(
+                    label: 'New PIN',
+                    controller: _newPinController,
+                    obscurable: true,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: AppSpacing.section),
+                  MockTextField(
+                    label: 'Confirm new PIN',
+                    controller: _confirmNewPinController,
+                    obscurable: true,
+                    keyboardType: TextInputType.number,
+                  ),
+                ] else ...[
+                  MockTextField(
+                    label: 'Account password',
+                    controller: _pinPasswordController,
+                    obscurable: true,
+                  ),
+                  const SizedBox(height: AppSpacing.section),
+                  MockTextField(
+                    label: 'Transaction PIN',
+                    controller: _pinController,
+                    obscurable: true,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: AppSpacing.section),
+                  MockTextField(
+                    label: 'Confirm PIN',
+                    controller: _confirmPinController,
+                    obscurable: true,
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.section),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: 240,
+                    child: MockPrimaryButton(
+                      label: _isUpdatingTransactionPin
+                          ? 'Saving…'
+                          : (_hasTransactionPin
+                                ? 'Update transaction PIN'
+                                : 'Create transaction PIN'),
+                      isLoading: _isUpdatingTransactionPin,
+                      onPressed: _saveTransactionPin,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.page),
@@ -546,41 +684,33 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
                   AppThemeMode.system => 'System',
                 },
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.page),
-        widget.engagementAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
-          data: (engagement) {
-            final pushEnabled = widget.pushEnabledOverride ?? engagement.fcmNotificationsEnabled;
-            return MockCard(
-            child: SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text('Daily streak reminders', style: context.cardTitle),
-              subtitle: Text(
-                AppConfig.isFirebaseConfigured
-                    ? '${engagement.practiceStreakDays}-day streak'
-                    : 'Configure Firebase to enable push (see Notifications screen).',
-                style: context.caption,
-              ),
-              value: AppConfig.isFirebaseConfigured && pushEnabled,
-              onChanged: (AppConfig.isFirebaseConfigured && !widget.isUpdatingPush) ? widget.onTogglePush : null,
-            ),
-          );
-          },
-        ),
-        const SizedBox(height: AppSpacing.page),
-        MockCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Share with parent or coach', style: context.cardTitle),
-              const SizedBox(height: AppSpacing.item),
-              Text('Send a read-only link with weekly plan and recent scores.', style: context.bodySecondary),
               const SizedBox(height: AppSpacing.section),
-              MockShareButton(label: 'Share parent link', onShare: _shareParentLink),
+              const Divider(),
+              widget.engagementAsync.when(
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (engagement) {
+                  final pushEnabled =
+                      widget.pushEnabledOverride ??
+                      engagement.fcmNotificationsEnabled;
+                  return SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Daily reminders', style: context.cardTitle),
+                    subtitle: Text(
+                      AppConfig.isFirebaseConfigured
+                          ? '${engagement.practiceStreakDays}-day streak'
+                          : 'Set up notifications from the Notifications screen.',
+                      style: context.caption,
+                    ),
+                    value: AppConfig.isFirebaseConfigured && pushEnabled,
+                    onChanged:
+                        (AppConfig.isFirebaseConfigured &&
+                            !widget.isUpdatingPush)
+                        ? widget.onTogglePush
+                        : null,
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -589,20 +719,52 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Redeem school license', style: context.cardTitle),
-              const SizedBox(height: AppSpacing.item),
-              MockTextField(label: 'License code', controller: _bulkLicenseController),
-              const SizedBox(height: AppSpacing.section),
-              MockPrimaryButton(
-                label: _isRedeemingLicense ? 'Redeeming…' : 'Redeem code',
-                isLoading: _isRedeemingLicense,
-                onPressed: _redeemBulkLicense,
+              _ProfileExpansion(
+                icon: Icons.ios_share_outlined,
+                title: 'Share progress',
+                subtitle:
+                    'Send a read-only progress link to a parent or coach.',
+                child: MockShareButton(
+                  label: 'Share parent link',
+                  onShare: _shareParentLink,
+                ),
+              ),
+              const Divider(),
+              _ProfileExpansion(
+                icon: Icons.workspace_premium_outlined,
+                title: 'Redeem school licence',
+                subtitle: 'Enter a code provided by your school.',
+                child: Column(
+                  children: [
+                    MockTextField(
+                      label: 'Licence code',
+                      controller: _bulkLicenseController,
+                    ),
+                    const SizedBox(height: AppSpacing.section),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: SizedBox(
+                        width: 200,
+                        child: MockPrimaryButton(
+                          label: _isRedeemingLicense
+                              ? 'Redeeming…'
+                              : 'Redeem code',
+                          isLoading: _isRedeemingLicense,
+                          onPressed: _redeemBulkLicense,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.page),
-        MockPrimaryButton(label: 'Browse packages', onPressed: () => context.push('/packages')),
+        MockPrimaryButton(
+          label: 'Browse packages',
+          onPressed: () => context.push('/packages'),
+        ),
         const SizedBox(height: AppSpacing.section),
         MockDestructiveButton(
           label: MockVoice.logOut,
@@ -627,7 +789,8 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
             final confirmed = await MockConfirmDialog.show(
               context,
               title: 'Delete Account',
-              message: 'Are you sure you want to permanently delete your account? This action cannot be undone and you will lose all your progress and purchases.',
+              message:
+                  'Are you sure you want to permanently delete your account? This action cannot be undone and you will lose all your progress and purchases.',
               confirmLabel: 'Delete Account',
               variant: MockConfirmDialogVariant.danger,
               isDestructiveConfirm: true,
@@ -639,13 +802,51 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
               if (context.mounted) context.go('/login');
             } catch (e) {
               if (context.mounted) {
-                MockToast.show(context, 'Failed to delete account', tone: MockToastTone.error);
+                MockToast.show(
+                  context,
+                  'Failed to delete account',
+                  tone: MockToastTone.error,
+                );
               }
             }
           },
-          child: Text('Delete Account', style: context.body.copyWith(color: Theme.of(context).colorScheme.error)),
+          child: Text(
+            'Delete Account',
+            style: context.body.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _ProfileExpansion extends StatelessWidget {
+  const _ProfileExpansion({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: AppSpacing.item),
+        leading: Icon(icon, color: context.appTextSecondary),
+        title: Text(title, style: context.cardTitle),
+        subtitle: Text(subtitle, style: context.caption),
+        children: [child],
+      ),
     );
   }
 }
@@ -682,7 +883,9 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
     _paperYearFrom = interests?.paperYearFrom;
     _paperYearTo = interests?.paperYearTo;
     _prepYear = interests?.prepYear ?? DateTime.now().year;
-    _practiceTimerEnabled = resolvePracticeTimerEnabled(interests?.practiceTimerEnabled);
+    _practiceTimerEnabled = resolvePracticeTimerEnabled(
+      interests?.practiceTimerEnabled,
+    );
     if (interests?.targetScore != null) {
       _targetScoreController.text = '${interests!.targetScore}';
     }
@@ -727,20 +930,28 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
   Widget build(BuildContext context) {
     final examTypesAsync = ref.watch(examTypesProvider);
     final selectedType = examTypesAsync.maybeWhen(
-      data: (types) => types.where((type) => type.slug == _selectedExamTypeSlug).firstOrNull,
+      data: (types) =>
+          types.where((type) => type.slug == _selectedExamTypeSlug).firstOrNull,
       orElse: () => null,
     );
-    final subjects = [...?selectedType?.subjects]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
+    final subjects = [...?selectedType?.subjects]
+      ..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
 
     return examTypesAsync.when(
       loading: () => const MockLoadingView(message: 'Loading exam types…'),
-      error: (error, _) => MockErrorView(message: error.toString(), onRetry: () => ref.invalidate(examTypesProvider)),
+      error: (error, _) => MockErrorView(
+        message: error.toString(),
+        onRetry: () => ref.invalidate(examTypesProvider),
+      ),
       data: (examTypes) => ListView(
         padding: const EdgeInsets.all(AppSpacing.page),
         children: [
           Text('Exam setup', style: context.pageTitle),
           const SizedBox(height: AppSpacing.item),
-          Text('Choose your exam, track, paper years, and goals.', style: context.pageSubtitle),
+          Text(
+            'Choose your exam, track, paper years, and goals.',
+            style: context.pageSubtitle,
+          ),
           const SizedBox(height: AppSpacing.page),
           if (_error != null) ...[
             MockInlineNotice.error(message: _error!),
@@ -776,11 +987,15 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
                     _selectedTrack = option.track;
                     _selectedSubjectIds
                       ..clear()
-                      ..addAll(resolveSubjectIdsForTrack(
-                        examTypeSlug: _selectedExamTypeSlug!,
-                        track: option.track,
-                        subjects: subjects.map((s) => (id: s.id, slug: s.slug)).toList(),
-                      ));
+                      ..addAll(
+                        resolveSubjectIdsForTrack(
+                          examTypeSlug: _selectedExamTypeSlug!,
+                          track: option.track,
+                          subjects: subjects
+                              .map((s) => (id: s.id, slug: s.slug))
+                              .toList(),
+                        ),
+                      );
                   }),
                 ),
               ),
@@ -816,7 +1031,9 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
                   decoration: const InputDecoration(labelText: 'From year'),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('Not set')),
-                    ...paperYearOptions().map((y) => DropdownMenuItem(value: y, child: Text('$y'))),
+                    ...paperYearOptions().map(
+                      (y) => DropdownMenuItem(value: y, child: Text('$y')),
+                    ),
                   ],
                   onChanged: (value) => setState(() => _paperYearFrom = value),
                 ),
@@ -828,7 +1045,9 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
                   decoration: const InputDecoration(labelText: 'To year'),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('Not set')),
-                    ...paperYearOptions().map((y) => DropdownMenuItem(value: y, child: Text('$y'))),
+                    ...paperYearOptions().map(
+                      (y) => DropdownMenuItem(value: y, child: Text('$y')),
+                    ),
                   ],
                   onChanged: (value) => setState(() => _paperYearTo = value),
                 ),
@@ -866,15 +1085,25 @@ class _PrepProfileTabState extends ConsumerState<_PrepProfileTab> {
           DropdownButtonFormField<int>(
             value: _prepYear,
             decoration: const InputDecoration(labelText: 'Sitting year'),
-            items: prepYearOptions().map((y) => DropdownMenuItem(value: y, child: Text('$y'))).toList(),
+            items: prepYearOptions()
+                .map((y) => DropdownMenuItem(value: y, child: Text('$y')))
+                .toList(),
             onChanged: (value) {
               if (value != null) setState(() => _prepYear = value);
             },
           ),
           const SizedBox(height: AppSpacing.section),
-          MockTextField(label: 'Target score', controller: _targetScoreController, keyboardType: TextInputType.number),
+          MockTextField(
+            label: 'Target score',
+            controller: _targetScoreController,
+            keyboardType: TextInputType.number,
+          ),
           const SizedBox(height: AppSpacing.page),
-          MockPrimaryButton(label: _isSaving ? 'Saving…' : 'Save prep profile', isLoading: _isSaving, onPressed: _save),
+          MockPrimaryButton(
+            label: _isSaving ? 'Saving…' : 'Save prep profile',
+            isLoading: _isSaving,
+            onPressed: _save,
+          ),
         ],
       ),
     );
@@ -903,7 +1132,10 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
     super.dispose();
   }
 
-  Future<void> _shareReferral(MockEngagement engagement, Rect sharePositionOrigin) async {
+  Future<void> _shareReferral(
+    MockEngagement engagement,
+    Rect sharePositionOrigin,
+  ) async {
     await shareReferral(
       referralLink: engagement.referralLink,
       referralCode: engagement.referralCode ?? _ownCodeController.text,
@@ -915,9 +1147,13 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
   Widget build(BuildContext context) {
     return widget.engagementAsync.when(
       loading: () => const MockLoadingView(message: 'Loading referral…'),
-      error: (_, __) => const MockEmptyState(title: 'Referral unavailable', message: 'Try again later.'),
+      error: (_, __) => const MockEmptyState(
+        title: 'Referral unavailable',
+        message: 'Try again later.',
+      ),
       data: (engagement) {
-        if (_ownCodeController.text.isEmpty && engagement.referralCode?.isNotEmpty == true) {
+        if (_ownCodeController.text.isEmpty &&
+            engagement.referralCode?.isNotEmpty == true) {
           _ownCodeController.text = engagement.referralCode!;
         }
 
@@ -926,10 +1162,16 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
           children: [
             Text('Invite friends', style: context.pageTitle),
             const SizedBox(height: AppSpacing.item),
-            Text('Share your code to earn bonus preview questions and commissions.', style: context.pageSubtitle),
+            Text(
+              'Share your code to earn bonus preview questions and commissions.',
+              style: context.pageSubtitle,
+            ),
             const SizedBox(height: AppSpacing.page),
             if (engagement.referredByCustomerId == null) ...[
-              MockTextField(label: "Friend's referral code", controller: _applyCodeController),
+              MockTextField(
+                label: "Friend's referral code",
+                controller: _applyCodeController,
+              ),
               const SizedBox(height: AppSpacing.section),
               MockPrimaryButton(
                 label: _isApplying ? 'Applying…' : 'Apply referral code',
@@ -937,11 +1179,17 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
                 onPressed: () async {
                   setState(() => _isApplying = true);
                   try {
-                    await ref.read(profileRepositoryProvider).applyReferralCode(_applyCodeController.text);
+                    await ref
+                        .read(profileRepositoryProvider)
+                        .applyReferralCode(_applyCodeController.text);
                     ref.invalidate(engagementProvider);
-                    if (context.mounted) MockToast.success(context, 'Referral code applied');
+                    if (context.mounted) {
+                      MockToast.success(context, 'Referral code applied');
+                    }
                   } on ApiException catch (error) {
-                    if (context.mounted) MockToast.error(context, error.message);
+                    if (context.mounted) {
+                      MockToast.error(context, error.message);
+                    }
                   } finally {
                     if (mounted) setState(() => _isApplying = false);
                   }
@@ -950,7 +1198,10 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
               const SizedBox(height: AppSpacing.page),
             ] else
               MockCard(
-                child: Text('A friend\'s referral code is already linked to this account.', style: context.bodySecondary),
+                child: Text(
+                  'A friend\'s referral code is already linked to this account.',
+                  style: context.bodySecondary,
+                ),
               ),
             MockCard(
               child: Column(
@@ -958,7 +1209,10 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
                 children: [
                   Text('Your referral code', style: context.cardTitle),
                   const SizedBox(height: AppSpacing.section),
-                  MockTextField(label: 'Referral code', controller: _ownCodeController),
+                  MockTextField(
+                    label: 'Referral code',
+                    controller: _ownCodeController,
+                  ),
                   const SizedBox(height: AppSpacing.section),
                   Row(
                     children: [
@@ -966,7 +1220,8 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
                         child: MockShareButton(
                           label: 'Share invite link',
                           icon: Icons.link,
-                          onShare: (origin) => _shareReferral(engagement, origin),
+                          onShare: (origin) =>
+                              _shareReferral(engagement, origin),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.item),
@@ -977,13 +1232,24 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
                           onPressed: () async {
                             setState(() => _isUpdatingCode = true);
                             try {
-                              await ref.read(profileRepositoryProvider).updateReferralCode(_ownCodeController.text);
+                              await ref
+                                  .read(profileRepositoryProvider)
+                                  .updateReferralCode(_ownCodeController.text);
                               ref.invalidate(engagementProvider);
-                              if (context.mounted) MockToast.success(context, 'Referral code updated');
+                              if (context.mounted) {
+                                MockToast.success(
+                                  context,
+                                  'Referral code updated',
+                                );
+                              }
                             } on ApiException catch (error) {
-                              if (context.mounted) MockToast.error(context, error.message);
+                              if (context.mounted) {
+                                MockToast.error(context, error.message);
+                              }
                             } finally {
-                              if (mounted) setState(() => _isUpdatingCode = false);
+                              if (mounted) {
+                                setState(() => _isUpdatingCode = false);
+                              }
                             }
                           },
                         ),
@@ -1001,7 +1267,12 @@ class _ReferralTabState extends ConsumerState<_ReferralTab> {
 }
 
 class _SelectableTile extends StatelessWidget {
-  const _SelectableTile({required this.title, required this.selected, required this.onTap, this.subtitle});
+  const _SelectableTile({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+    this.subtitle,
+  });
 
   final String title;
   final String? subtitle;
@@ -1021,7 +1292,9 @@ class _SelectableTile extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.section),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(color: selected ? AppColors.primary : context.appBorder),
+            border: Border.all(
+              color: selected ? AppColors.primary : context.appBorder,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

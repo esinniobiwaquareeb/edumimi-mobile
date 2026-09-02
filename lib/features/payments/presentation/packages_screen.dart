@@ -8,7 +8,6 @@ import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_rich_content.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
-import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/shared/models/mock_package.dart';
 
@@ -29,64 +28,6 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
     super.dispose();
   }
 
-  Future<String?> _promptTransactionPin({
-    required bool hasTransactionPin,
-  }) async {
-    if (!hasTransactionPin) {
-      if (!mounted) return null;
-      final goToProfile = await MockConfirmDialog.show(
-        context,
-        title: 'Set up transaction PIN',
-        message:
-            'Create a 4–6 digit PIN in your profile before making payments.',
-        confirmLabel: 'Go to profile',
-        cancelLabel: 'Cancel',
-      );
-      if (goToProfile == true && mounted) {
-        context.push('/profile');
-      }
-      return null;
-    }
-
-    final pinController = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Enter transaction PIN'),
-          content: TextField(
-            controller: pinController,
-            keyboardType: TextInputType.number,
-            obscureText: true,
-            maxLength: 6,
-            decoration: const InputDecoration(
-              labelText: '4–6 digit PIN',
-              counterText: '',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final pin = pinController.text.trim();
-                if (pin.length < 4) {
-                  return;
-                }
-                Navigator.of(dialogContext).pop(pin);
-              },
-              child: const Text('Continue'),
-            ),
-          ],
-        );
-      },
-    );
-    pinController.dispose();
-    return result;
-  }
-
   Future<void> _purchase(
     MockPackage package,
     List<MockPurchase> purchases,
@@ -101,14 +42,6 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
       return;
     }
 
-    final user = ref.read(authControllerProvider).user;
-    final transactionPin = await _promptTransactionPin(
-      hasTransactionPin: user?.hasTransactionPin ?? false,
-    );
-    if (transactionPin == null) {
-      return;
-    }
-
     setState(() => _checkoutSlug = package.slug);
     try {
       final checkout = await ref
@@ -118,7 +51,6 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
             agentCode: _agentCodeController.text.trim().isEmpty
                 ? null
                 : _agentCodeController.text.trim(),
-            transactionPin: transactionPin,
           );
       ref.invalidate(myPurchasesProvider);
       if (!mounted) {
