@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mock_mobile/core/utils/mock_date_time.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
@@ -45,18 +46,20 @@ class PaymentVerifyScreen extends ConsumerWidget {
                         success
                             ? Icons.check_circle_outline
                             : pending
-                                ? Icons.schedule_outlined
-                                : Icons.error_outline,
+                            ? Icons.schedule_outlined
+                            : Icons.error_outline,
                         size: 40,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.55),
                       ),
                       const SizedBox(height: AppSpacing.section),
                       Text(
                         success
                             ? 'Payment successful'
                             : pending
-                                ? 'Payment pending'
-                                : 'Payment not completed',
+                            ? 'Payment pending'
+                            : 'Payment not completed',
                         style: context.sectionTitle,
                       ),
                       const SizedBox(height: AppSpacing.item),
@@ -73,7 +76,10 @@ class PaymentVerifyScreen extends ConsumerWidget {
                       ],
                       if (purchase.accessEndsAt != null) ...[
                         const SizedBox(height: AppSpacing.item),
-                        Text('Access until ${purchase.accessEndsAt}', style: context.caption),
+                        Text(
+                          'Access until ${MockDateTime.dateTime(purchase.accessEndsAt)}',
+                          style: context.caption,
+                        ),
                       ],
                     ],
                   ),
@@ -83,7 +89,8 @@ class PaymentVerifyScreen extends ConsumerWidget {
                   MockSplitActionRow(
                     start: MockSecondaryButton(
                       label: 'Check again',
-                      onPressed: () => ref.invalidate(_paymentVerifyProvider(reference)),
+                      onPressed: () =>
+                          ref.invalidate(_paymentVerifyProvider(reference)),
                       expand: true,
                     ),
                     end: MockPrimaryButton(
@@ -115,6 +122,7 @@ class PaymentVerifyScreen extends ConsumerWidget {
   }
 }
 
-final _paymentVerifyProvider = FutureProvider.autoDispose.family<MockPurchase, String>((ref, reference) {
-  return ref.watch(paymentRepositoryProvider).verifyPayment(reference);
-});
+final _paymentVerifyProvider = FutureProvider.autoDispose
+    .family<MockPurchase, String>((ref, reference) {
+      return ref.watch(paymentRepositoryProvider).verifyPayment(reference);
+    });

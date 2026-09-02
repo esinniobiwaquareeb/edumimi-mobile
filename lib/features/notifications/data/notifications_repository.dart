@@ -17,7 +17,10 @@ class NotificationsRepository {
         if (json is! List) {
           return <MockNotification>[];
         }
-        return json.whereType<Map<String, dynamic>>().map(MockNotification.fromJson).toList();
+        return json
+            .whereType<Map<String, dynamic>>()
+            .map(MockNotification.fromJson)
+            .toList();
       },
     );
   }
@@ -39,19 +42,30 @@ class NotificationsRepository {
   }
 }
 
-final notificationsRepositoryProvider = Provider<NotificationsRepository>((ref) {
+final notificationsRepositoryProvider = Provider<NotificationsRepository>((
+  ref,
+) {
   return NotificationsRepository(ref.watch(dioProvider));
 });
 
-final notificationsProvider = FutureProvider.autoDispose<List<MockNotification>>((ref) {
-  return ref.watch(notificationsRepositoryProvider).fetchNotifications();
-});
+final notificationsProvider =
+    FutureProvider.autoDispose<List<MockNotification>>((ref) {
+      return ref.watch(notificationsRepositoryProvider).fetchNotifications();
+    });
 
-final unreadNotificationsProvider = FutureProvider.autoDispose<List<MockNotification>>((ref) {
-  return ref.watch(notificationsRepositoryProvider).fetchNotifications(unreadOnly: true);
-});
+final unreadNotificationsProvider =
+    FutureProvider.autoDispose<List<MockNotification>>((ref) {
+      return ref
+          .watch(notificationsRepositoryProvider)
+          .fetchNotifications(unreadOnly: true);
+    });
 
 void invalidateNotifications(WidgetRef ref) {
+  ref.invalidate(notificationsProvider);
+  ref.invalidate(unreadNotificationsProvider);
+}
+
+void invalidateNotificationsFromRef(Ref ref) {
   ref.invalidate(notificationsProvider);
   ref.invalidate(unreadNotificationsProvider);
 }

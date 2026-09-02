@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mock_mobile/core/config/app_config.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/theme/app_colors.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
+import 'package:mock_mobile/core/utils/mock_date_time.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
@@ -106,7 +106,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final unreadCount = ref.watch(unreadSummaryProvider).valueOrNull?.notificationUnread ?? 0;
+    final unreadCount =
+        ref.watch(unreadSummaryProvider).valueOrNull?.notificationUnread ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -122,7 +123,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                 child: Text(
                   _isMarkingAll ? 'Marking…' : 'Mark all read',
                   style: context.label.copyWith(
-                    color: _isMarkingAll ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.primary,
+                    color: _isMarkingAll
+                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        : Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
@@ -239,10 +242,10 @@ class _NotificationCard extends StatelessWidget {
       MockNotificationCategory.referral => LucideIcons.gift,
       MockNotificationCategory.system => LucideIcons.bell,
     };
-    final parsed = DateTime.tryParse(item.createdAt);
-    final timestamp = parsed != null
-        ? DateFormat('d MMM · HH:mm').format(parsed.toLocal())
-        : 'Recently';
+    final timestamp = MockDateTime.compactDateTime(
+      item.createdAt,
+      fallback: 'Recently',
+    );
 
     return MockContentWidth(
       child: MockCard(

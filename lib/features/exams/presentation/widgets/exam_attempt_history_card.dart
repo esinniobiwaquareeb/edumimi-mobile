@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:mock_mobile/core/theme/app_icons.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
+import 'package:mock_mobile/core/utils/mock_date_time.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/shared/models/mock_attempt.dart';
 
@@ -16,7 +16,7 @@ class ExamAttemptHistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final submittedLabel = attempt.submittedAt == null
         ? 'Submitted'
-        : DateFormat.yMMMd().format(DateTime.parse(attempt.submittedAt!).toLocal());
+        : MockDateTime.dateTime(attempt.submittedAt);
 
     return MockCard(
       child: InkWell(
@@ -35,7 +35,10 @@ class ExamAttemptHistoryCard extends StatelessWidget {
                     value: '${attempt.score}/${attempt.totalPossibleScore}',
                     emphasis: true,
                   ),
-                  MockMetaRow(label: 'Percent', value: '${attempt.percentScore}%'),
+                  MockMetaRow(
+                    label: 'Percent',
+                    value: '${attempt.percentScore}%',
+                  ),
                   MockMetaRow(label: 'Submitted', value: submittedLabel),
                 ],
               ),

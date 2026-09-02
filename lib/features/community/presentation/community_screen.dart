@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:mock_mobile/core/utils/mock_date_time.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
 import 'package:mock_mobile/core/theme/app_icons.dart';
@@ -607,10 +607,7 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final time = DateTime.tryParse(message.createdAt);
-    final formattedTime = time == null
-        ? ''
-        : DateFormat.jm().format(time.toLocal());
+    final formattedTime = MockDateTime.time(message.createdAt);
     final theme = Theme.of(context);
 
     return Align(

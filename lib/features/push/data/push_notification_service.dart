@@ -8,6 +8,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/features/payments/data/payment_repository.dart';
+import 'package:mock_mobile/features/notifications/data/notifications_repository.dart';
+import 'package:mock_mobile/features/notifications/data/unread_counts_repository.dart';
 import 'package:mock_mobile/firebase_options.dart';
 
 const _iosPushChannel = MethodChannel('com.edumimi.mock/push');
@@ -18,14 +20,16 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class PushNotificationService {
-  PushNotificationService(this._repository);
+  PushNotificationService(this._repository, {this.onNotificationReceived});
 
   final PaymentRepository _repository;
+  final void Function()? onNotificationReceived;
   final _localNotifications = FlutterLocalNotificationsPlugin();
   var _localNotificationsReady = false;
   var _firebaseInitialized = false;
   var _listenersAttached = false;
   String? _currentToken;
+  GoRouter? _router;
 
   bool get isFirebaseAvailable => DefaultFirebaseOptions.isConfigured;
 
@@ -35,9 +39,14 @@ class PushNotificationService {
     }
 
     try {
+      _router = router;
       if (!_firebaseInitialized) {
-        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-        FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+        FirebaseMessaging.onBackgroundMessage(
+          firebaseMessagingBackgroundHandler,
+        );
         _firebaseInitialized = true;
       }
 
@@ -53,11 +62,12 @@ class PushNotificationService {
       }
 
       if (Platform.isIOS) {
-        await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+        await FirebaseMessaging.instance
+            .setForegroundNotificationPresentationOptions(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
         await _registerForRemoteNotificationsOnIos();
       }
 
@@ -82,7 +92,9 @@ class PushNotificationService {
 
     try {
       if (!_firebaseInitialized) {
-        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
         _firebaseInitialized = true;
       }
 
@@ -109,7 +121,8 @@ class PushNotificationService {
     await _localNotifications.show(
       id: 9001,
       title: 'Keep your streak alive!',
-      body: 'You have an active practice streak — complete one mock today to extend it.',
+      body:
+          'You have an active practice streak — complete one mock today to extend it.',
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'mock_streak_reminders',
@@ -125,7 +138,9 @@ class PushNotificationService {
 
   Future<void> _registerForRemoteNotificationsOnIos() async {
     try {
-      await _iosPushChannel.invokeMethod<void>('registerForRemoteNotifications');
+      await _iosPushChannel.invokeMethod<void>(
+        'registerForRemoteNotifications',
+      );
     } catch (_) {
       // Native channel unavailable — Firebase proxy may still register later.
     }
@@ -188,15 +203,18 @@ class PushNotificationService {
       unawaited(_registerTokenSafely(token));
     });
     FirebaseMessaging.onMessage.listen((message) {
+      onNotificationReceived?.call();
       unawaited(_showForegroundNotification(message));
     });
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      onNotificationReceived?.call();
       _handleNavigation(router, message.data);
     });
 
     unawaited(
       FirebaseMessaging.instance.getInitialMessage().then((initialMessage) {
         if (initialMessage != null) {
+          onNotificationReceived?.call();
           _handleNavigation(router, initialMessage.data);
         }
       }),
@@ -231,20 +249,36 @@ class PushNotificationService {
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(),
       ),
+      onDidReceiveNotificationResponse: (response) {
+        final route = response.payload;
+        if (_isAllowedRoute(route)) {
+          _router?.go(route!);
+        }
+      },
     );
     _localNotificationsReady = true;
   }
 
   Future<bool> _requestLocalPermission() async {
     if (Platform.isAndroid) {
-      final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       final granted = await androidPlugin?.requestNotificationsPermission();
       return granted ?? true;
     }
 
     if (Platform.isIOS) {
-      final iosPlugin = _localNotifications.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-      final granted = await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
+      final iosPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      final granted = await iosPlugin?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
       return granted ?? false;
     }
 
@@ -262,6 +296,7 @@ class PushNotificationService {
       id: notification.hashCode,
       title: notification.title,
       body: notification.body,
+      payload: message.data['route']?.toString(),
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'mock_streak_reminders',
@@ -275,17 +310,51 @@ class PushNotificationService {
   }
 
   void _handleNavigation(GoRouter router, Map<String, dynamic> data) {
-    final url = data['url']?.toString();
-    if (url == null || url.isEmpty) {
-      router.go('/dashboard');
-      return;
+    final route = _resolveInternalRoute(data);
+    router.go(route ?? '/dashboard');
+  }
+
+  String? _resolveInternalRoute(Map<String, dynamic> data) {
+    final route = data['route']?.toString();
+    if (_isAllowedRoute(route)) {
+      return route;
     }
-    if (url.contains('/dashboard')) {
-      router.go('/dashboard');
+
+    final url = Uri.tryParse(data['url']?.toString() ?? '');
+    if (url != null && _isAllowedRoute(url.path)) {
+      return url.hasQuery ? '${url.path}?${url.query}' : url.path;
     }
+
+    return null;
+  }
+
+  bool _isAllowedRoute(String? route) {
+    if (route == null || !route.startsWith('/') || route.startsWith('//')) {
+      return false;
+    }
+    const allowedPrefixes = [
+      '/dashboard',
+      '/exams',
+      '/packages',
+      '/notifications',
+      '/community',
+      '/profile',
+      '/results',
+    ];
+    return allowedPrefixes.any(
+      (prefix) => route == prefix || route.startsWith('$prefix/'),
+    );
   }
 }
 
-final pushNotificationServiceProvider = Provider<PushNotificationService>((ref) {
-  return PushNotificationService(ref.watch(paymentRepositoryProvider));
+final pushNotificationServiceProvider = Provider<PushNotificationService>((
+  ref,
+) {
+  return PushNotificationService(
+    ref.watch(paymentRepositoryProvider),
+    onNotificationReceived: () {
+      invalidateNotificationsFromRef(ref);
+      invalidateUnreadSummaryFromRef(ref);
+    },
+  );
 });

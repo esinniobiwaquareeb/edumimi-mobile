@@ -53,7 +53,7 @@ class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
               context.go(redirect);
               return NavigationDecision.prevent;
             }
-            if (_trustedCheckoutUri(request.url) == null) {
+            if (!_isAllowedPaymentNavigation(request.url)) {
               setState(() {
                 _isLoading = false;
                 _loadError =
@@ -88,6 +88,14 @@ class _PaymentCheckoutScreenState extends ConsumerState<PaymentCheckoutScreen> {
         host == 'paystack.co' ||
         host.endsWith('.paystack.co');
     return isPaystackHost || host == webHost ? uri : null;
+  }
+
+  bool _isAllowedPaymentNavigation(String rawUrl) {
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null) {
+      return false;
+    }
+    return uri.scheme == 'https' || rawUrl == 'about:blank';
   }
 
   String? _resolvePaymentRedirect(String url) {
