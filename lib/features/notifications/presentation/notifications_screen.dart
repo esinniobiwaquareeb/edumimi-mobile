@@ -32,6 +32,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   var _isUpdatingPush = false;
   var _isPreviewingLocal = false;
   bool? _pushEnabledOverride;
+  var _isMarkingAll = false;
 
   @override
   void initState() {
@@ -43,6 +44,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _markAllAsRead() async {
+    setState(() => _isMarkingAll = true);
+    try {
+      await ref.read(notificationsRepositoryProvider).markAllAsRead();
+      invalidateNotifications(ref);
+      invalidateUnreadSummary(ref);
+    } finally {
+      if (mounted) {
+        setState(() => _isMarkingAll = false);
+      }
+    }
   }
 
   Future<void> _togglePushNotifications(bool enabled) async {
@@ -92,11 +106,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final unreadCount = ref.watch(unreadSummaryProvider).valueOrNull?.notificationUnread ?? 0;
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: const MockBackButton(),
         title: Text('Notifications', style: context.cardTitle),
+        actions: [
+          if (unreadCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.item),
+              child: TextButton(
+                onPressed: _isMarkingAll ? null : _markAllAsRead,
+                child: Text(
+                  _isMarkingAll ? 'Marking…' : 'Mark all read',
+                  style: context.label.copyWith(
+                    color: _isMarkingAll ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+        ],
         bottom: MockFilledTabBar(
           controller: _tabController,
           tabs: const [
@@ -132,21 +163,6 @@ class _ActivityNotificationsTab extends ConsumerStatefulWidget {
 
 class _ActivityNotificationsTabState
     extends ConsumerState<_ActivityNotificationsTab> {
-  var _isMarkingAll = false;
-
-  Future<void> _markAllAsRead() async {
-    setState(() => _isMarkingAll = true);
-    try {
-      await ref.read(notificationsRepositoryProvider).markAllAsRead();
-      invalidateNotifications(ref);
-      invalidateUnreadSummary(ref);
-    } finally {
-      if (mounted) {
-        setState(() => _isMarkingAll = false);
-      }
-    }
-  }
-
   Future<void> _openNotification(MockNotification item) async {
     if (!item.isRead) {
       await ref.read(notificationsRepositoryProvider).markAsRead(item.id);
@@ -171,8 +187,6 @@ class _ActivityNotificationsTabState
         onRetry: () => ref.invalidate(notificationsProvider),
       ),
       data: (items) {
-        final unreadCount = items.where((item) => !item.isRead).length;
-
         if (items.isEmpty) {
           return const MockEmptyState(
             title: 'No notifications yet',
@@ -183,24 +197,6 @@ class _ActivityNotificationsTabState
 
         return Column(
           children: [
-            if (unreadCount > 0)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.page,
-                  AppSpacing.page,
-                  AppSpacing.page,
-                  0,
-                ),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _isMarkingAll ? null : _markAllAsRead,
-                    child: Text(
-                      _isMarkingAll ? 'Marking all read…' : 'Mark all as read',
-                    ),
-                  ),
-                ),
-              ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
@@ -299,16 +295,21 @@ class _NotificationCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(item.message, style: context.bodySecondary),
                     const SizedBox(height: AppSpacing.item),
-                    Text(timestamp, style: context.caption),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(timestamp, style: context.caption),
+                        if (item.route != null)
+                          MockLongArrowIcon(
+                            direction: MockLongArrowDirection.right,
+                            size: 18,
+                            color: context.appTextDisabled,
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              if (item.route != null)
-                MockLongArrowIcon(
-                  direction: MockLongArrowDirection.right,
-                  size: 18,
-                  color: context.appTextDisabled,
-                ),
             ],
           ),
         ),

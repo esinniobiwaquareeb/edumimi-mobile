@@ -9,6 +9,7 @@ import 'package:mock_mobile/core/utils/text_utils.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/shared/models/mock_exam.dart';
 
 class ExamsScreen extends ConsumerStatefulWidget {
   const ExamsScreen({super.key});
@@ -169,34 +170,55 @@ class _ExamsScreenState extends ConsumerState<ExamsScreen> {
               return RefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(examsCatalogProvider(_selectedExamTypeSlug)),
-                child: ListView.separated(
-                  padding: MockTabScrollPadding.list(context),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: AppSpacing.section),
-                  itemBuilder: (context, index) {
-                    final exam = filtered[index];
-                    final subtitle = [
-                      exam.examTypeLabel,
-                      exam.subjectLabel,
-                    ].where((part) => part.isNotEmpty).join(' · ');
-                    return MockContentWidth(
-                      child: MockExamCard(
-                        title: exam.title,
-                        subtitle: subtitle,
-                        meta:
-                            '${formatMockMode(exam.mode)} · ${exam.totalQuestions} questions',
-                        locked: exam.isLocked,
-                        onTap: () => context.push('/exams/${exam.slug}'),
+                child: MockAdaptiveLayout.isWide(context)
+                    ? GridView.builder(
+                        padding: MockTabScrollPadding.list(context),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 500,
+                              mainAxisExtent: 176,
+                              crossAxisSpacing: AppSpacing.section,
+                              mainAxisSpacing: AppSpacing.section,
+                            ),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) =>
+                            _ExamCatalogCard(exam: filtered[index]),
+                      )
+                    : ListView.separated(
+                        padding: MockTabScrollPadding.list(context),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: AppSpacing.section),
+                        itemBuilder: (context, index) => MockContentWidth(
+                          child: _ExamCatalogCard(exam: filtered[index]),
+                        ),
                       ),
-                    );
-                  },
-                ),
               );
             },
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ExamCatalogCard extends StatelessWidget {
+  const _ExamCatalogCard({required this.exam});
+
+  final MockExam exam;
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitle = [
+      exam.examTypeLabel,
+      exam.subjectLabel,
+    ].where((part) => part.isNotEmpty).join(' · ');
+    return MockExamCard(
+      title: exam.title,
+      subtitle: subtitle,
+      meta: '${formatMockMode(exam.mode)} · ${exam.totalQuestions} questions',
+      locked: exam.isLocked,
+      onTap: () => context.push('/exams/${exam.slug}'),
     );
   }
 }

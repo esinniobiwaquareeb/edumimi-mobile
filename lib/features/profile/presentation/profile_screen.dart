@@ -621,6 +621,30 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
             if (context.mounted) context.go('/login');
           },
         ),
+        const SizedBox(height: AppSpacing.item),
+        TextButton(
+          onPressed: () async {
+            final confirmed = await MockConfirmDialog.show(
+              context,
+              title: 'Delete Account',
+              message: 'Are you sure you want to permanently delete your account? This action cannot be undone and you will lose all your progress and purchases.',
+              confirmLabel: 'Delete Account',
+              variant: MockConfirmDialogVariant.danger,
+              isDestructiveConfirm: true,
+              icon: AppIcons.logout,
+            );
+            if (!confirmed || !context.mounted) return;
+            try {
+              await ref.read(authControllerProvider.notifier).deleteAccount();
+              if (context.mounted) context.go('/login');
+            } catch (e) {
+              if (context.mounted) {
+                MockToast.show(context, 'Failed to delete account', tone: MockToastTone.error);
+              }
+            }
+          },
+          child: Text('Delete Account', style: context.body.copyWith(color: Theme.of(context).colorScheme.error)),
+        ),
       ],
     );
   }

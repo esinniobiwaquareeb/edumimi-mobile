@@ -93,6 +93,99 @@ class DashboardScreen extends ConsumerWidget {
         !hasActivePurchases && (submittedAttempts >= 1 || feedExams.isNotEmpty);
     final streakDays = engagementAsync.valueOrNull?.practiceStreakDays ?? 0;
     final onboardingCompleted = user?.mockProfile?.onboardingCompleted == true;
+    final isWide = MockAdaptiveLayout.isWide(context);
+
+    final progressCard = insightsAsync.when(
+      loading: () =>
+          const MockCard(child: MockLoadingView(message: 'Loading insights…')),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (insights) => MockCard(
+        elevated: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Your progress', style: context.sectionTitle),
+            const SizedBox(height: AppSpacing.section),
+            Row(
+              children: [
+                MockStatTile(
+                  label: 'Streak',
+                  value: '$streakDays days',
+                  icon: Icons.local_fire_department_outlined,
+                  subtitle: streakDays > 0 ? 'Keep it going' : 'Start today',
+                ),
+                const SizedBox(width: AppSpacing.section),
+                MockStatTile(
+                  label: 'Attempts',
+                  value: '$submittedAttempts',
+                  icon: Icons.check_circle_outline_rounded,
+                  subtitle: 'Submitted',
+                ),
+              ],
+            ),
+            if (insights.weakTopics.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.page),
+              const MockSectionTitle(title: 'Improve in these areas'),
+              const SizedBox(height: AppSpacing.item),
+              Wrap(
+                spacing: AppSpacing.item,
+                runSpacing: AppSpacing.item,
+                children: insights.weakTopics
+                    .take(3)
+                    .map((topic) => MockWeakTopicChip(topic: topic))
+                    .toList(),
+              ),
+              const SizedBox(height: AppSpacing.section),
+              SizedBox(
+                width: isWide ? 260 : double.infinity,
+                child: MockSecondaryButton(
+                  label: 'Practice weak topics',
+                  onPressed: () =>
+                      _startAdaptiveDrill(context, ref, insights.weakTopics),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+
+    final quickActionsCard = MockCard(
+      child: isWide
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Quick actions', style: context.sectionTitle),
+                const SizedBox(height: AppSpacing.section),
+                MockSecondaryButton(
+                  label: 'Browse packages',
+                  onPressed: () => context.push('/packages'),
+                ),
+                const SizedBox(height: AppSpacing.item),
+                MockSecondaryButton(
+                  label: 'Post-UTME packs',
+                  onPressed: () => context.push('/post-utme'),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: MockSecondaryButton(
+                    label: 'Browse packages',
+                    onPressed: () => context.push('/packages'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.item),
+                Expanded(
+                  child: MockSecondaryButton(
+                    label: 'Post-UTME packs',
+                    onPressed: () => context.push('/post-utme'),
+                  ),
+                ),
+              ],
+            ),
+    );
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -163,10 +256,16 @@ class DashboardScreen extends ConsumerWidget {
                           style: context.bodySecondary,
                         ),
                         const SizedBox(height: AppSpacing.section),
-                        MockPrimaryButton(
-                          label: MockVoice.continueAttemptCta,
-                          onPressed: () => context.push(
-                            '/exams/${inProgressAttempt!.exam!.slug}/take',
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: SizedBox(
+                            width: isWide ? 260 : double.infinity,
+                            child: MockPrimaryButton(
+                              label: MockVoice.continueAttemptCta,
+                              onPressed: () => context.push(
+                                '/exams/${inProgressAttempt!.exam!.slug}/take',
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -174,110 +273,39 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.section),
                 ],
-                insightsAsync.when(
-                  loading: () => const MockCard(
-                    child: MockLoadingView(message: 'Loading insights…'),
-                  ),
-                  error: (_, __) => const SizedBox.shrink(),
-                  data: (insights) => MockCard(
-                    elevated: true,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Your progress', style: context.sectionTitle),
-                        const SizedBox(height: AppSpacing.section),
-                        Row(
-                          children: [
-                            MockStatTile(
-                              label: 'Streak',
-                              value: '$streakDays days',
-                              icon: Icons.local_fire_department_outlined,
-                              subtitle: streakDays > 0
-                                  ? 'Keep it going'
-                                  : 'Start today',
-                            ),
-                            const SizedBox(width: AppSpacing.section),
-                            MockStatTile(
-                              label: 'Attempts',
-                              value: '$submittedAttempts',
-                              icon: Icons.check_circle_outline_rounded,
-                              subtitle: 'Submitted',
-                            ),
-                          ],
-                        ),
-                        if (insights.weakTopics.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.page),
-                          const MockSectionTitle(title: 'Fix these topics'),
-                          const SizedBox(height: AppSpacing.item),
-                          Wrap(
-                            spacing: AppSpacing.item,
-                            runSpacing: AppSpacing.item,
-                            children: insights.weakTopics
-                                .take(3)
-                                .map((topic) => MockWeakTopicChip(topic: topic))
-                                .toList(),
-                          ),
-                          const SizedBox(height: AppSpacing.section),
-                          MockSecondaryButton(
-                            label: 'Practice weak topics',
-                            onPressed: () => _startAdaptiveDrill(
-                              context,
-                              ref,
-                              insights.weakTopics,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.page),
-                MockCard(
-                  child: Row(
+                if (isWide)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: MockSecondaryButton(
-                          label: 'Browse packages',
-                          onPressed: () => context.push('/packages'),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.item),
-                      Expanded(
-                        child: MockSecondaryButton(
-                          label: 'Post-UTME packs',
-                          onPressed: () => context.push('/post-utme'),
+                      Expanded(flex: 2, child: progressCard),
+                      const SizedBox(width: AppSpacing.section),
+                      SizedBox(
+                        width: 300,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            quickActionsCard,
+                            if (showUnlockUpsell) ...[
+                              const SizedBox(height: AppSpacing.section),
+                              _UnlockUpsellCard(
+                                onTap: () => context.push('/packages'),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.page),
-                if (showUnlockUpsell) ...[
-                  MockCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          MockVoice.unlockUpsellTitle,
-                          style: context.caption.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.item),
-                        Text(
-                          MockVoice.unlockUpsellBody,
-                          style: context.bodySecondary,
-                        ),
-                        const SizedBox(height: AppSpacing.section),
-                        MockPrimaryButton(
-                          label: MockVoice.unlockUpsellCta,
-                          onPressed: () => context.push('/packages'),
-                        ),
-                      ],
-                    ),
-                  ),
+                  )
+                else ...[
+                  progressCard,
                   const SizedBox(height: AppSpacing.page),
+                  quickActionsCard,
+                  if (showUnlockUpsell) ...[
+                    const SizedBox(height: AppSpacing.page),
+                    _UnlockUpsellCard(onTap: () => context.push('/packages')),
+                  ],
                 ],
+                const SizedBox(height: AppSpacing.page),
                 feedAsync.when(
                   loading: () =>
                       const MockLoadingView(message: 'Loading practice…'),
@@ -302,14 +330,35 @@ class DashboardScreen extends ConsumerWidget {
                       children: [
                         const MockSectionTitle(title: 'Recommended for you'),
                         const SizedBox(height: AppSpacing.section),
-                        ...exams.map(
-                          (exam) => Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: AppSpacing.section,
+                        if (isWide)
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final itemWidth =
+                                  (constraints.maxWidth - AppSpacing.section) /
+                                  2;
+                              return Wrap(
+                                spacing: AppSpacing.section,
+                                runSpacing: AppSpacing.section,
+                                children: exams
+                                    .map(
+                                      (exam) => SizedBox(
+                                        width: itemWidth,
+                                        child: _ExamListTile(exam: exam),
+                                      ),
+                                    )
+                                    .toList(),
+                              );
+                            },
+                          )
+                        else
+                          ...exams.map(
+                            (exam) => Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.section,
+                              ),
+                              child: _ExamListTile(exam: exam),
                             ),
-                            child: _ExamListTile(exam: exam),
                           ),
-                        ),
                       ],
                     );
                   },
@@ -317,6 +366,31 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnlockUpsellCard extends StatelessWidget {
+  const _UnlockUpsellCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return MockCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            MockVoice.unlockUpsellTitle,
+            style: context.caption.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: AppSpacing.item),
+          Text(MockVoice.unlockUpsellBody, style: context.bodySecondary),
+          const SizedBox(height: AppSpacing.section),
+          MockPrimaryButton(label: MockVoice.unlockUpsellCta, onPressed: onTap),
         ],
       ),
     );

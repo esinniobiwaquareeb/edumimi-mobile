@@ -108,6 +108,11 @@ class AuthController extends Notifier<AuthState> {
     state = const AuthState.unauthenticated();
   }
 
+  Future<void> deleteAccount() async {
+    await _repository.deleteAccount();
+    await logout(localOnly: true);
+  }
+
   Future<void> refreshUser() async {
     final current = state.session;
     if (current == null) {

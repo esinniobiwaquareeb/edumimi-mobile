@@ -83,6 +83,13 @@ class AuthRepository {
 
   Future<void> clearSession() => _storage.clear();
 
+  Future<void> deleteAccount() async {
+    return _dio.deleteData(
+      ApiPaths.deleteAccount,
+      parser: (_) {},
+    );
+  }
+
   Future<void> forgotPassword({required String email}) {
     return _dio.postData(
       ApiPaths.forgotPassword,

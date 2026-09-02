@@ -5,7 +5,7 @@ import 'package:mock_mobile/core/theme/app_spacing.dart';
 abstract final class MockAdaptiveLayout {
   static const double tabletBreakpoint = 720;
   static const double wideBreakpoint = 1024;
-  static const double contentMaxWidth = 1180;
+  static const double contentMaxWidth = 1040;
   static const double readingMaxWidth = 820;
 
   static bool isTablet(BuildContext context) =>
