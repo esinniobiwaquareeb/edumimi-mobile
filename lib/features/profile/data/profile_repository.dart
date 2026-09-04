@@ -13,7 +13,10 @@ class ProfileRepository {
   Future<MockUser> updateProfile({required String fullName, String? phone}) {
     return _dio.patchData(
       ApiPaths.me,
-      data: {'fullName': fullName.trim(), 'phone': phone?.trim().isEmpty == true ? null : phone?.trim()},
+      data: {
+        'fullName': fullName.trim(),
+        'phone': phone?.trim().isEmpty == true ? null : phone?.trim(),
+      },
       parser: (json) {
         final data = json as Map<String, dynamic>;
         return MockUser.fromJson(data['user'] as Map<String, dynamic>? ?? data);
@@ -21,7 +24,10 @@ class ProfileRepository {
     );
   }
 
-  Future<void> changePassword({required String currentPassword, required String newPassword}) {
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
     return _dio.postData(
       ApiPaths.changePassword,
       data: {'currentPassword': currentPassword, 'newPassword': newPassword},
@@ -36,7 +42,11 @@ class ProfileRepository {
   }) {
     return _dio.postData(
       ApiPaths.transactionPin,
-      data: {'password': password, 'pin': pin.trim(), 'confirmPin': confirmPin.trim()},
+      data: {
+        'password': password,
+        'pin': pin.trim(),
+        'confirmPin': confirmPin.trim(),
+      },
       parser: (_) {},
     );
   }
@@ -48,7 +58,11 @@ class ProfileRepository {
   }) {
     return _dio.patchData(
       ApiPaths.transactionPin,
-      data: {'currentPin': currentPin.trim(), 'newPin': newPin.trim(), 'confirmPin': confirmPin.trim()},
+      data: {
+        'currentPin': currentPin.trim(),
+        'newPin': newPin.trim(),
+        'confirmPin': confirmPin.trim(),
+      },
       parser: (_) {},
     );
   }
@@ -66,7 +80,9 @@ class ProfileRepository {
       data: payload,
       parser: (json) {
         final data = json as Map<String, dynamic>;
-        return MockInterests.fromJson(data['interests'] as Map<String, dynamic>? ?? data);
+        return MockInterests.fromJson(
+          data['interests'] as Map<String, dynamic>? ?? data,
+        );
       },
     );
   }
@@ -76,7 +92,10 @@ class ProfileRepository {
       'file': await MultipartFile.fromFile(filePath),
     });
     try {
-      final response = await _dio.post<dynamic>(ApiPaths.avatar, data: formData);
+      final response = await _dio.post<dynamic>(
+        ApiPaths.avatar,
+        data: formData,
+      );
       final data = response.data as Map<String, dynamic>;
       return MockUser.fromJson(data['user'] as Map<String, dynamic>? ?? data);
     } on DioException catch (error) {
@@ -125,10 +144,10 @@ class ProfileRepository {
     );
   }
 
-  Future<void> redeemBulkLicense(String code) {
+  Future<void> redeemBulkLicense(String code, {required String platform}) {
     return _dio.postData(
       ApiPaths.bulkLicenseRedeem,
-      data: {'code': code.trim()},
+      data: {'code': code.trim(), 'platform': platform},
       parser: (_) {},
     );
   }
@@ -157,9 +176,15 @@ class ParentShareLink {
 ApiException _mapDioError(DioException error) {
   final data = error.response?.data;
   if (data is Map && data['message'] is String) {
-    return ApiException(data['message'] as String, statusCode: error.response?.statusCode);
+    return ApiException(
+      data['message'] as String,
+      statusCode: error.response?.statusCode,
+    );
   }
-  return ApiException('Request failed.', statusCode: error.response?.statusCode);
+  return ApiException(
+    'Request failed.',
+    statusCode: error.response?.statusCode,
+  );
 }
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {

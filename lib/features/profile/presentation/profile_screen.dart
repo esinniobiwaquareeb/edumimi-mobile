@@ -277,7 +277,12 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
 
     setState(() => _isRedeemingLicense = true);
     try {
-      await ref.read(profileRepositoryProvider).redeemBulkLicense(code);
+      await ref
+          .read(profileRepositoryProvider)
+          .redeemBulkLicense(
+            code,
+            platform: ref.read(paymentRepositoryProvider).platform,
+          );
       _bulkLicenseController.clear();
       if (mounted) {
         MockToast.success(context, 'License redeemed');
@@ -299,6 +304,7 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
 
   @override
   Widget build(BuildContext context) {
+    final commerceSettings = ref.watch(commerceSettingsProvider).valueOrNull;
     final verified =
         widget.user.isVerified == true ||
         widget.user.mockProfile?.isVerified == true;
@@ -508,41 +514,44 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
                 ),
               ),
               const Divider(),
-              _ProfileExpansion(
-                icon: Icons.workspace_premium_outlined,
-                title: 'Redeem school licence',
-                subtitle: 'Enter a code provided by your school.',
-                child: Column(
-                  children: [
-                    MockTextField(
-                      label: 'Licence code',
-                      controller: _bulkLicenseController,
-                    ),
-                    const SizedBox(height: AppSpacing.section),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: SizedBox(
-                        width: 200,
-                        child: MockPrimaryButton(
-                          label: _isRedeemingLicense
-                              ? 'Redeeming…'
-                              : 'Redeem code',
-                          isLoading: _isRedeemingLicense,
-                          onPressed: _redeemBulkLicense,
+              if (commerceSettings?.bulkLicensesEnabled ?? true) ...[
+                _ProfileExpansion(
+                  icon: Icons.workspace_premium_outlined,
+                  title: 'Redeem school licence',
+                  subtitle: 'Enter a code provided by your school.',
+                  child: Column(
+                    children: [
+                      MockTextField(
+                        label: 'Licence code',
+                        controller: _bulkLicenseController,
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: 200,
+                          child: MockPrimaryButton(
+                            label: _isRedeemingLicense
+                                ? 'Redeeming…'
+                                : 'Redeem code',
+                            isLoading: _isRedeemingLicense,
+                            onPressed: _redeemBulkLicense,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.page),
-        MockPrimaryButton(
-          label: 'Browse packages',
-          onPressed: () => context.push('/packages'),
-        ),
+        if (commerceSettings?.paymentsEnabled ?? true)
+          MockPrimaryButton(
+            label: 'Browse packages',
+            onPressed: () => context.push('/packages'),
+          ),
         const SizedBox(height: AppSpacing.section),
         MockDestructiveButton(
           label: MockVoice.logOut,

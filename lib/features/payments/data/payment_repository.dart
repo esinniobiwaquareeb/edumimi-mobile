@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mock_mobile/core/constants/api_paths.dart';
@@ -44,6 +46,17 @@ class PaymentRepository {
     );
   }
 
+  String get platform => Platform.isIOS ? 'ios' : 'android';
+
+  Future<MockCommerceSettings> fetchCommerceSettings() {
+    return _dio.getData(
+      ApiPaths.commerceSettings,
+      queryParameters: {'platform': platform},
+      parser: (json) =>
+          MockCommerceSettings.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
   Future<CheckoutResponse> initializeCheckout(
     String slug, {
     String? agentCode,
@@ -51,6 +64,7 @@ class PaymentRepository {
     return _dio.postData(
       ApiPaths.packageCheckout(slug),
       data: {
+        'platform': platform,
         if (agentCode != null && agentCode.isNotEmpty) 'agentCode': agentCode,
       },
       parser: (json) => CheckoutResponse.fromJson(json as Map<String, dynamic>),
@@ -104,6 +118,10 @@ final myPurchasesProvider = FutureProvider.autoDispose<List<MockPurchase>>((
   ref,
 ) {
   return ref.watch(paymentRepositoryProvider).fetchMyPurchases();
+});
+
+final commerceSettingsProvider = FutureProvider<MockCommerceSettings>((ref) {
+  return ref.watch(paymentRepositoryProvider).fetchCommerceSettings();
 });
 
 final engagementProvider = FutureProvider<MockEngagement>((ref) {

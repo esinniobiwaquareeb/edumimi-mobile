@@ -30,6 +30,7 @@ class ApiPaths {
   static const notificationsMarkAllRead = '/me/notifications/mark-all-read';
   static const packages = '/packages';
   static const myPurchases = '/my/purchases';
+  static const commerceSettings = '/me/commerce-settings';
   static const verifyPayment = '/payments/verify';
   static const communityRooms = '/community/rooms';
   static const communityDisplayName = '/community/me/display-name';
@@ -40,16 +41,22 @@ class ApiPaths {
   static String examTypeDetail(String slug) => '/exam-types/$slug';
   static String examDetail(String slug) => '/exams/$slug';
   static String startExam(String slug) => '/exams/$slug/start';
-  static String submitAttempt(String attemptId) => '/attempts/$attemptId/submit';
-  static String attemptProgress(String attemptId) => '/attempts/$attemptId/progress';
+  static String submitAttempt(String attemptId) =>
+      '/attempts/$attemptId/submit';
+  static String attemptProgress(String attemptId) =>
+      '/attempts/$attemptId/progress';
   static String attemptDetail(String attemptId) => '/my/attempts/$attemptId';
-  static String attemptChallenge(String attemptId) => '/my/attempts/$attemptId/challenge';
+  static String attemptChallenge(String attemptId) =>
+      '/my/attempts/$attemptId/challenge';
   static String packageCheckout(String slug) => '/packages/$slug/checkout';
-  static String communityMessages(String roomId) => '/community/rooms/$roomId/messages';
+  static String communityMessages(String roomId) =>
+      '/community/rooms/$roomId/messages';
   static String communityJoin(String roomId) => '/community/rooms/$roomId/join';
   static String communityRead(String roomId) => '/community/rooms/$roomId/read';
-  static String communityReport(String messageId) => '/community/messages/$messageId/report';
-  static String notificationRead(String notificationId) => '/me/notifications/$notificationId/read';
+  static String communityReport(String messageId) =>
+      '/community/messages/$messageId/report';
+  static String notificationRead(String notificationId) =>
+      '/me/notifications/$notificationId/read';
   static String publicChallenge(String token) => '/public/challenges/$token';
   static String publicParentView(String token) => '/public/parent/$token';
   static String postUtmePackDetail(String slug) => '/post-utme/packs/$slug';

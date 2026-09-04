@@ -9,7 +9,8 @@ import 'package:mock_mobile/core/theme/app_colors.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/theme/theme_context.dart';
-import 'package:mock_mobile/core/utils/text_utils.dart' show formatMockDifficulty, formatMockMode;
+import 'package:mock_mobile/core/utils/text_utils.dart'
+    show formatMockDifficulty, formatMockMode;
 import 'package:mock_mobile/core/widgets/mock_rich_content.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/exams/exam_attempt_utils.dart';
@@ -97,11 +98,17 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
               MockChip(label: exam.examTypeLabel, tone: MockChipTone.primary),
             if (exam.subjectLabel.isNotEmpty)
               MockChip(label: exam.subjectLabel, tone: MockChipTone.neutral),
-            MockChip(label: formatMockMode(exam.mode), tone: MockChipTone.primary),
+            MockChip(
+              label: formatMockMode(exam.mode),
+              tone: MockChipTone.primary,
+            ),
             if (difficultyLabel.isNotEmpty)
               MockChip(label: difficultyLabel, tone: MockChipTone.neutral),
             if (exam.examYear != null)
-              MockChip(label: '${exam.examYear} paper', tone: MockChipTone.neutral),
+              MockChip(
+                label: '${exam.examYear} paper',
+                tone: MockChipTone.neutral,
+              ),
           ],
         ),
         if (exam.recommendationReason?.isNotEmpty == true) ...[
@@ -190,14 +197,14 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
           Text('Sample questions from this mock', style: context.sectionTitle),
           const SizedBox(height: AppSpacing.section),
           ...previewQuestions.asMap().entries.map(
-                (entry) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.section),
-                  child: _QuestionPreviewCard(
-                    question: entry.value,
-                    index: entry.key,
-                  ),
-                ),
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.section),
+              child: _QuestionPreviewCard(
+                question: entry.value,
+                index: entry.key,
               ),
+            ),
+          ),
         ],
         if (pastAttempts.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.section),
@@ -212,7 +219,9 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
             ],
           ),
           const SizedBox(height: AppSpacing.item),
-          ...pastAttempts.take(3).map(
+          ...pastAttempts
+              .take(3)
+              .map(
                 (attempt) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.section),
                   child: ExamAttemptHistoryCard(attempt: attempt),
@@ -223,11 +232,15 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
         MockSplitActionRow(
           start: MockSecondaryButton(
             label: exam.isLocked ? 'Browse packages' : 'Browse more mocks',
-            onPressed: () => exam.isLocked ? context.push('/packages') : context.go('/exams'),
+            onPressed: () => exam.isLocked
+                ? context.push('/packages')
+                : context.go('/exams'),
             expand: true,
           ),
           end: MockPrimaryButton(
-            label: exam.isLocked ? 'Unlock full access' : _startButtonLabel(exam),
+            label: exam.isLocked
+                ? 'Unlock full access'
+                : _startButtonLabel(exam),
             isLoading: _isStarting,
             onPressed: exam.isLocked ? () => context.push('/packages') : _start,
             expand: true,
@@ -255,7 +268,7 @@ _AccessCopy _resolveAccessCopy(MockExam exam) {
   if (exam.isFreePractice && !exam.isLocked) {
     return const _AccessCopy(
       heading: 'Free practice',
-      body: 'Free preview — no payment needed. Start anytime.',
+      body: 'Preview available. Start anytime.',
       tone: MockNoticeTone.success,
     );
   }
@@ -270,7 +283,8 @@ _AccessCopy _resolveAccessCopy(MockExam exam) {
 
   return const _AccessCopy(
     heading: 'Full mock access needed',
-    body: 'Full-length mocks and past papers need active access. Unlock a package to continue.',
+    body:
+        'Full-length mocks and past papers need active access. Unlock a package to continue.',
     tone: MockNoticeTone.info,
   );
 }
@@ -318,7 +332,9 @@ class _AccessNotice extends StatelessWidget {
           Icon(
             LucideIcons.info,
             size: 18,
-            color: copy.tone == MockNoticeTone.success ? AppColors.success : context.appTextSecondary,
+            color: copy.tone == MockNoticeTone.success
+                ? AppColors.success
+                : context.appTextSecondary,
           ),
           const SizedBox(width: AppSpacing.section),
           Expanded(
@@ -331,7 +347,9 @@ class _AccessNotice extends StatelessWidget {
                   copy.body,
                   style: context.bodySecondary.copyWith(
                     color: bodyColor,
-                    fontWeight: copy.tone == MockNoticeTone.success ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: copy.tone == MockNoticeTone.success
+                        ? FontWeight.w600
+                        : FontWeight.w400,
                   ),
                 ),
               ],
@@ -357,9 +375,7 @@ class _InstructionsSection extends StatelessWidget {
     return MockCard(
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(color: AppColors.primary, width: 2),
-          ),
+          border: Border(left: BorderSide(color: AppColors.primary, width: 2)),
         ),
         child: Padding(
           padding: const EdgeInsets.only(left: AppSpacing.section),
@@ -456,7 +472,10 @@ class _QuestionPreviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Question ${index + 1}', style: context.label.copyWith(color: AppColors.primary)),
+          Text(
+            'Question ${index + 1}',
+            style: context.label.copyWith(color: AppColors.primary),
+          ),
           const SizedBox(height: AppSpacing.item),
           MockRichContent(
             content: question.questionText,
@@ -471,7 +490,10 @@ class _QuestionPreviewCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: AppSpacing.item),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: context.appNeutralSoft,
                     borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
@@ -479,7 +501,9 @@ class _QuestionPreviewCard extends StatelessWidget {
                   ),
                   child: Text(
                     '$optionLabel. ${question.options[optionIndex]}',
-                    style: context.caption.copyWith(color: context.appTextSecondary),
+                    style: context.caption.copyWith(
+                      color: context.appTextSecondary,
+                    ),
                   ),
                 ),
               );

@@ -188,6 +188,7 @@ class _ActivityNotificationsTabState
   @override
   Widget build(BuildContext context) {
     final notificationsAsync = ref.watch(notificationsProvider);
+    final commerce = ref.watch(commerceSettingsProvider).valueOrNull;
 
     return notificationsAsync.when(
       loading: () => const MockLoadingView(message: 'Loading notifications…'),
@@ -196,11 +197,19 @@ class _ActivityNotificationsTabState
         onRetry: () => ref.invalidate(notificationsProvider),
       ),
       data: (items) {
-        if (items.isEmpty) {
+        final visibleItems = commerce?.paymentsEnabled == false
+            ? items
+                .where(
+                  (item) =>
+                      item.category != MockNotificationCategory.purchase,
+                )
+                .toList()
+            : items;
+        if (visibleItems.isEmpty) {
           return const MockEmptyState(
             title: 'No notifications yet',
             message:
-                'Payments, package unlocks, and submitted scores will show up here.',
+                'Scores, account updates, and submitted practice will show up here.',
           );
         }
 
@@ -211,11 +220,11 @@ class _ActivityNotificationsTabState
                 onRefresh: _refreshNotifications,
                 child: ListView.separated(
                   padding: const EdgeInsets.all(AppSpacing.page),
-                  itemCount: items.length,
+                  itemCount: visibleItems.length,
                   separatorBuilder: (_, __) =>
                       const SizedBox(height: AppSpacing.section),
                   itemBuilder: (context, index) {
-                    final item = items[index];
+                    final item = visibleItems[index];
                     return _NotificationCard(
                       item: item,
                       onTap: () => _openNotification(item),

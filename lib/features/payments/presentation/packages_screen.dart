@@ -87,7 +87,23 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
   Widget build(BuildContext context) {
     final packagesAsync = ref.watch(packagesProvider);
     final purchasesAsync = ref.watch(myPurchasesProvider);
+    final commerceSettings = ref.watch(commerceSettingsProvider);
+    final commerce = commerceSettings.valueOrNull;
     final currency = NumberFormat.simpleCurrency(name: 'NGN', decimalDigits: 0);
+
+    if (commerce?.paymentsEnabled == false) {
+      return Scaffold(
+        appBar: const MockDetailAppBar(title: 'Practice'),
+        body: MockContentWidth(
+          child: MockEmptyState(
+            title: 'Practice is available',
+            message: 'Browse the exam catalog to choose a mock or drill.',
+            actionLabel: 'Browse exams',
+            onAction: () => context.go('/exams'),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: const MockDetailAppBar(title: 'Unlock full access'),
@@ -109,19 +125,22 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
                         'Get timed full mocks and extended practice access.',
                   ),
                   const SizedBox(height: AppSpacing.page),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () =>
-                          setState(() => _showAgentCode = !_showAgentCode),
-                      child: Text(
-                        _showAgentCode
-                            ? 'Hide agent or tutor code'
-                            : 'Have an agent or tutor code?',
+                  if (commerce?.agentDiscountCodesEnabled ?? true) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () =>
+                            setState(() => _showAgentCode = !_showAgentCode),
+                        child: Text(
+                          _showAgentCode
+                              ? 'Hide agent or tutor code'
+                              : 'Have an agent or tutor code?',
+                        ),
                       ),
                     ),
-                  ),
-                  if (_showAgentCode) ...[
+                  ],
+                  if ((commerce?.agentDiscountCodesEnabled ?? true) &&
+                      _showAgentCode) ...[
                     const SizedBox(height: AppSpacing.item),
                     TextField(
                       controller: _agentCodeController,
@@ -214,6 +233,8 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
                                               package.slug,
                                             )
                                             ? 'Active'
+                                            : commerce?.paymentsEnabled == false
+                                            ? 'Unavailable'
                                             : hasPendingPackageSlug(
                                                 purchases,
                                                 package.slug,
@@ -227,6 +248,8 @@ class _PackagesScreenState extends ConsumerState<PackagesScreen> {
                                               purchases,
                                               package.slug,
                                             )
+                                            ? null
+                                            : commerce?.paymentsEnabled == false
                                             ? null
                                             : () =>
                                                   _purchase(package, purchases),

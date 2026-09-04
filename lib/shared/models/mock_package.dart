@@ -24,13 +24,19 @@ class MockPackage extends Equatable {
       title: json['title']?.toString() ?? 'Package',
       slug: json['slug']?.toString() ?? '',
       price: _asDouble(json['price']),
-      compareAtPrice: json['compareAtPrice'] == null ? null : _asDouble(json['compareAtPrice']),
+      compareAtPrice: json['compareAtPrice'] == null
+          ? null
+          : _asDouble(json['compareAtPrice']),
       currencyCode: json['currencyCode']?.toString() ?? 'NGN',
       accessDurationDays: _asInt(json['accessDurationDays']),
-      maxAttempts: json['maxAttempts'] == null ? null : _asInt(json['maxAttempts']),
+      maxAttempts: json['maxAttempts'] == null
+          ? null
+          : _asInt(json['maxAttempts']),
       description: json['description']?.toString(),
       isFeatured: json['isFeatured'] == true,
-      features: features is List ? features.map((item) => item.toString()).toList() : const [],
+      features: features is List
+          ? features.map((item) => item.toString()).toList()
+          : const [],
       examType: json['examType'] is Map<String, dynamic>
           ? MockExamType.fromJson(json['examType'] as Map<String, dynamic>)
           : null,
@@ -73,7 +79,9 @@ class MockPurchase extends Equatable {
       paymentReference: json['paymentReference']?.toString(),
       accessStartsAt: json['accessStartsAt']?.toString(),
       accessEndsAt: json['accessEndsAt']?.toString(),
-      amountPaid: json['amountPaid'] == null ? null : _asDouble(json['amountPaid']),
+      amountPaid: json['amountPaid'] == null
+          ? null
+          : _asDouble(json['amountPaid']),
       currencyCode: json['currencyCode']?.toString(),
       package: json['package'] is Map<String, dynamic>
           ? MockPackage.fromJson(json['package'] as Map<String, dynamic>)
@@ -129,6 +137,37 @@ class CheckoutResponse extends Equatable {
 
   @override
   List<Object?> get props => [purchaseId, paymentReference];
+}
+
+class MockCommerceSettings extends Equatable {
+  const MockCommerceSettings({
+    required this.platform,
+    required this.paymentsEnabled,
+    required this.bulkLicensesEnabled,
+    required this.agentDiscountCodesEnabled,
+  });
+
+  factory MockCommerceSettings.fromJson(Map<String, dynamic> json) {
+    return MockCommerceSettings(
+      platform: json['platform']?.toString() ?? 'android',
+      paymentsEnabled: json['paymentsEnabled'] == true,
+      bulkLicensesEnabled: json['bulkLicensesEnabled'] == true,
+      agentDiscountCodesEnabled: json['agentDiscountCodesEnabled'] == true,
+    );
+  }
+
+  final String platform;
+  final bool paymentsEnabled;
+  final bool bulkLicensesEnabled;
+  final bool agentDiscountCodesEnabled;
+
+  @override
+  List<Object?> get props => [
+    platform,
+    paymentsEnabled,
+    bulkLicensesEnabled,
+    agentDiscountCodesEnabled,
+  ];
 }
 
 double _asDouble(Object? value) {
