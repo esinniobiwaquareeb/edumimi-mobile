@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mock_mobile/core/constants/api_paths.dart';
@@ -14,6 +16,7 @@ class MockPortalRepository {
   Future<MockExamFeed> fetchExamFeed() {
     return _dio.getData(
       ApiPaths.examFeed,
+      queryParameters: {'platform': Platform.isIOS ? 'ios' : 'android'},
       parser: (json) => MockExamFeed.fromJson(json as Map<String, dynamic>),
     );
   }
@@ -91,6 +94,7 @@ class MockPortalRepository {
       ApiPaths.startExam(slug),
       data: {
         'sessionId': sessionId,
+        'platform': Platform.isIOS ? 'ios' : 'android',
         if (challengeToken != null && challengeToken.isNotEmpty)
           'challengeToken': challengeToken,
         if (adaptive) 'adaptive': true,
