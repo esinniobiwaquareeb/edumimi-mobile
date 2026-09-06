@@ -32,6 +32,7 @@ import 'package:mock_mobile/features/profile/presentation/profile_screen.dart';
 import 'package:mock_mobile/features/results/presentation/result_detail_screen.dart';
 import 'package:mock_mobile/features/results/presentation/results_screen.dart';
 import 'package:mock_mobile/features/shell/presentation/main_shell_screen.dart';
+import 'package:mock_mobile/features/support/presentation/support_screen.dart';
 
 class RouterRefreshNotifier extends ChangeNotifier {
   RouterRefreshNotifier(this._ref) {
@@ -45,6 +46,7 @@ class RouterRefreshNotifier extends ChangeNotifier {
     return location.startsWith('/forgot-password') ||
         location.startsWith('/reset-password') ||
         location.startsWith('/verify-email') ||
+        location.startsWith('/support') ||
         location.startsWith('/challenge/') ||
         location.startsWith('/parent/');
   }
@@ -57,7 +59,8 @@ class RouterRefreshNotifier extends ChangeNotifier {
     final isOnboarding = location == '/onboarding';
     final isInterestOnboarding = location == '/onboarding/interests';
     final isAuthRoute = location == '/login' || location == '/signup';
-    final isBootstrapping = authState.isInitializing || onboardingState.isLoading;
+    final isBootstrapping =
+        authState.isInitializing || onboardingState.isLoading;
 
     if (isBootstrapping) {
       return isSplash ? null : '/splash';
@@ -102,7 +105,9 @@ class RouterRefreshNotifier extends ChangeNotifier {
 
     if (loggedIn && isAuthRoute) {
       final redirect = state.uri.queryParameters['redirect'];
-      if (redirect != null && redirect.startsWith('/') && !redirect.startsWith('//')) {
+      if (redirect != null &&
+          redirect.startsWith('/') &&
+          !redirect.startsWith('//')) {
         return redirect;
       }
       if (authState.user?.mockProfile?.onboardingCompleted != true) {
@@ -111,11 +116,15 @@ class RouterRefreshNotifier extends ChangeNotifier {
       return '/dashboard';
     }
 
-    if (loggedIn && isInterestOnboarding && authState.user?.mockProfile?.onboardingCompleted == true) {
+    if (loggedIn &&
+        isInterestOnboarding &&
+        authState.user?.mockProfile?.onboardingCompleted == true) {
       return '/dashboard';
     }
 
-    if (loggedIn && !isInterestOnboarding && authState.user?.mockProfile?.onboardingCompleted != true) {
+    if (loggedIn &&
+        !isInterestOnboarding &&
+        authState.user?.mockProfile?.onboardingCompleted != true) {
       final allowed = isAuthRoute || location == '/profile';
       if (!allowed) {
         return '/onboarding/interests';
@@ -141,72 +150,127 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refreshNotifier,
     redirect: refreshNotifier.redirect,
     routes: [
-      GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
-      GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
-      GoRoute(path: '/onboarding/interests', builder: (context, state) => const InterestOnboardingScreen()),
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/interests',
+        builder: (context, state) => const InterestOnboardingScreen(),
+      ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/signup',
-        builder: (context, state) => SignupScreen(
-          initialReferralCode: state.uri.queryParameters['ref'],
-        ),
+        builder: (context, state) =>
+            SignupScreen(initialReferralCode: state.uri.queryParameters['ref']),
       ),
-      GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
       GoRoute(
         path: '/reset-password',
-        builder: (context, state) => ResetPasswordScreen(token: state.uri.queryParameters['token']),
+        builder: (context, state) =>
+            ResetPasswordScreen(token: state.uri.queryParameters['token']),
       ),
       GoRoute(
         path: '/verify-email',
-        builder: (context, state) => VerifyEmailScreen(token: state.uri.queryParameters['token']),
+        builder: (context, state) =>
+            VerifyEmailScreen(token: state.uri.queryParameters['token']),
       ),
       GoRoute(
         path: '/challenge/:token',
-        builder: (context, state) => ChallengeScreen(token: state.pathParameters['token']!),
+        builder: (context, state) =>
+            ChallengeScreen(token: state.pathParameters['token']!),
       ),
       GoRoute(
         path: '/parent/:token',
-        builder: (context, state) => ParentViewScreen(token: state.pathParameters['token']!),
+        builder: (context, state) =>
+            ParentViewScreen(token: state.pathParameters['token']!),
       ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => MainShellScreen(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) =>
+            MainShellScreen(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
+              GoRoute(
+                path: '/dashboard',
+                builder: (context, state) => const DashboardScreen(),
+              ),
             ],
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/exams', builder: (context, state) => const ExamsScreen()),
+              GoRoute(
+                path: '/exams',
+                builder: (context, state) => const ExamsScreen(),
+              ),
             ],
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/leaderboard', builder: (context, state) => const LeaderboardScreen()),
+              GoRoute(
+                path: '/leaderboard',
+                builder: (context, state) => const LeaderboardScreen(),
+              ),
             ],
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/results', builder: (context, state) => const ResultsScreen()),
+              GoRoute(
+                path: '/results',
+                builder: (context, state) => const ResultsScreen(),
+              ),
             ],
           ),
         ],
       ),
-      GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
-      GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
-      GoRoute(path: '/packages', builder: (context, state) => const PackagesScreen()),
-      GoRoute(path: '/community', builder: (context, state) => const CommunityScreen()),
-      GoRoute(path: '/exam-types', builder: (context, state) => const ExamTypesScreen()),
-      GoRoute(path: '/jamb/syllabus', builder: (context, state) => const JambSyllabusScreen()),
-      GoRoute(path: '/post-utme', builder: (context, state) => const PostUtmePacksScreen()),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/support',
+        builder: (context, state) => const SupportScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/packages',
+        builder: (context, state) => const PackagesScreen(),
+      ),
+      GoRoute(
+        path: '/community',
+        builder: (context, state) => const CommunityScreen(),
+      ),
+      GoRoute(
+        path: '/exam-types',
+        builder: (context, state) => const ExamTypesScreen(),
+      ),
+      GoRoute(
+        path: '/jamb/syllabus',
+        builder: (context, state) => const JambSyllabusScreen(),
+      ),
+      GoRoute(
+        path: '/post-utme',
+        builder: (context, state) => const PostUtmePacksScreen(),
+      ),
       GoRoute(
         path: '/post-utme/:slug',
-        builder: (context, state) => PostUtmePackDetailScreen(slug: state.pathParameters['slug']!),
+        builder: (context, state) =>
+            PostUtmePackDetailScreen(slug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: '/exam-types/:slug',
-        builder: (context, state) => ExamCatalogScreen(examTypeSlug: state.pathParameters['slug']!),
+        builder: (context, state) =>
+            ExamCatalogScreen(examTypeSlug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: '/payments/checkout',
@@ -223,15 +287,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/results/:attemptId',
-        builder: (context, state) => ResultDetailScreen(attemptId: state.pathParameters['attemptId']!),
+        builder: (context, state) =>
+            ResultDetailScreen(attemptId: state.pathParameters['attemptId']!),
       ),
       GoRoute(
         path: '/exams/:slug/attempts',
-        builder: (context, state) => ExamAttemptsScreen(slug: state.pathParameters['slug']!),
+        builder: (context, state) =>
+            ExamAttemptsScreen(slug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: '/exams/:slug',
-        builder: (context, state) => ExamDetailScreen(slug: state.pathParameters['slug']!),
+        builder: (context, state) =>
+            ExamDetailScreen(slug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: '/exams/:slug/take',

@@ -552,6 +552,12 @@ class _PersonalTabState extends ConsumerState<_PersonalTab> {
             label: 'Browse packages',
             onPressed: () => context.push('/packages'),
           ),
+        const SizedBox(height: AppSpacing.item),
+        MockSecondaryButton(
+          label: 'Help & support',
+          expand: true,
+          onPressed: () => context.push('/support'),
+        ),
         const SizedBox(height: AppSpacing.section),
         MockDestructiveButton(
           label: MockVoice.logOut,
