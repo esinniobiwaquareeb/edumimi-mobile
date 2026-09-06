@@ -12,7 +12,19 @@ class GuestPracticeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final exams = ref.watch(examsCatalogProvider(null));
     return Scaffold(
-      appBar: AppBar(title: const Text('Try practice')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: MockBackButton(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/login');
+            }
+          },
+        ),
+        title: const Text('Try practice'),
+      ),
       body: exams.when(
         loading: () => const MockLoadingView(message: 'Loading practice…'),
         error: (error, _) => MockErrorView(
