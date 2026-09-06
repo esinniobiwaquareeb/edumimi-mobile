@@ -8,6 +8,7 @@ import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/shared/models/mock_attempt.dart';
 
 class LeaderboardScreen extends ConsumerStatefulWidget {
@@ -48,6 +49,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final commerce = ref.watch(commerceSettingsProvider).valueOrNull;
+    final showPayments = commerce?.paymentsEnabled ?? true;
     final examTypesAsync = ref.watch(examTypesProvider);
     final leaderboardAsync = ref.watch(
       leaderboardProvider((
@@ -217,28 +220,30 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                                   : null,
                             ),
                           ],
-                          const SizedBox(height: AppSpacing.section),
-                          MockCard(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  MockVoice.leaderboardCtaTitle,
-                                  style: context.cardTitle,
-                                ),
-                                const SizedBox(height: AppSpacing.item),
-                                Text(
-                                  MockVoice.leaderboardCtaBody,
-                                  style: context.bodySecondary,
-                                ),
-                                const SizedBox(height: AppSpacing.section),
-                                MockPrimaryButton(
-                                  label: MockVoice.leaderboardCtaButton,
-                                  onPressed: () => context.push('/packages'),
-                                ),
-                              ],
+                          if (showPayments) ...[
+                            const SizedBox(height: AppSpacing.section),
+                            MockCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    MockVoice.leaderboardCtaTitle,
+                                    style: context.cardTitle,
+                                  ),
+                                  const SizedBox(height: AppSpacing.item),
+                                  Text(
+                                    MockVoice.leaderboardCtaBody,
+                                    style: context.bodySecondary,
+                                  ),
+                                  const SizedBox(height: AppSpacing.section),
+                                  MockPrimaryButton(
+                                    label: MockVoice.leaderboardCtaButton,
+                                    onPressed: () => context.push('/packages'),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
