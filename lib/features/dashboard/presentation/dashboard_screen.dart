@@ -74,6 +74,8 @@ class DashboardScreen extends ConsumerWidget {
     final engagementAsync = ref.watch(engagementProvider);
     final attemptsAsync = ref.watch(attemptsProvider);
     final purchasesAsync = ref.watch(myPurchasesProvider);
+    final commerce = ref.watch(commerceSettingsProvider).valueOrNull;
+    final showPayments = commerce?.paymentsEnabled ?? true;
     final user = ref.watch(authControllerProvider).user;
     final attempts = attemptsAsync.valueOrNull ?? const <MockAttempt>[];
     final submittedAttempts = attempts
@@ -90,7 +92,9 @@ class DashboardScreen extends ConsumerWidget {
     final hasActivePurchases = purchases.any((purchase) => purchase.isActive);
     final feedExams = feedAsync.valueOrNull?.recommended ?? const <MockExam>[];
     final showUnlockUpsell =
-        !hasActivePurchases && (submittedAttempts >= 1 || feedExams.isNotEmpty);
+        showPayments &&
+        !hasActivePurchases &&
+        (submittedAttempts >= 1 || feedExams.isNotEmpty);
     final streakDays = engagementAsync.valueOrNull?.practiceStreakDays ?? 0;
     final onboardingCompleted = user?.mockProfile?.onboardingCompleted == true;
     final isWide = MockAdaptiveLayout.isWide(context);
@@ -158,8 +162,9 @@ class DashboardScreen extends ConsumerWidget {
                 Text('Quick actions', style: context.sectionTitle),
                 const SizedBox(height: AppSpacing.section),
                 MockSecondaryButton(
-                  label: 'Browse packages',
-                  onPressed: () => context.push('/packages'),
+                  label: showPayments ? 'Browse packages' : 'Browse practice',
+                  onPressed: () =>
+                      context.push(showPayments ? '/packages' : '/exams'),
                 ),
                 const SizedBox(height: AppSpacing.item),
                 MockSecondaryButton(
@@ -172,8 +177,9 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: MockSecondaryButton(
-                    label: 'Browse packages',
-                    onPressed: () => context.push('/packages'),
+                    label: showPayments ? 'Browse packages' : 'Browse practice',
+                    onPressed: () =>
+                        context.push(showPayments ? '/packages' : '/exams'),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.item),

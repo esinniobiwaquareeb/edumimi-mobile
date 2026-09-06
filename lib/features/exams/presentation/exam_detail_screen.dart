@@ -16,6 +16,7 @@ import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/exams/exam_attempt_utils.dart';
 import 'package:mock_mobile/features/exams/presentation/widgets/exam_attempt_history_card.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:mock_mobile/shared/models/mock_attempt.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 
@@ -55,7 +56,9 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
   var _isStarting = false;
 
   Future<void> _start() async {
-    if (widget.exam.isLocked) {
+    final paymentsEnabled =
+        ref.read(commerceSettingsProvider).valueOrNull?.paymentsEnabled ?? true;
+    if (widget.exam.isLocked && paymentsEnabled) {
       return;
     }
     setState(() => _isStarting = true);
@@ -83,7 +86,11 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
     final bestScore = _resolveBestScore(exam, pastAttempts);
     final previewQuestions = exam.questions.take(3).toList();
     final difficultyLabel = formatMockDifficulty(exam.difficulty);
-    final accessCopy = _resolveAccessCopy(exam);
+    final paymentsEnabled =
+        ref.watch(commerceSettingsProvider).valueOrNull?.paymentsEnabled ??
+        true;
+    final isLocked = paymentsEnabled && exam.isLocked;
+    final accessCopy = _resolveAccessCopy(exam, isLocked: isLocked);
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.page),
@@ -231,18 +238,15 @@ class _ExamDetailBodyState extends ConsumerState<_ExamDetailBody> {
         const SizedBox(height: AppSpacing.page),
         MockSplitActionRow(
           start: MockSecondaryButton(
-            label: exam.isLocked ? 'Browse packages' : 'Browse more mocks',
-            onPressed: () => exam.isLocked
-                ? context.push('/packages')
-                : context.go('/exams'),
+            label: isLocked ? 'Browse packages' : 'Browse more mocks',
+            onPressed: () =>
+                isLocked ? context.push('/packages') : context.go('/exams'),
             expand: true,
           ),
           end: MockPrimaryButton(
-            label: exam.isLocked
-                ? 'Unlock full access'
-                : _startButtonLabel(exam),
+            label: isLocked ? 'Unlock full access' : _startButtonLabel(exam),
             isLoading: _isStarting,
-            onPressed: exam.isLocked ? () => context.push('/packages') : _start,
+            onPressed: isLocked ? () => context.push('/packages') : _start,
             expand: true,
           ),
         ),
@@ -264,7 +268,7 @@ class _AccessCopy {
   final MockNoticeTone tone;
 }
 
-_AccessCopy _resolveAccessCopy(MockExam exam) {
+_AccessCopy _resolveAccessCopy(MockExam exam, {required bool isLocked}) {
   if (exam.isFreePractice && !exam.isLocked) {
     return const _AccessCopy(
       heading: 'Free practice',
@@ -273,10 +277,10 @@ _AccessCopy _resolveAccessCopy(MockExam exam) {
     );
   }
 
-  if (!exam.isLocked) {
+  if (!isLocked) {
     return const _AccessCopy(
-      heading: 'Access active',
-      body: 'Your package unlocks this mock. You can start right away.',
+      heading: 'Ready to start',
+      body: 'This mock is available to start now.',
       tone: MockNoticeTone.success,
     );
   }
