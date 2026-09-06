@@ -14,6 +14,7 @@ import 'package:mock_mobile/features/exams/presentation/exam_catalog_screen.dart
 import 'package:mock_mobile/features/exams/presentation/exam_detail_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/exam_session_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/exam_types_screen.dart';
+import 'package:mock_mobile/features/exams/presentation/guest_practice_detail_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/guest_practice_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/exams_screen.dart';
 import 'package:mock_mobile/features/growth/presentation/challenge_screen.dart';
@@ -242,6 +243,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/try/:slug',
+        builder: (context, state) =>
+            GuestPracticeDetailScreen(slug: state.pathParameters['slug']!),
+      ),
+      GoRoute(
+        path: '/try/:slug/take',
         builder: (context, state) => ExamSessionScreen(
           slug: state.pathParameters['slug']!,
           guestMode: true,
