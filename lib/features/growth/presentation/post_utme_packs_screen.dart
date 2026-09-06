@@ -6,6 +6,7 @@ import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/payments/data/payment_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PostUtmePacksScreen extends ConsumerWidget {
@@ -14,16 +15,25 @@ class PostUtmePacksScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final packsAsync = ref.watch(postUtmePacksProvider);
+    final paymentsEnabled =
+        ref.watch(commerceSettingsProvider).valueOrNull?.paymentsEnabled ??
+        true;
     final currency = NumberFormat.simpleCurrency(name: 'NGN', decimalDigits: 0);
 
     return Scaffold(
       appBar: const MockDetailAppBar(title: 'Post-UTME packs'),
       body: packsAsync.when(
         loading: () => const MockLoadingView(message: 'Loading packs…'),
-        error: (_, __) => MockErrorView(message: 'Could not load post-UTME packs.', onRetry: () => ref.invalidate(postUtmePacksProvider)),
+        error: (_, __) => MockErrorView(
+          message: 'Could not load post-UTME packs.',
+          onRetry: () => ref.invalidate(postUtmePacksProvider),
+        ),
         data: (packs) {
           if (packs.isEmpty) {
-            return const MockEmptyState(title: 'No packs yet', message: 'Check back soon for university screening packs.');
+            return const MockEmptyState(
+              title: 'No packs yet',
+              message: 'Check back soon for university screening packs.',
+            );
           }
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.page),
@@ -42,7 +52,8 @@ class PostUtmePacksScreen extends ConsumerWidget {
                     title: pack.title,
                     subtitle: pack.universityName,
                     meta: [
-                      if (pack.listPrice != null) currency.format(pack.listPrice),
+                      if (paymentsEnabled && pack.listPrice != null)
+                        currency.format(pack.listPrice),
                       '${pack.practiceExamCount} practice exams',
                     ].where((part) => part.isNotEmpty).join(' · '),
                     onTap: () => context.push('/post-utme/${pack.slug}'),
@@ -71,15 +82,22 @@ class PostUtmePackDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailAsync = ref.watch(postUtmePackDetailProvider(slug));
+    final paymentsEnabled =
+        ref.watch(commerceSettingsProvider).valueOrNull?.paymentsEnabled ??
+        true;
 
     return Scaffold(
       appBar: const MockDetailAppBar(title: 'Post-UTME pack'),
       body: detailAsync.when(
         loading: () => const MockLoadingView(message: 'Loading pack…'),
-        error: (_, __) => MockErrorView(message: 'Could not load this pack.', onRetry: () => ref.invalidate(postUtmePackDetailProvider(slug))),
+        error: (_, __) => MockErrorView(
+          message: 'Could not load this pack.',
+          onRetry: () => ref.invalidate(postUtmePackDetailProvider(slug)),
+        ),
         data: (detail) {
           final pack = detail.pack;
-          final hasAdmissionsInfo = pack.brochureUrl?.isNotEmpty == true ||
+          final hasAdmissionsInfo =
+              pack.brochureUrl?.isNotEmpty == true ||
               pack.cutOffMarks?.isNotEmpty == true ||
               pack.entryRequirements?.isNotEmpty == true;
 
@@ -110,7 +128,10 @@ class PostUtmePackDetailScreen extends ConsumerWidget {
                       if (pack.entryRequirements?.isNotEmpty == true) ...[
                         Text('Entry requirements', style: context.cardTitle),
                         const SizedBox(height: AppSpacing.item),
-                        Text(pack.entryRequirements!, style: context.bodySecondary),
+                        Text(
+                          pack.entryRequirements!,
+                          style: context.bodySecondary,
+                        ),
                         const SizedBox(height: AppSpacing.section),
                       ],
                       if (pack.brochureUrl?.isNotEmpty == true)
@@ -138,7 +159,7 @@ class PostUtmePackDetailScreen extends ConsumerWidget {
                       title: exam.title,
                       subtitle: exam.subjectLabel,
                       meta: exam.mode,
-                      locked: exam.isLocked,
+                      locked: paymentsEnabled && exam.isLocked,
                       onTap: () => context.push('/exams/${exam.slug}'),
                     ),
                   ),
