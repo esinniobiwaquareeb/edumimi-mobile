@@ -6,49 +6,70 @@ import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 
-class JambSyllabusScreen extends ConsumerWidget {
-  const JambSyllabusScreen({super.key});
+class ExamSyllabusScreen extends ConsumerWidget {
+  const ExamSyllabusScreen({
+    super.key,
+    required this.examTypeSlug,
+    required this.examTitle,
+    this.showRecommendedTexts = false,
+  });
+
+  final String examTypeSlug;
+  final String examTitle;
+  final bool showRecommendedTexts;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final syllabusAsync = ref.watch(jambSyllabusProvider);
+    final syllabusAsync = ref.watch(examSyllabusProvider(examTypeSlug));
 
     return Scaffold(
-      appBar: const MockDetailAppBar(title: 'JAMB syllabus & novels'),
+      appBar: MockDetailAppBar(title: '$examTitle syllabus'),
       body: syllabusAsync.when(
-        loading: () => const MockLoadingView(message: 'Loading JAMB module…'),
-        error: (_, __) => MockErrorView(message: 'Could not load JAMB syllabus.', onRetry: () => ref.invalidate(jambSyllabusProvider)),
+        loading: () => MockLoadingView(message: 'Loading $examTitle module…'),
+        error: (_, __) => MockErrorView(
+          message: 'Could not load $examTitle syllabus.',
+          onRetry: () => ref.invalidate(examSyllabusProvider(examTypeSlug)),
+        ),
         data: (module) => ListView(
           padding: const EdgeInsets.all(AppSpacing.page),
           children: [
-            Text('Syllabus & recommended texts', style: context.pageTitle),
+            Text(
+              showRecommendedTexts
+                  ? 'Syllabus & recommended texts'
+                  : 'Syllabus topics',
+              style: context.pageTitle,
+            ),
             const SizedBox(height: AppSpacing.item),
             Text(
-              'Syllabus topics, compulsory novel, and practice sets linked to literature drills.',
+              showRecommendedTexts
+                  ? 'Syllabus topics, recommended texts, and linked practice sets.'
+                  : 'Syllabus topics and linked practice sets for focused revision.',
               style: context.pageSubtitle,
             ),
             const SizedBox(height: AppSpacing.page),
-            const MockSectionTitle(title: 'Recommended texts'),
-            const SizedBox(height: AppSpacing.section),
-            ...module.recommendedTexts.map(
-              (text) => Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.section),
-                child: MockCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(text.title, style: context.cardTitle),
-                      if (text.author?.isNotEmpty == true)
-                        Text(text.author!, style: context.caption),
-                      if (text.summary?.isNotEmpty == true) ...[
-                        const SizedBox(height: AppSpacing.item),
-                        Text(text.summary!, style: context.bodySecondary),
+            if (showRecommendedTexts && module.recommendedTexts.isNotEmpty) ...[
+              const MockSectionTitle(title: 'Recommended texts'),
+              const SizedBox(height: AppSpacing.section),
+              ...module.recommendedTexts.map(
+                (text) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.section),
+                  child: MockCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(text.title, style: context.cardTitle),
+                        if (text.author?.isNotEmpty == true)
+                          Text(text.author!, style: context.caption),
+                        if (text.summary?.isNotEmpty == true) ...[
+                          const SizedBox(height: AppSpacing.item),
+                          Text(text.summary!, style: context.bodySecondary),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
             const MockSectionTitle(title: 'Syllabus topics'),
             const SizedBox(height: AppSpacing.section),
             ...module.syllabusTopics.map(
@@ -77,7 +98,7 @@ class JambSyllabusScreen extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: AppSpacing.section),
                 child: MockExamCard(
                   title: exam.title,
-                  subtitle: exam.subjectName ?? 'JAMB',
+                  subtitle: exam.subjectName ?? examTitle,
                   meta: exam.mode ?? 'PRACTICE',
                   onTap: () => context.push('/exams/${exam.slug}'),
                 ),
@@ -88,4 +109,13 @@ class JambSyllabusScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class JambSyllabusScreen extends ExamSyllabusScreen {
+  const JambSyllabusScreen({super.key})
+    : super(
+        examTypeSlug: 'jamb',
+        examTitle: 'JAMB',
+        showRecommendedTexts: true,
+      );
 }

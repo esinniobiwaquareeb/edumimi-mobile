@@ -107,6 +107,32 @@ class MockPortalRepository {
     );
   }
 
+  Future<GuestStartAttemptResponse> startGuestExam(String slug) {
+    return _dio.postData(
+      ApiPaths.startGuestExam(slug),
+      data: {'sessionId': DateTime.now().millisecondsSinceEpoch.toString()},
+      parser: (json) =>
+          GuestStartAttemptResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<GuestAttemptResult> submitGuestAttempt({
+    required String guestToken,
+    required Map<String, int> answers,
+    required int durationSeconds,
+  }) {
+    return _dio.postData(
+      ApiPaths.submitGuestAttempt,
+      data: {
+        'guestToken': guestToken,
+        'answers': answers,
+        'durationSeconds': durationSeconds,
+      },
+      parser: (json) =>
+          GuestAttemptResult.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
   Future<MockAttempt> submitAttempt({
     required String attemptId,
     required Map<String, dynamic> answers,
@@ -190,8 +216,17 @@ class MockPortalRepository {
   }
 
   Future<JambSyllabusModule> fetchJambSyllabus() {
+    return fetchExamSyllabus('jamb');
+  }
+
+  Future<JambSyllabusModule> fetchExamSyllabus(String examTypeSlug) {
+    final path = switch (examTypeSlug.trim().toLowerCase()) {
+      'waec' => ApiPaths.waecSyllabus,
+      'neco' => ApiPaths.necoSyllabus,
+      _ => ApiPaths.jambSyllabus,
+    };
     return _dio.getData(
-      ApiPaths.jambSyllabus,
+      path,
       parser: (json) =>
           JambSyllabusModule.fromJson(json as Map<String, dynamic>),
     );
@@ -227,6 +262,53 @@ class MockPortalRepository {
           ParentProgressView.fromJson(json as Map<String, dynamic>),
     );
   }
+}
+
+class GuestStartAttemptResponse {
+  const GuestStartAttemptResponse({
+    required this.guestToken,
+    required this.exam,
+  });
+
+  factory GuestStartAttemptResponse.fromJson(Map<String, dynamic> json) {
+    return GuestStartAttemptResponse(
+      guestToken: json['guestToken']?.toString() ?? '',
+      exam: MockExam.fromJson(json['exam'] as Map<String, dynamic>? ?? {}),
+    );
+  }
+
+  final String guestToken;
+  final MockExam exam;
+}
+
+class GuestAttemptResult {
+  const GuestAttemptResult({
+    required this.examTitle,
+    required this.score,
+    required this.totalPossibleScore,
+    required this.percentScore,
+  });
+
+  factory GuestAttemptResult.fromJson(Map<String, dynamic> json) {
+    int asInt(Object? value) => value is num
+        ? value.toInt()
+        : int.tryParse(value?.toString() ?? '') ?? 0;
+    double asDouble(Object? value) => value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? '') ?? 0;
+    final exam = json['exam'] as Map<String, dynamic>?;
+    return GuestAttemptResult(
+      examTitle: exam?['title']?.toString() ?? 'Practice result',
+      score: asInt(json['score']),
+      totalPossibleScore: asInt(json['totalPossibleScore']),
+      percentScore: asDouble(json['percentScore']),
+    );
+  }
+
+  final String examTitle;
+  final int score;
+  final int totalPossibleScore;
+  final double percentScore;
 }
 
 final mockPortalRepositoryProvider = Provider<MockPortalRepository>((ref) {
@@ -303,6 +385,13 @@ final jambSyllabusProvider = FutureProvider.autoDispose<JambSyllabusModule>((
 ) {
   return ref.watch(mockPortalRepositoryProvider).fetchJambSyllabus();
 });
+
+final examSyllabusProvider = FutureProvider.autoDispose
+    .family<JambSyllabusModule, String>((ref, examTypeSlug) {
+      return ref
+          .watch(mockPortalRepositoryProvider)
+          .fetchExamSyllabus(examTypeSlug);
+    });
 
 final postUtmePacksProvider =
     FutureProvider.autoDispose<List<PostUtmePackSummary>>((ref) {

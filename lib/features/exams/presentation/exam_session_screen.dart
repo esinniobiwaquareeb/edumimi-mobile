@@ -18,6 +18,7 @@ import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:mock_mobile/core/utils/mock_preparation_profile.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
+import 'package:mock_mobile/features/results/presentation/guest_result_screen.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 
 class ExamSessionScreen extends ConsumerStatefulWidget {
@@ -26,11 +27,13 @@ class ExamSessionScreen extends ConsumerStatefulWidget {
     required this.slug,
     this.attemptId,
     this.sessionId,
+    this.guestMode = false,
   });
 
   final String slug;
   final String? attemptId;
   final String? sessionId;
+  final bool guestMode;
 
   @override
   ConsumerState<ExamSessionScreen> createState() => _ExamSessionScreenState();
@@ -51,6 +54,7 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
   var _warnedFiveMinutes = false;
   var _warnedOneMinute = false;
   String? _error;
+  String? _guestToken;
   late DateTime _startedAt;
   Timer? _countdownTimer;
 
@@ -76,9 +80,11 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
     try {
       final sessionId =
           widget.sessionId ?? DateTime.now().millisecondsSinceEpoch.toString();
-      final response = await ref
-          .read(mockPortalRepositoryProvider)
-          .startExam(widget.slug, sessionId: sessionId);
+      final response = widget.guestMode
+          ? await _startGuestSession()
+          : await ref
+                .read(mockPortalRepositoryProvider)
+                .startExam(widget.slug, sessionId: sessionId);
       await ref
           .read(offlinePracticeCacheProvider)
           .cacheExamQuestions(response.exam);
@@ -100,6 +106,17 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<StartAttemptResponse> _startGuestSession() async {
+    final response = await ref
+        .read(mockPortalRepositoryProvider)
+        .startGuestExam(widget.slug);
+    _guestToken = response.guestToken;
+    return StartAttemptResponse(
+      attemptId: 'guest-${response.guestToken}',
+      exam: response.exam,
+    );
   }
 
   void _applySession(StartAttemptResponse response) {
@@ -265,6 +282,7 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
   }
 
   Future<void> _persistProgress() async {
+    if (widget.guestMode) return;
     final session = _session;
     if (session == null) {
       return;
@@ -367,6 +385,32 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
         .currentStatus();
 
     try {
+      if (widget.guestMode) {
+        final token = _guestToken;
+        if (token == null || token.isEmpty) {
+          if (mounted) {
+            MockToast.error(
+              context,
+              'Your guest session has expired. Please start again.',
+            );
+          }
+          return;
+        }
+        final result = await ref
+            .read(mockPortalRepositoryProvider)
+            .submitGuestAttempt(
+              guestToken: token,
+              answers: payload,
+              durationSeconds: durationSeconds,
+            );
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(
+            builder: (_) => GuestResultScreen(result: result),
+          ),
+        );
+        return;
+      }
       if (!connectivity.isOnline) {
         await _queueOfflineSubmit(session, payload, durationSeconds);
         return;

@@ -37,7 +37,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).login(
+      await ref
+          .read(authControllerProvider.notifier)
+          .login(
             email: _emailController.text,
             password: _passwordController.text,
           );
@@ -72,7 +74,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: AppSpacing.page),
                     Text('Sign in', style: context.pageTitle),
                     const SizedBox(height: AppSpacing.item),
-                    Text('Continue your practice and saved scores.', style: context.pageSubtitle),
+                    Text(
+                      'Continue your practice and saved scores.',
+                      style: context.pageSubtitle,
+                    ),
                     const SizedBox(height: AppSpacing.page),
                     MockAuthCard(
                       child: Column(
@@ -86,17 +91,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             label: 'Email address',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
+                            validator: (value) =>
+                                value != null && value.contains('@')
+                                ? null
+                                : 'Enter a valid email',
                           ),
                           const SizedBox(height: AppSpacing.section),
                           MockTextField(
                             label: 'Password',
                             controller: _passwordController,
                             obscurable: true,
-                            validator: (value) => value != null && value.length >= 6 ? null : 'Enter your password',
+                            validator: (value) =>
+                                value != null && value.length >= 6
+                                ? null
+                                : 'Enter your password',
                           ),
                           const SizedBox(height: AppSpacing.page),
-                          MockPrimaryButton(label: 'Log in', isLoading: _isLoading, onPressed: _submit),
+                          MockPrimaryButton(
+                            label: 'Log in',
+                            isLoading: _isLoading,
+                            onPressed: _submit,
+                          ),
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
@@ -111,6 +126,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextButton(
                       onPressed: () => context.go('/signup'),
                       child: const Text('No account yet? Sign up free'),
+                    ),
+                    TextButton(
+                      onPressed: () => context.go('/try'),
+                      child: const Text('Try free practice first'),
                     ),
                   ],
                 ),

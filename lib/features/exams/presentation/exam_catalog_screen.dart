@@ -105,10 +105,19 @@ class _ExamCatalogScreenState extends ConsumerState<ExamCatalogScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (widget.examTypeSlug == 'jamb')
+                      if (const {
+                        'jamb',
+                        'waec',
+                        'neco',
+                      }.contains(widget.examTypeSlug))
                         TextButton(
-                          onPressed: () => context.push('/jamb/syllabus'),
-                          child: const Text('JAMB syllabus & novels →'),
+                          onPressed: () =>
+                              context.push('/${widget.examTypeSlug}/syllabus'),
+                          child: Text(
+                            widget.examTypeSlug == 'jamb'
+                                ? 'JAMB syllabus & novels →'
+                                : '${widget.examTypeSlug.toUpperCase()} syllabus →',
+                          ),
                         ),
                       TextField(
                         controller: _searchController,

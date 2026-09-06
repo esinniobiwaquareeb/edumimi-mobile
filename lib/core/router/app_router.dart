@@ -14,6 +14,7 @@ import 'package:mock_mobile/features/exams/presentation/exam_catalog_screen.dart
 import 'package:mock_mobile/features/exams/presentation/exam_detail_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/exam_session_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/exam_types_screen.dart';
+import 'package:mock_mobile/features/exams/presentation/guest_practice_screen.dart';
 import 'package:mock_mobile/features/exams/presentation/exams_screen.dart';
 import 'package:mock_mobile/features/growth/presentation/challenge_screen.dart';
 import 'package:mock_mobile/features/growth/presentation/jamb_syllabus_screen.dart';
@@ -47,6 +48,7 @@ class RouterRefreshNotifier extends ChangeNotifier {
         location.startsWith('/reset-password') ||
         location.startsWith('/verify-email') ||
         location.startsWith('/support') ||
+        location.startsWith('/try') ||
         location.startsWith('/challenge/') ||
         location.startsWith('/parent/');
   }
@@ -235,6 +237,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
+        path: '/try',
+        builder: (context, state) => const GuestPracticeScreen(),
+      ),
+      GoRoute(
+        path: '/try/:slug',
+        builder: (context, state) => ExamSessionScreen(
+          slug: state.pathParameters['slug']!,
+          guestMode: true,
+        ),
+      ),
+      GoRoute(
         path: '/support',
         builder: (context, state) => const SupportScreen(),
       ),
@@ -257,6 +270,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/jamb/syllabus',
         builder: (context, state) => const JambSyllabusScreen(),
+      ),
+      GoRoute(
+        path: '/waec/syllabus',
+        builder: (context, state) =>
+            const ExamSyllabusScreen(examTypeSlug: 'waec', examTitle: 'WAEC'),
+      ),
+      GoRoute(
+        path: '/neco/syllabus',
+        builder: (context, state) =>
+            const ExamSyllabusScreen(examTypeSlug: 'neco', examTitle: 'NECO'),
       ),
       GoRoute(
         path: '/post-utme',

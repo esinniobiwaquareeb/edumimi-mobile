@@ -36,11 +36,15 @@ class ApiPaths {
   static const communityDisplayName = '/community/me/display-name';
   static const fcmRegister = '/me/push/fcm/register';
   static const jambSyllabus = '/jamb/syllabus';
+  static const waecSyllabus = '/waec/syllabus';
+  static const necoSyllabus = '/neco/syllabus';
   static const postUtmePacks = '/post-utme/packs';
 
   static String examTypeDetail(String slug) => '/exam-types/$slug';
   static String examDetail(String slug) => '/exams/$slug';
   static String startExam(String slug) => '/exams/$slug/start';
+  static String startGuestExam(String slug) => '/exams/$slug/guest-start';
+  static const submitGuestAttempt = '/guest-attempts/submit';
   static String submitAttempt(String attemptId) =>
       '/attempts/$attemptId/submit';
   static String attemptProgress(String attemptId) =>
