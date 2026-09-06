@@ -6,12 +6,24 @@ import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 
 class GuestResultScreen extends StatelessWidget {
-  const GuestResultScreen({super.key, required this.result});
+  const GuestResultScreen({super.key, this.result});
 
-  final GuestAttemptResult result;
+  final GuestAttemptResult? result;
 
   @override
   Widget build(BuildContext context) {
+    final result = this.result;
+    if (result == null) {
+      return Scaffold(
+        appBar: const MockDetailAppBar(title: 'Practice complete'),
+        body: MockEmptyState(
+          title: 'Practice result unavailable',
+          message: 'Start another practice session to see your result.',
+          actionLabel: 'Browse practice',
+          onAction: () => context.go('/try'),
+        ),
+      );
+    }
     return Scaffold(
       appBar: const MockDetailAppBar(title: 'Practice complete'),
       body: Center(
@@ -53,7 +65,7 @@ class GuestResultScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.item),
                 MockSecondaryButton(
                   label: 'Browse more practice',
-                  onPressed: () => context.go('/try'),
+                  onPressed: () => GoRouter.of(context).go('/try'),
                 ),
               ],
             ),

@@ -22,6 +22,7 @@ import 'package:mock_mobile/features/growth/presentation/jamb_syllabus_screen.da
 import 'package:mock_mobile/features/growth/presentation/parent_view_screen.dart';
 import 'package:mock_mobile/features/growth/presentation/post_utme_packs_screen.dart';
 import 'package:mock_mobile/features/leaderboard/presentation/leaderboard_screen.dart';
+import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
 import 'package:mock_mobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:mock_mobile/features/onboarding/presentation/interest_onboarding_screen.dart';
 import 'package:mock_mobile/features/onboarding/presentation/onboarding_screen.dart';
@@ -32,6 +33,7 @@ import 'package:mock_mobile/features/payments/presentation/payment_checkout_scre
 import 'package:mock_mobile/features/payments/presentation/payment_verify_screen.dart';
 import 'package:mock_mobile/features/profile/presentation/profile_screen.dart';
 import 'package:mock_mobile/features/results/presentation/result_detail_screen.dart';
+import 'package:mock_mobile/features/results/presentation/guest_result_screen.dart';
 import 'package:mock_mobile/features/results/presentation/results_screen.dart';
 import 'package:mock_mobile/features/shell/presentation/main_shell_screen.dart';
 import 'package:mock_mobile/features/support/presentation/support_screen.dart';
@@ -251,6 +253,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => ExamSessionScreen(
           slug: state.pathParameters['slug']!,
           guestMode: true,
+        ),
+      ),
+      GoRoute(
+        path: '/try/:slug/result',
+        builder: (context, state) => GuestResultScreen(
+          result: state.extra is GuestAttemptResult
+              ? state.extra! as GuestAttemptResult
+              : null,
         ),
       ),
       GoRoute(

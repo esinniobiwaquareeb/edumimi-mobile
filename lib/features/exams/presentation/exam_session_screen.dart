@@ -18,7 +18,6 @@ import 'package:mock_mobile/core/widgets/mock_adaptive_layout.dart';
 import 'package:mock_mobile/core/utils/mock_preparation_profile.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/mock/data/mock_portal_repository.dart';
-import 'package:mock_mobile/features/results/presentation/guest_result_screen.dart';
 import 'package:mock_mobile/shared/models/mock_exam.dart';
 
 class ExamSessionScreen extends ConsumerStatefulWidget {
@@ -404,11 +403,7 @@ class _ExamSessionScreenState extends ConsumerState<ExamSessionScreen> {
               durationSeconds: durationSeconds,
             );
         if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (_) => GuestResultScreen(result: result),
-          ),
-        );
+        context.go('/try/${widget.slug}/result', extra: result);
         return;
       }
       if (!connectivity.isOnline) {
