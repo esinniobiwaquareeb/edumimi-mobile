@@ -74,6 +74,20 @@ class AuthRepository {
     );
   }
 
+  Future<AuthSession> loginWithGoogle(String idToken) async {
+    final data = await _dio.postData<Map<String, dynamic>>(
+      ApiPaths.googleLogin,
+      data: {'idToken': idToken},
+      parser: (json) => json as Map<String, dynamic>,
+    );
+    final session = AuthSession(
+      token: data['access_token']?.toString() ?? '',
+      user: MockUser.fromJson(data['user'] as Map<String, dynamic>? ?? {}),
+    );
+    await _storage.saveSession(token: session.token, user: session.user);
+    return session;
+  }
+
   Future<MockUser> fetchMe() async {
     return _dio.getData(
       ApiPaths.me,
@@ -84,10 +98,7 @@ class AuthRepository {
   Future<void> clearSession() => _storage.clear();
 
   Future<void> deleteAccount() async {
-    return _dio.deleteData(
-      ApiPaths.deleteAccount,
-      parser: (_) {},
-    );
+    return _dio.deleteData(ApiPaths.deleteAccount, parser: (_) {});
   }
 
   Future<void> forgotPassword({required String email}) {

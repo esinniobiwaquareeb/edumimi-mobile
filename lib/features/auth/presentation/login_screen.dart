@@ -6,6 +6,7 @@ import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
+import 'package:mock_mobile/features/auth/data/google_sign_in_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -45,6 +46,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
     } on ApiException catch (error) {
       setState(() => _error = error.message);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _googleSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final token = await GoogleSignInService().authenticate();
+      await ref.read(authControllerProvider.notifier).loginWithGoogle(token);
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () => _error = error.toString().replaceFirst('Bad state: ', ''),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -111,6 +133,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             label: 'Log in',
                             isLoading: _isLoading,
                             onPressed: _submit,
+                          ),
+                          const SizedBox(height: AppSpacing.item),
+                          MockSecondaryButton(
+                            label: 'Continue with Google',
+                            onPressed: _isLoading ? null : _googleSignIn,
                           ),
                           Align(
                             alignment: Alignment.centerRight,

@@ -104,6 +104,17 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  Future<void> loginWithGoogle(String idToken) async {
+    try {
+      state = AuthState.authenticated(
+        await _repository.loginWithGoogle(idToken),
+      );
+    } on ApiException catch (error) {
+      state = AuthState.unauthenticated(errorMessage: error.message);
+      rethrow;
+    }
+  }
+
   Future<void> logout({bool localOnly = false}) async {
     await Future.wait([
       _repository.clearSession(),

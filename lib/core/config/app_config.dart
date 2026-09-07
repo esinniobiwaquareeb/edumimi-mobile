@@ -42,6 +42,12 @@ class AppConfig {
   }
 
   static const apiPrefix = '/mock-portal';
+  static const googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+  );
+  static const googleIosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+  );
   static const appName = 'mock.edumimi';
   static const deepLinkScheme = 'mockedumimi';
   static const webShareOrigin = String.fromEnvironment(
