@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
 import 'package:mock_mobile/features/auth/providers/auth_providers.dart';
 import 'package:mock_mobile/features/auth/data/google_sign_in_service.dart';
+import 'package:mock_mobile/features/auth/data/apple_sign_in_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -61,6 +64,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final token = await GoogleSignInService().authenticate();
       await ref.read(authControllerProvider.notifier).loginWithGoogle(token);
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () => _error = error.toString().replaceFirst('Bad state: ', ''),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _appleSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final credential = await AppleSignInService().authenticate();
+      await ref
+          .read(authControllerProvider.notifier)
+          .loginWithApple(
+            idToken: credential.idToken,
+            email: credential.email,
+            fullName: credential.fullName,
+          );
     } catch (error) {
       if (mounted) {
         setState(
@@ -139,6 +169,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             label: 'Continue with Google',
                             onPressed: _isLoading ? null : _googleSignIn,
                           ),
+                          if (Platform.isIOS) ...[
+                            const SizedBox(height: AppSpacing.item),
+                            MockSecondaryButton(
+                              label: 'Continue with Apple',
+                              onPressed: _isLoading ? null : _appleSignIn,
+                            ),
+                          ],
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(

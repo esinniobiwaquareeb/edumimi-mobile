@@ -3,6 +3,7 @@ class ApiPaths {
 
   static const login = '/auth/login';
   static const googleLogin = '/auth/google';
+  static const appleLogin = '/auth/apple';
   static const signup = '/auth/signup';
   static const forgotPassword = '/auth/forgot-password';
   static const resetPassword = '/auth/reset-password';

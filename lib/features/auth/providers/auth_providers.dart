@@ -115,6 +115,25 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  Future<void> loginWithApple({
+    required String idToken,
+    String? email,
+    String? fullName,
+  }) async {
+    try {
+      state = AuthState.authenticated(
+        await _repository.loginWithApple(
+          idToken: idToken,
+          email: email,
+          fullName: fullName,
+        ),
+      );
+    } on ApiException catch (error) {
+      state = AuthState.unauthenticated(errorMessage: error.message);
+      rethrow;
+    }
+  }
+
   Future<void> logout({bool localOnly = false}) async {
     await Future.wait([
       _repository.clearSession(),

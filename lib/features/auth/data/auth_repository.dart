@@ -88,6 +88,28 @@ class AuthRepository {
     return session;
   }
 
+  Future<AuthSession> loginWithApple({
+    required String idToken,
+    String? email,
+    String? fullName,
+  }) async {
+    final data = await _dio.postData<Map<String, dynamic>>(
+      ApiPaths.appleLogin,
+      data: {
+        'idToken': idToken,
+        if (email != null) 'email': email,
+        if (fullName != null) 'fullName': fullName,
+      },
+      parser: (json) => json as Map<String, dynamic>,
+    );
+    final session = AuthSession(
+      token: data['access_token']?.toString() ?? '',
+      user: MockUser.fromJson(data['user'] as Map<String, dynamic>? ?? {}),
+    );
+    await _storage.saveSession(token: session.token, user: session.user);
+    return session;
+  }
+
   Future<MockUser> fetchMe() async {
     return _dio.getData(
       ApiPaths.me,
