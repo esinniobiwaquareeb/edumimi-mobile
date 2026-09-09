@@ -168,12 +168,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           MockSecondaryButton(
                             label: 'Continue with Google',
                             onPressed: _isLoading ? null : _googleSignIn,
+                            leading: const _GoogleMark(),
                           ),
                           if (Platform.isIOS) ...[
                             const SizedBox(height: AppSpacing.item),
                             MockSecondaryButton(
                               label: 'Continue with Apple',
                               onPressed: _isLoading ? null : _appleSignIn,
+                              leading: const Icon(Icons.apple, size: 20),
                             ),
                           ],
                           Align(
@@ -201,6 +203,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _GoogleMark extends StatelessWidget {
+  const _GoogleMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      'G',
+      style: TextStyle(
+        color: Color(0xFF4285F4),
+        fontSize: 20,
+        fontWeight: FontWeight.w800,
       ),
     );
   }

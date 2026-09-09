@@ -56,15 +56,25 @@ class MockSecondaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.expand = false,
+    this.leading,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool expand;
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
-    final button = OutlinedButton(onPressed: onPressed, child: Text(label));
+    final button = OutlinedButton(
+      onPressed: onPressed,
+      child: leading == null
+          ? Text(label)
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [leading!, const SizedBox(width: 8), Text(label)],
+            ),
+    );
     if (!expand) return button;
     return SizedBox(width: double.infinity, child: button);
   }
