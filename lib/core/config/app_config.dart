@@ -48,6 +48,10 @@ class AppConfig {
   static const googleIosClientId = String.fromEnvironment(
     'GOOGLE_IOS_CLIENT_ID',
   );
+  static const socialLoginEnabled = bool.fromEnvironment(
+    'SOCIAL_LOGIN_ENABLED',
+    defaultValue: false,
+  );
   static const appName = 'mock.edumimi';
   static const deepLinkScheme = 'mockedumimi';
   static const webShareOrigin = String.fromEnvironment(

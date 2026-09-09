@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mock_mobile/core/network/api_exception.dart';
+import 'package:mock_mobile/core/config/app_config.dart';
 import 'package:mock_mobile/core/theme/app_spacing.dart';
 import 'package:mock_mobile/core/theme/app_text.dart';
 import 'package:mock_mobile/core/widgets/mock_ui.dart';
@@ -164,19 +165,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             isLoading: _isLoading,
                             onPressed: _submit,
                           ),
-                          const SizedBox(height: AppSpacing.item),
-                          MockSecondaryButton(
-                            label: 'Continue with Google',
-                            onPressed: _isLoading ? null : _googleSignIn,
-                            leading: const _GoogleMark(),
-                          ),
-                          if (Platform.isIOS) ...[
+                          if (AppConfig.socialLoginEnabled) ...[
                             const SizedBox(height: AppSpacing.item),
                             MockSecondaryButton(
-                              label: 'Continue with Apple',
-                              onPressed: _isLoading ? null : _appleSignIn,
-                              leading: const Icon(Icons.apple, size: 20),
+                              label: 'Continue with Google',
+                              onPressed: _isLoading ? null : _googleSignIn,
+                              leading: const _GoogleMark(),
                             ),
+                            if (Platform.isIOS) ...[
+                              const SizedBox(height: AppSpacing.item),
+                              MockSecondaryButton(
+                                label: 'Continue with Apple',
+                                onPressed: _isLoading ? null : _appleSignIn,
+                                leading: const Icon(Icons.apple, size: 20),
+                              ),
+                            ],
                           ],
                           Align(
                             alignment: Alignment.centerRight,
